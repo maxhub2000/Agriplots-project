@@ -1,0 +1,216 @@
+Solution found:
+
+<<< setup
+
+
+<<< generate
+
+Version identifier: 20.1.0.0 | 2020-11-10 | 9bedb6d68
+Tried aggregator 1 time.
+MIP Presolve eliminated 391 rows and 5 columns.
+MIP Presolve added 4 rows and 4 columns.
+MIP Presolve modified 1 coefficients.
+Reduced MIP has 16 rows, 999 columns, and 11378 nonzeros.
+Reduced MIP has 992 binaries, 7 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.00 sec. (5.84 ticks)
+Found incumbent of value 157.010000 after 0.03 sec. (15.50 ticks)
+Probing time = 0.00 sec. (0.22 ticks)
+Tried aggregator 1 time.
+Detecting symmetries...
+MIP Presolve eliminated 4 rows and 4 columns.
+MIP Presolve added 4 rows and 4 columns.
+Reduced MIP has 16 rows, 999 columns, and 11378 nonzeros.
+Reduced MIP has 992 binaries, 7 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.02 sec. (4.67 ticks)
+Probing time = 0.00 sec. (0.26 ticks)
+Clique table members: 1.
+MIP emphasis: balance optimality and feasibility.
+MIP search method: dynamic search.
+Parallel mode: deterministic, using up to 4 threads.
+Root relaxation solution time = 0.02 sec. (2.56 ticks)
+
+        Nodes                                         Cuts/
+   Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
+
+*     0+    0                          157.0100     2281.1200              --- 
+*     0+    0                          160.7800     2281.1200              --- 
+      0     0      165.2092     6      160.7800      165.2092        7    2.75%
+      0     0      164.9161     7      160.7800       Cuts: 8       18    2.57%
+*     0+    0                          162.7400      164.9161             1.34%
+      0     0      164.9057     9      162.7400      Cuts: 10       35    1.33%
+      0     0      164.9050    12      162.7400       Cuts: 6       45    1.33%
+*     0+    0                          164.5300      164.9050             0.23%
+      0     0      164.9048    11      164.5300       Cuts: 6       52    0.23%
+*     0+    0                          164.7800      164.9048             0.08%
+*     0+    0                          164.8800      164.9048             0.02%
+*     0+    0                          164.8900      164.9043             0.01%
+      0     0        cutoff            164.8900      164.9043       52    0.01%
+
+Cover cuts applied:  1
+Flow cuts applied:  1
+Mixed integer rounding cuts applied:  6
+Zero-half cuts applied:  1
+Gomory fractional cuts applied:  5
+
+Root node processing (before b&c):
+  Real time             =    0.14 sec. (91.54 ticks)
+Parallel b&c, 4 threads:
+  Real time             =    0.00 sec. (0.00 ticks)
+  Sync time (average)   =    0.00 sec.
+  Wait time (average)   =    0.00 sec.
+                          ------------
+Total (root+branch&cut) =    0.14 sec. (91.54 ticks)
+
+<<< solve
+
+
+OBJECTIVE: 164.89
+Setting time limit to 60 seconds
+Total energy produced: 164.89
+Installation decisions:
+Location 1: 2.23 mln Energy units Produced, influence of 0.03 on crops, area_in_dunam used: 20.7
+Location 5: 0.09 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.8
+Location 32: 0.38 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 3.5
+Location 33: 1.67 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 15.4
+Location 80: 0.21 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 1.9
+Location 89: 0.62 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 5.62169597
+Location 142: 0.07 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.6
+Location 153: 2.11 mln Energy units Produced, influence of 0.03 on crops, area_in_dunam used: 19
+Location 166: 0.37 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 3.4
+Location 179: 2.09 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 19.1
+Location 197: 1.47 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 13.1
+Location 198: 0.52 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 4.8
+Location 216: 0.06 mln Energy units Produced, influence of 0.05 on crops, area_in_dunam used: 0.5435032
+Location 241: 6.27 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 56.6
+Location 264: 0.38 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 3.5
+Location 275: 2.57 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 23.1
+Location 292: 2.32 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 20.6
+Location 295: 0.78 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 7.1
+Location 296: 1.41 mln Energy units Produced, influence of -0.03 on crops, area_in_dunam used: 13
+Location 304: 0.16 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 1.47938482
+Location 319: 0.7 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 6.2
+Location 322: 0.91 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 8.4
+Location 347: 0.06 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 0.54803103
+Location 365: 1.08 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 9.7
+Location 372: 0.04 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.35359855
+Location 378: 1.31 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 12.1
+Location 426: 0.05 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.4
+Location 462: 0.39 mln Energy units Produced, influence of 0.05 on crops, area_in_dunam used: 3.6
+Location 472: 4.7 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 43
+Location 499: 1.7 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 15.7
+Location 538: 0.65 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 5.8
+Location 583: 16.44 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 150.2
+Location 596: 2.63 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 24.1
+Location 604: 0.11 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 1
+Location 621: 0.36 mln Energy units Produced, influence of 0.04 on crops, area_in_dunam used: 3.3
+Location 646: 1.31 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 11.7
+Location 649: 0.26 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 2.4
+Location 680: 3.75 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 33.5
+Location 696: 0.02 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.1
+Location 721: 5.78 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 51.7
+Location 726: 0.25 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 2.3
+Location 738: 11.29 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 101
+Location 753: 0.04 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.3
+Location 762: 5.05 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 44.4
+Location 771: 6.99 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 61.6
+Location 784: 1.05 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 9.7
+Location 787: 1.42 mln Energy units Produced, influence of -0.03 on crops, area_in_dunam used: 13
+Location 810: 0.99 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 8.8
+Location 820: 1.01 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 9.34990105
+Location 823: 7.88 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 73.2
+Location 828: 0.5 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 4.6
+Location 852: 0.69 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 6.4
+Location 853: 1.28 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 11.6
+Location 855: 0.14 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 1.3
+Location 897: 0.82 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 7.6
+Location 899: 0.15 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 1.37057536
+Location 909: 0.17 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 1.5
+Location 910: 14.54 mln Energy units Produced, influence of 0.04 on crops, area_in_dunam used: 134.3
+Location 917: 0.1 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.9
+Location 918: 0.79 mln Energy units Produced, influence of 0.05 on crops, area_in_dunam used: 7.3
+Location 919: 0.01 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.075399
+Location 923: 4.26 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 38.7
+Location 924: 3.05 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 28
+Location 931: 10.22 mln Energy units Produced, influence of 0.04 on crops, area_in_dunam used: 94.9
+Location 936: 1.69 mln Energy units Produced, influence of 0.04 on crops, area_in_dunam used: 15.7
+Location 944: 2.24 mln Energy units Produced, influence of -0.06 on crops, area_in_dunam used: 20.7
+Location 946: 1.18 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 10.6
+Location 948: 0.89 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 8
+Location 950: 14.36 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 130.5
+Location 954: 0.08 mln Energy units Produced, influence of 0.04 on crops, area_in_dunam used: 0.73690735
+Location 961: 1.76 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 15.9
+Location 963: 1.12 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 10.1
+Location 985: 0.07 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 0.63136682
+Location 986: 0.25 mln Energy units Produced, influence of 0 on crops, area_in_dunam used: 2.3
+Location 993: 0.53 mln Energy units Produced, influence of 0.1 on crops, area_in_dunam used: 4.89638416
+Total energy produced: 164.89
+Number of installed PV's: 75
+Total influence on crops: 0.81
+Overall total revenue (in mln): 29.013310445
+total area (in dunam) used: 1499.90674731
+
+Energy produced by city: 
+city 1: allowed energy production: 1536.766948443 ,chosen locations: [1, ] total energy produced: 2.23
+city 3: allowed energy production: 908.819096142 ,chosen locations: [5, ] total energy produced: 0.09
+city 11: allowed energy production: 4616.31951484 ,chosen locations: [32, 33, ] total energy produced: 2.05
+city 25: allowed energy production: 1709.302141088 ,chosen locations: [80, ] total energy produced: 0.21
+city 28: allowed energy production: 3807.811577212 ,chosen locations: [89, ] total energy produced: 0.62
+city 40: allowed energy production: 4068.62058935 ,chosen locations: [142, ] total energy produced: 0.07
+city 43: allowed energy production: 52047.447706859 ,chosen locations: [153, ] total energy produced: 2.11
+city 52: allowed energy production: 2961.185399349 ,chosen locations: [166, ] total energy produced: 0.37
+city 56: allowed energy production: 2588.027889675 ,chosen locations: [179, ] total energy produced: 2.09
+city 66: allowed energy production: 2537.872310418 ,chosen locations: [197, ] total energy produced: 1.47
+city 67: allowed energy production: 5657.549340221 ,chosen locations: [198, ] total energy produced: 0.52
+city 74: allowed energy production: 1402.349996033 ,chosen locations: [216, ] total energy produced: 0.06
+city 86: allowed energy production: 2182.770809277 ,chosen locations: [241, ] total energy produced: 6.27
+city 97: allowed energy production: 2108.540551976 ,chosen locations: [264, ] total energy produced: 0.38
+city 104: allowed energy production: 2808.712438407 ,chosen locations: [275, ] total energy produced: 2.57
+city 111: allowed energy production: 1398.337549693 ,chosen locations: [292, 295, ] total energy produced: 3.1
+city 112: allowed energy production: 1041.229825381 ,chosen locations: [296, ] total energy produced: 1.41
+city 113: allowed energy production: 1518.71093991 ,chosen locations: [304, ] total energy produced: 0.16
+city 120: allowed energy production: 2036.316517845 ,chosen locations: [319, ] total energy produced: 0.7
+city 121: allowed energy production: 1426.424674077 ,chosen locations: [322, ] total energy produced: 0.91
+city 131: allowed energy production: 29320.951633803 ,chosen locations: [347, ] total energy produced: 0.06
+city 144: allowed energy production: 18804.329775137 ,chosen locations: [365, ] total energy produced: 1.08
+city 146: allowed energy production: 5242.26114397 ,chosen locations: [372, ] total energy produced: 0.04
+city 150: allowed energy production: 57239.553271572 ,chosen locations: [378, ] total energy produced: 1.31
+city 174: allowed energy production: 2339.256216559 ,chosen locations: [426, ] total energy produced: 0.05
+city 196: allowed energy production: 1639.084330128 ,chosen locations: [462, ] total energy produced: 0.39
+city 201: allowed energy production: 1797.575960581 ,chosen locations: [472, ] total energy produced: 4.7
+city 217: allowed energy production: 2353.299778751 ,chosen locations: [499, ] total energy produced: 1.7
+city 240: allowed energy production: 1380.28154116 ,chosen locations: [538, ] total energy produced: 0.65
+city 270: allowed energy production: 1817.638192284 ,chosen locations: [583, ] total energy produced: 16.44
+city 277: allowed energy production: 856.657293714 ,chosen locations: [596, ] total energy produced: 2.63
+city 285: allowed energy production: 674.090985218 ,chosen locations: [604, ] total energy produced: 0.11
+city 295: allowed energy production: 762.364804711 ,chosen locations: [621, ] total energy produced: 0.36
+city 313: allowed energy production: 1211.758794856 ,chosen locations: [646, ] total energy produced: 1.31
+city 315: allowed energy production: 445.381543805 ,chosen locations: [649, ] total energy produced: 0.26
+city 342: allowed energy production: 2110.546775146 ,chosen locations: [680, ] total energy produced: 3.75
+city 358: allowed energy production: 122172.972401209 ,chosen locations: [696, ] total energy produced: 0.02
+city 380: allowed energy production: 227403.390129312 ,chosen locations: [721, ] total energy produced: 5.78
+city 385: allowed energy production: 197189.669184729 ,chosen locations: [726, ] total energy produced: 0.25
+
+Energy produced by eshkol: 
+eshkol 1: allowed energy production: 32.978 ,chosen locations: [1, 32, 33, 621, 649, 153, 372, ] total energy produced: 7.05
+eshkol 2: allowed energy production: 29.6802 ,chosen locations: [5, 89, 166, 179, 216, 292, 295, 347, 426, 462, ] total energy produced: 6.83
+eshkol 3: allowed energy production: 24.7335 ,chosen locations: [680, ] total energy produced: 3.75
+eshkol 4: allowed energy production: 19.7868 ,chosen locations: [583, 142, 197, 319, 365, ] total energy produced: 19.76
+eshkol 5: allowed energy production: 16.489 ,chosen locations: [646, 538, 696, 198, 726, 378, ] total energy produced: 4.06
+eshkol 6: allowed energy production: 13.1912 ,chosen locations: [604, 721, 275, 472, ] total energy produced: 13.16
+eshkol 7: allowed energy production: 11.5423 ,chosen locations: [264, 304, 322, 80, 596, 499, ] total energy produced: 5.99
+eshkol 8: allowed energy production: 8.2445 ,chosen locations: [241, 296, ] total energy produced: 7.68
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+<<< post process
+
+
+<<< done
+
