@@ -33,16 +33,15 @@ maximize sum(j in 1..num_locations) (fix_energy_production[j] * X[j]);
 // Constraints
 subject to {
 
-
+    // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
     forall (j in Cities) {
         sum(i in S[j]) X[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
     }
 
-
+    // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
     forall (j in Eshkolot) {
         sum(i in E[j]) X[i] * fix_energy_production[i] <= energy_division_between_eshkolot[j] * sum(j in 1..num_locations) (fix_energy_production[j] * X[j]);
     }
-
 
     // Constraint for an upper bound of the total area used by installed PV's
     sum(j in 1..num_locations) (X[j] * area_in_dunam[j]) <= total_area_upper_bound;
@@ -99,9 +98,6 @@ execute {
   writeln("total area (in dunam) used: ", total_area);
 
 
-
-
-
   writeln("\nEnergy produced by city: ")
   for (var city in Cities) {
     var total_energy_produced_by_city = 0
@@ -120,12 +116,6 @@ execute {
     city_str += "] total energy produced: " + total_energy_produced_by_city.toString();
     writeln(city_str);  
   }
-
-
-
-
-
-
 
   writeln("\nEnergy produced by eshkol: ")
   for (var eshkol in Eshkolot) {
@@ -149,8 +139,6 @@ execute {
 }
 
 
-
-  
 execute {
     for (var eshkol in Eshkolot) {
       writeln(eshkol); 
