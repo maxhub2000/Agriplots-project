@@ -1,6 +1,6 @@
 // Parameters
 int num_locations = ...;
-int num_cities = ...;
+int num_yeshuvim = ...;
 int num_eshkolot = ...;
 float influence_on_crops_lower_limit = ...;
 float minimal_total_revenue = ...;
@@ -11,46 +11,46 @@ float total_revenue[1..num_locations] = ...;
 float area_in_dunam[1..num_locations] = ...;
 //float energy_consumption_by_yeshuv = ...;
 
-range Cities = 1..num_cities;
-float energy_consumption_by_yeshuv[Cities] = ...;
+range Yeshuvim = 1..num_yeshuvim;
+float energy_consumption_by_yeshuv[Yeshuvim] = ...;
 range Eshkolot = 1..num_eshkolot;
 float energy_division_between_eshkolot[Eshkolot] = ...;
 
 
-// Define sets S_j for each city j
-{int} S[j in Cities] = ...; // Load sets from .dat file
+// Define sets S_j for each yeshuv j
+{int} S[j in Yeshuvim] = ...; // Load sets from .dat file
 
-// Define sets E_j for each eshkol j
-{int} E[j in Eshkolot] = ...; // Load sets from .dat file
+// Define sets E_k for each eshkol k
+{int} E[k in Eshkolot] = ...; // Load sets from .dat file
 
 // Decision Variables
-dvar boolean X[1..num_locations]; // binary (boolean) decision variables
+dvar boolean x[1..num_locations]; // binary (boolean) decision variables
 
 
 // Objective Function
-maximize sum(j in 1..num_locations) (fix_energy_production[j] * X[j]);
+maximize sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 
 // Constraints
 subject to {
 
     // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
-    forall (j in Cities) {
-        sum(i in S[j]) X[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
+    forall (j in Yeshuvim) {
+        sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
     }
 
     // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
-    forall (j in Eshkolot) {
-        sum(i in E[j]) X[i] * fix_energy_production[i] <= energy_division_between_eshkolot[j] * sum(j in 1..num_locations) (fix_energy_production[j] * X[j]);
+    forall (k in Eshkolot) {
+        sum(i in E[k]) x[i] * fix_energy_production[i] <= energy_division_between_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
     }
 
     // Constraint for an upper bound of the total area used by installed PV's
-    sum(j in 1..num_locations) (X[j] * area_in_dunam[j]) <= total_area_upper_bound;
+    sum(i in 1..num_locations) (x[i] * area_in_dunam[i]) <= total_area_upper_bound;
 	    
     // Constraint for minimal influence on crops after installment of PV's that can be tolerated 
-    sum(j in 1..num_locations) (X[j] * influence_on_crops[j]) >= influence_on_crops_lower_limit;
+    sum(i in 1..num_locations) (x[i] * influence_on_crops[i]) >= influence_on_crops_lower_limit;
 	
     // Constraint for minimal total revenue from installment of PV's
-    sum(j in 1..num_locations) (X[j] * total_revenue[j]) >= minimal_total_revenue;
+    sum(i in 1..num_locations) (x[i] * total_revenue[i]) >= minimal_total_revenue;
 
 }
 
@@ -64,8 +64,8 @@ execute {
 
 execute {
   var total_energy_produced = 0;
-  for (var j in fix_energy_production) {
-    total_energy_produced += fix_energy_production[j] * X[j];
+  for (var i in fix_energy_production) {
+    total_energy_produced += fix_energy_production[i] * x[i];
   }
   writeln("Total energy produced: ", total_energy_produced);
 }
@@ -79,14 +79,14 @@ execute {
   var Overall_total_revenue = 0;
   var total_area = 0;
   writeln("Installation decisions:");
-  for (var j in fix_energy_production) {
-    if (X[j] == 1) {
-      writeln("Location ", j, ": ", fix_energy_production[j] * X[j], " mln Energy units Produced, influence of ", influence_on_crops[j] * X[j], " on crops, area_in_dunam used: ", area_in_dunam[j] * X[j]);
-      total_energy_produced += fix_energy_production[j] * X[j]
-      total_influence += influence_on_crops[j]
+  for (var i in fix_energy_production) {
+    if (x[i] == 1) {
+      writeln("Location ", i, ": ", fix_energy_production[i] * x[i], " mln Energy units Produced, influence of ", influence_on_crops[i] * x[i], " on crops, area_in_dunam used: ", area_in_dunam[i] * x[i]);
+      total_energy_produced += fix_energy_production[i] * x[i]
+      total_influence += influence_on_crops[i]
       number_of_installed_PV += 1
-      Overall_total_revenue += total_revenue[j]
-      total_area += area_in_dunam[j]
+      Overall_total_revenue += total_revenue[i]
+      total_area += area_in_dunam[i]
 
 	 }
   }
@@ -98,23 +98,23 @@ execute {
   writeln("total area (in dunam) used: ", total_area);
 
 
-  writeln("\nEnergy produced by city: ")
-  for (var city in Cities) {
-    var total_energy_produced_by_city = 0
-    var city_str = "city " + city.toString() + ": " + "allowed energy production: " + energy_consumption_by_yeshuv[city].toString();
-    city_str += " ,chosen locations: ["
-    for (var loc in S[city])
-      if (X[loc] == 1){
-        city_str += loc.toString() + ", "
-        total_energy_produced_by_city += X[loc]*fix_energy_production[loc]
+  writeln("\nEnergy produced by yeshuv: ")
+  for (var yeshuv in Yeshuvim) {
+    var total_energy_produced_by_yeshuv = 0
+    var yeshuv_str = "yeshuv " + yeshuv.toString() + ": " + "allowed energy production: " + energy_consumption_by_yeshuv[yeshuv].toString();
+    yeshuv_str += " ,chosen locations: ["
+    for (var loc in S[yeshuv])
+      if (x[loc] == 1){
+        yeshuv_str += loc.toString() + ", "
+        total_energy_produced_by_yeshuv += x[loc]*fix_energy_production[loc]
       }
 
-    if (total_energy_produced_by_city == 0){
+    if (total_energy_produced_by_yeshuv == 0){
       continue
     }
 
-    city_str += "] total energy produced: " + total_energy_produced_by_city.toString();
-    writeln(city_str);  
+    yeshuv_str += "] total energy produced: " + total_energy_produced_by_yeshuv.toString();
+    writeln(yeshuv_str);  
   }
 
   writeln("\nEnergy produced by eshkol: ")
@@ -124,9 +124,9 @@ execute {
     var eshkol_str = "eshkol " + eshkol.toString() + ": " + "allowed energy production: " + eshkol_allowed_energy_production.toString();
     eshkol_str += " ,chosen locations: ["
     for (var loc in E[eshkol])
-      if (X[loc] == 1){
+      if (x[loc] == 1){
         eshkol_str += loc.toString() + ", "
-        total_energy_produced_by_eshkol += X[loc]*fix_energy_production[loc]
+        total_energy_produced_by_eshkol += x[loc]*fix_energy_production[loc]
       }
 
     if (total_energy_produced_by_eshkol == 0){

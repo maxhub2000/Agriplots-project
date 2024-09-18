@@ -2,25 +2,25 @@ import subprocess
 import shutil
 import pandas as pd
 
-def create_cities_with_locations(df, yeshuvim_in_eshkolot):
+def create_yeshuvim_with_locations(df, yeshuvim_in_eshkolot):
     yeshuvim_in_df = df['YeshuvName']
     yeshuvim_eshkolot_in_df = pd.merge(yeshuvim_in_df, yeshuvim_in_eshkolot, on='YeshuvName', how='inner')
-    cities_with_locations = {}
+    yeshuvim_with_locations = {}
     eshkolot_with_locations = {}
     for i in yeshuvim_eshkolot_in_df.index:
         location = i+1
-        city = yeshuvim_eshkolot_in_df['YeshuvName'][i]
-        if city not in cities_with_locations:
-            cities_with_locations[city] = {location}
+        yeshuv = yeshuvim_eshkolot_in_df['YeshuvName'][i]
+        if yeshuv not in yeshuvim_with_locations:
+            yeshuvim_with_locations[yeshuv] = {location}
         else:
-            cities_with_locations[city].add(location)
+            yeshuvim_with_locations[yeshuv].add(location)
 
         eshkol = yeshuvim_eshkolot_in_df['eshkol'][i]
         if eshkol not in eshkolot_with_locations:
             eshkolot_with_locations[eshkol] = {location}
         else:
             eshkolot_with_locations[eshkol].add(location)
-    return cities_with_locations, eshkolot_with_locations
+    return yeshuvim_with_locations, eshkolot_with_locations
 
 
 def prepare_data(df, energy_consumption_by_yeshuv, influence_on_crops_dict, yeshuvim_in_eshkolot, energy_division_between_eshkolot):
@@ -36,12 +36,12 @@ def prepare_data(df, energy_consumption_by_yeshuv, influence_on_crops_dict, yesh
     # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
     influence_on_crops = df['AnafSub'].map(influence_on_crops_dict).tolist()
     num_locations = len(fix_energy_production)
-    cities_with_locations, eshkolot_with_locations = create_cities_with_locations(df, yeshuvim_in_eshkolot)
+    yeshuvim_with_locations, eshkolot_with_locations = create_yeshuvim_with_locations(df, yeshuvim_in_eshkolot)
     
-    num_cities = len(cities_with_locations)
-    relevant_cities = cities_with_locations.keys()
-    # takes only cities that appear in the current dataset
-    energy_consumption_by_yeshuv = [row['yearly energy consumption'] for index, row in energy_consumption_by_yeshuv.iterrows() if row['yeshuv_name'] in relevant_cities]
+    num_yeshuvim = len(yeshuvim_with_locations)
+    relevant_yeshuvim = yeshuvim_with_locations.keys()
+    # takes only yeshuvim that appear in the current dataset
+    energy_consumption_by_yeshuv = [row['yearly energy consumption'] for index, row in energy_consumption_by_yeshuv.iterrows() if row['yeshuv_name'] in relevant_yeshuvim]
     
     num_eshkolot = len(eshkolot_with_locations)
     relevant_eshkolot = eshkolot_with_locations.keys()
@@ -54,8 +54,8 @@ def prepare_data(df, energy_consumption_by_yeshuv, influence_on_crops_dict, yesh
         "influence_on_crops" : influence_on_crops,
         "total_revenue" : total_revenue,
         "area_in_dunam" : area_in_dunam,
-        "cities_with_locations" : cities_with_locations,
-        "num_cities" : num_cities,
+        "yeshuvim_with_locations" : yeshuvim_with_locations,
+        "num_yeshuvim" : num_yeshuvim,
         "energy_consumption_by_yeshuv" : energy_consumption_by_yeshuv,
         "eshkolot_with_locations" : eshkolot_with_locations,
         "num_eshkolot" : num_eshkolot,
@@ -63,7 +63,7 @@ def prepare_data(df, energy_consumption_by_yeshuv, influence_on_crops_dict, yesh
     }
 
 def write_dat_file(dat_file, data, params):
-    cities_with_locations = data.pop("cities_with_locations")
+    yeshuvim_with_locations = data.pop("yeshuvim_with_locations")
     eshkolot_with_locations = data.pop("eshkolot_with_locations")
     with open(dat_file, 'w') as f:
         for dict in [params, data]:
@@ -71,7 +71,7 @@ def write_dat_file(dat_file, data, params):
                 f.write(f"{key} = {val};\n")
 
         f.write("S = [\n")
-        for city, locations in cities_with_locations.items():
+        for yeshuv, locations in yeshuvim_with_locations.items():
             f.write(f"{locations},\n")
         f.write("];\n")
         
