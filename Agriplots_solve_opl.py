@@ -7,8 +7,11 @@ def create_yeshuvim_with_locations(df, yeshuvim_in_eshkolot):
     yeshuvim_eshkolot_in_df = pd.merge(yeshuvim_in_df, yeshuvim_in_eshkolot, on='YeshuvName', how='inner')
     yeshuvim_with_locations = {}
     eshkolot_with_locations = {}
+    location_to_object_id = {}
     for i in yeshuvim_eshkolot_in_df.index:
         location = i+1
+        location_to_object_id[df["OBJECTID"][i]] = location
+
         yeshuv = yeshuvim_eshkolot_in_df['YeshuvName'][i]
         if yeshuv not in yeshuvim_with_locations:
             yeshuvim_with_locations[yeshuv] = {location}
@@ -20,15 +23,11 @@ def create_yeshuvim_with_locations(df, yeshuvim_in_eshkolot):
             eshkolot_with_locations[eshkol] = {location}
         else:
             eshkolot_with_locations[eshkol].add(location)
-    return yeshuvim_with_locations, eshkolot_with_locations
+    return yeshuvim_with_locations, eshkolot_with_locations, location_to_object_id
 
 
-def prepare_data(df, energy_consumption_by_yeshuv, influence_on_crops_dict, yeshuvim_in_eshkolot, energy_division_between_eshkolot):
-    # remove rows with nan values (Ideally should find a better way to handle those nan values later on)
-    df = df.dropna(subset=['Energy production (fix) mln kWh/year',
-                           'Average influence of PV on crops',
-                           'Total revenue, mln NIS',
-                           'Dunam'])
+def prepare_data(df, energy_consumption_by_yeshuv, influence_on_crops_dict, yeshuvim_with_locations, eshkolot_with_locations, energy_division_between_eshkolot):
+
     
     fix_energy_production = df['Energy production (fix) mln kWh/year'].tolist()
     total_revenue = df['Total revenue, mln NIS'].tolist()
@@ -36,7 +35,6 @@ def prepare_data(df, energy_consumption_by_yeshuv, influence_on_crops_dict, yesh
     # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
     influence_on_crops = df['AnafSub'].map(influence_on_crops_dict).tolist()
     num_locations = len(fix_energy_production)
-    yeshuvim_with_locations, eshkolot_with_locations = create_yeshuvim_with_locations(df, yeshuvim_in_eshkolot)
     
     num_yeshuvim = len(yeshuvim_with_locations)
     relevant_yeshuvim = yeshuvim_with_locations.keys()
@@ -135,8 +133,25 @@ def main():
         "total_area_upper_bound": 1500.00
     }
 
+    # remove rows with nan values (Ideally should find a better way to handle those nan values later on)
+    df_dataset = df_dataset.dropna(subset=['Energy production (fix) mln kWh/year',
+                           'Average influence of PV on crops',
+                           'Total revenue, mln NIS',
+                           'Dunam'])
+
+
+    yeshuvim_with_locations, eshkolot_with_locations, location_to_object_id = create_yeshuvim_with_locations(df_dataset, yeshuvim_in_eshkolot)
+    ###plan regarding using the location_to_object_id dict:
+    # If I have that dictionary, I could have a "connecting table" between the results of the opl model,
+    # which is in term of location (a number) and the original data of each field, which is in term of OBJECTID.
+    # that will allow me to output more meaningful result and check myself, since I could create a table with OBJECTID as it's key that includes data
+    # about the relevant columns from the dataset for each field, for example yeshuv, energy consumption, dunam, influece on crops etc.
+    # and also add to that interesting results/data from the opl run, for example the location, whether or not it was included in the model, in which city/eshkol it was
+    # in the model (sanity check) etc.
+    # I should probably implement that in a seperate python file that will import stuff from this file, and output the resluts as xlsx file.
+
     # Read data from Excel
-    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, influence_on_crops_dict, yeshuvim_in_eshkolot, energy_division_between_eshkolot)
+    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, influence_on_crops_dict, yeshuvim_with_locations, eshkolot_with_locations, energy_division_between_eshkolot)
     # Write data to .dat file
     write_dat_file(dat_file, data, params)
     # Solve the OPL model
