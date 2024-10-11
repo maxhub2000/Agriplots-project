@@ -28,11 +28,11 @@ def create_yeshuvim_with_locations(df_, yeshuvim_in_eshkolot):
 
     return eshkolot_with_locations, location_to_object_id
 
-def create_locations_in_yeshuvim(yeshuvim_with_locations):
+def create_locations_in_yeshuvim(yeshuvim_with_locations_):
     D = {}
-    for YeshuvName in yeshuvim_with_locations["YeshuvName"].unique():
+    for YeshuvName in yeshuvim_with_locations_["YeshuvName"].unique():
         # Get all location IDs associated with the current YeshuvName
-        location_ids = yeshuvim_with_locations.loc[yeshuvim_with_locations['YeshuvName'] == YeshuvName]["location_id"].tolist()
+        location_ids = yeshuvim_with_locations_.loc[yeshuvim_with_locations_['YeshuvName'] == YeshuvName]["location_id"].tolist()
         if YeshuvName not in D:
             D[YeshuvName] = set(location_ids)  # Create a set with all locations for the YeshuvName
         else:
@@ -41,8 +41,8 @@ def create_locations_in_yeshuvim(yeshuvim_with_locations):
   
 def adjust_energy_consumption_by_yeshuv(energy_consumption_by_yeshuv_, relevant_yeshuvim_):
     energy_consumption_by_yeshuv_ = energy_consumption_by_yeshuv_.drop(['yeshuv_symbol'], axis=1) # remove yeshuv_symbol column
-    # creating energy consumption by yeshuv for only cities in inputed df (relevant_yeshuvim_),
-    # if city not in original energy_consumption_by_yeshuv, their yearly consumption will be 0
+    # creating energy consumption by yeshuv for only yeshuvim in inputed df (relevant_yeshuvim_),
+    # if yeshuv not in original energy_consumption_by_yeshuv, their yearly consumption will be 0
     adjusted_df = pd.DataFrame(columns=['yeshuv_name', 'yearly energy consumption'])
     for yeshuv in relevant_yeshuvim_:
         if yeshuv in energy_consumption_by_yeshuv_["yeshuv_name"].tolist():
@@ -73,6 +73,35 @@ def sort_df_by_list_order(df_, list_order, column_name):
     df_sorted = df_.sort_values(column_name).reset_index(drop=True)
     return df_sorted
 
+def create_locations_in_eshkolot(eshkolot_with_locations_):
+    D = {}
+    eshkolot_lst = eshkolot_with_locations_["eshkol"].unique()
+    eshkolot_lst = sorted(eshkolot_lst)
+    print("eshkolot_lst",eshkolot_lst)
+    for eshkol in eshkolot_lst:
+        # Get all location IDs associated with the current eshkol
+        location_ids = eshkolot_with_locations_.loc[eshkolot_with_locations_['eshkol'] == eshkol]["location_id"].tolist()
+        if eshkol not in D:
+            D[eshkol] = set(location_ids)  # Create a set with all locations for the eshkol
+        else:
+            D[eshkol].update(location_ids)  # Update the set with additional location_ids if any   
+    return D
+
+def adjust_energy_division_between_eshkolot(energy_division_between_eshkolot_, relevant_eshkolot_):
+    # creating energy division between eshkolot for only eshkolot in inputed df (relevant_eshkolot_),
+    # if eshkol not in original energy_division_between_eshkolot_, their percentage_of_energy_output will be 0
+    adjusted_df = pd.DataFrame(columns=['eshkol', 'percentage_of_energy_output'])
+    for eshkol in relevant_eshkolot_:
+        if eshkol in energy_division_between_eshkolot_["eshkol"].tolist():
+            # if eshkol in input df, get it's eshkol number and percentage of energy output in the "row" var, then append the row to the adjusted_df
+            row = energy_division_between_eshkolot_.loc[energy_division_between_eshkolot_['eshkol'] == eshkol]
+            adjusted_df = adjusted_df.append(row, ignore_index = True)
+        else:
+            # otherwise, add the eshkol num with percentage of energy output of 0, so that the model wouldn't choose locations from that eshkol
+            row = {'eshkol': eshkol, 'percentage_of_energy_output': 0.00}
+            adjusted_df = adjusted_df.append(row, ignore_index = True)
+    return adjusted_df
+
 def prepare_data(df_, energy_consumption_by_yeshuv, eshkolot_with_locations, energy_division_between_eshkolot):
     fix_energy_production = df_['Energy production (fix) mln kWh/year'].tolist()
     total_revenue = df_['Total revenue, mln NIS'].tolist()
@@ -91,12 +120,23 @@ def prepare_data(df_, energy_consumption_by_yeshuv, eshkolot_with_locations, ene
     energy_consumption_by_yeshuv = energy_consumption_by_yeshuv['yearly energy consumption'].tolist()
 
 
-    num_eshkolot = len(eshkolot_with_locations)
-    relevant_eshkolot = eshkolot_with_locations.keys()
-    # takes only eshkolot that appear in the current dataset
-    energy_division_between_eshkolot = [row['percentage_of_energy_output'] for index, row in energy_division_between_eshkolot.iterrows() if row['eshkol'] in relevant_eshkolot]
+    #eshkolot_with_locations = df_[['location_id', 'eshkol']][df_['eshkol'] == -1]
+    eshkolot_with_locations = df_[['location_id', 'eshkol']]
+    print("eshkolot_with_locations:\n", eshkolot_with_locations)
+    locations_in_eshkolot = create_locations_in_eshkolot(eshkolot_with_locations)
+    #print("locations_in_eshkolot:\n",locations_in_eshkolot)
+    eshkolot_with_locations = locations_in_eshkolot
+    # takes only eshkolot that appear in the current dataset; values are unique since eshkolot_with_locations is a dictionary
+    relevant_eshkolot = list(eshkolot_with_locations.keys())
+    #print("relevant_eshkolot:\n",relevant_eshkolot)
+    num_eshkolot = len(relevant_eshkolot)
+    # adjust energy_division_between_eshkolot so that it will only include eshkolot from the dataset, and then convert it to a list
+    energy_division_between_eshkolot = adjust_energy_division_between_eshkolot(energy_division_between_eshkolot, relevant_eshkolot)
+    energy_division_between_eshkolot = energy_division_between_eshkolot['percentage_of_energy_output'].tolist()
 
-
+    
+    
+    
     return {
         "num_locations" : num_locations, #need to be first here, otherwise there will be bug in the mod file
         "fix_energy_production" : fix_energy_production,
@@ -162,6 +202,8 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
+        
+
 
 
 def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
@@ -197,7 +239,7 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
 def main():
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
-    df_dataset = pd.read_excel('Agriplots dataset - 1000 rows.xlsx') # Read dataset from Excel
+    df_dataset = pd.read_excel('Agriplots dataset - 10000 rows.xlsx') # Read dataset from Excel
     df_dataset["location_id"] = df_dataset.index + 1
     print("df_dataset[location_id]\n", df_dataset["location_id"])
     df_dataset = remove_rows_with_missing_values(df_dataset)
@@ -206,7 +248,6 @@ def main():
 
     energy_consumption_by_yeshuv = pd.read_excel("energy_consumption_by_yeshuv-average_consumption_times_population_per_yeshuv.xlsx")
     
-
     #yeshuvim_in_eshkolot = pd.read_excel('yeshuvim_in_eshkolot.xlsx')
     yeshuvim_in_eshkolot = pd.read_excel('yeshuvim_in_eshkolot_modified_to_match_dataset.xlsx')
     yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True)
@@ -215,7 +256,7 @@ def main():
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     print("df_dataset after adding eshkolot:\n", df_dataset)
     
-    
+
     # parameters of the model
     params = {
         "influence_on_crops_lower_limit": 0.00,

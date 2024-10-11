@@ -33,15 +33,7 @@ maximize sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 // Constraints
 subject to {
 
-    // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
-    forall (j in Yeshuvim) {
-        sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
-    }
 
-    // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
-    forall (k in Eshkolot) {
-        sum(i in E[k]) x[i] * fix_energy_production[i] <= energy_division_between_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
-    }
 
     // Constraint for an upper bound of the total area used by installed PV's
     sum(i in 1..num_locations) (x[i] * area_in_dunam[i]) <= total_area_upper_bound;
@@ -51,6 +43,23 @@ subject to {
 	
     // Constraint for minimal total revenue from installment of PV's
     sum(i in 1..num_locations) (x[i] * total_revenue[i]) >= minimal_total_revenue;
+
+
+
+    // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
+    
+    forall (j in Yeshuvim) {
+        sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
+    }
+    
+
+    // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
+    /*
+    forall (k in Eshkolot) {
+        sum(i in E[k]) x[i] * fix_energy_production[i] <= energy_division_between_eshkolot[k] * sum(j in 1..num_locations) (fix_energy_production[j] * x[j]);
+    }
+    */
+
 
 }
 
