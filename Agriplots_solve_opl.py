@@ -2,31 +2,6 @@ import subprocess
 import shutil
 import pandas as pd
 
-def create_yeshuvim_with_locations(df_, yeshuvim_in_eshkolot):
-    yeshuvim_in_df = df_['YeshuvName']
-    yeshuvim_eshkolot_in_df = pd.merge(yeshuvim_in_df, yeshuvim_in_eshkolot, on='YeshuvName', how='inner')
-    yeshuvim_with_locations = {}
-    eshkolot_with_locations = {}
-    location_to_object_id = {}
-    for i in yeshuvim_eshkolot_in_df.index:
-        location = i+1
-        location_to_object_id[df_["OBJECTID"][i]] = location
-
-
-        eshkol = yeshuvim_eshkolot_in_df['eshkol'][i]
-        if eshkol not in eshkolot_with_locations:
-            eshkolot_with_locations[eshkol] = {location}
-        else:
-            eshkolot_with_locations[eshkol].add(location)
-
-    # print("yeshuvim_with_locations before making it simple:\n ", yeshuvim_with_locations)
-    # print("len(yeshuvim_with_locations): ", len(yeshuvim_with_locations))
-
-    yeshuvim_with_locations = df_[['location_id', 'YeshuvName']]
-    #eshkolot_with_locations = []
-    location_to_object_id = []
-
-    return eshkolot_with_locations, location_to_object_id
 
 def create_locations_in_yeshuvim(yeshuvim_with_locations_):
     D = {}
@@ -102,7 +77,7 @@ def adjust_energy_division_between_eshkolot(energy_division_between_eshkolot_, r
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
 
-def prepare_data(df_, energy_consumption_by_yeshuv, eshkolot_with_locations, energy_division_between_eshkolot):
+def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshkolot):
     fix_energy_production = df_['Energy production (fix) mln kWh/year'].tolist()
     total_revenue = df_['Total revenue, mln NIS'].tolist()
     area_in_dunam = df_['Dunam'].tolist()
@@ -202,9 +177,6 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
-        
-
-
 
 def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
@@ -235,11 +207,10 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
 
 
 
-
 def main():
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
-    df_dataset = pd.read_excel('Agriplots dataset - 10000 rows.xlsx') # Read dataset from Excel
+    df_dataset = pd.read_excel('Agriplots dataset - 1000 rows.xlsx') # Read dataset from Excel
     df_dataset["location_id"] = df_dataset.index + 1
     print("df_dataset[location_id]\n", df_dataset["location_id"])
     df_dataset = remove_rows_with_missing_values(df_dataset)
@@ -256,7 +227,6 @@ def main():
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     print("df_dataset after adding eshkolot:\n", df_dataset)
     
-
     # parameters of the model
     params = {
         "influence_on_crops_lower_limit": 0.00,
@@ -264,11 +234,8 @@ def main():
         "total_area_upper_bound": 1500.00
     }
 
-
-
-
-    eshkolot_with_locations, location_to_object_id = create_yeshuvim_with_locations(df_dataset, yeshuvim_in_eshkolot)
-    ###plan regarding using the location_to_object_id dict:
+    ### plan regarding outputting the results in a meanningful manner:
+    # I will create a location_to_object_id dict (again, maybe in differently from what I tried before):
     # If I have that dictionary, I could have a "connecting table" between the results of the opl model,
     # which is in term of location (a number) and the original data of each field, which is in term of OBJECTID.
     # that will allow me to output more meaningful result and check myself, since I could create a table with OBJECTID as it's key that includes data
@@ -276,9 +243,8 @@ def main():
     # and also add to that interesting results/data from the opl run, for example the location, whether or not it was included in the model, in which city/eshkol it was
     # in the model (sanity check) etc.
     # I should probably implement that in a seperate python file that will import stuff from this file, and output the resluts as xlsx file.
-
     
-    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, eshkolot_with_locations, energy_division_between_eshkolot)
+    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot)
     # Write data to .dat file
     write_dat_file(dat_file, data, params)
     # Solve the OPL model
