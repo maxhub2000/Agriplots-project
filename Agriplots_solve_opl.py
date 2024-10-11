@@ -3,11 +3,12 @@ import shutil
 import pandas as pd
 
 
-def create_locations_in_yeshuvim(yeshuvim_with_locations_):
+def create_yeshuvim_with_locations(df_):
+    yeshuvim_locations_df = df_[['location_id', 'YeshuvName']]
     D = {}
-    for YeshuvName in yeshuvim_with_locations_["YeshuvName"].unique():
+    for YeshuvName in yeshuvim_locations_df["YeshuvName"].unique():
         # Get all location IDs associated with the current YeshuvName
-        location_ids = yeshuvim_with_locations_.loc[yeshuvim_with_locations_['YeshuvName'] == YeshuvName]["location_id"].tolist()
+        location_ids = yeshuvim_locations_df.loc[yeshuvim_locations_df['YeshuvName'] == YeshuvName]["location_id"].tolist()
         if YeshuvName not in D:
             D[YeshuvName] = set(location_ids)  # Create a set with all locations for the YeshuvName
         else:
@@ -30,6 +31,37 @@ def adjust_energy_consumption_by_yeshuv(energy_consumption_by_yeshuv_, relevant_
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
 
+
+def create_machozot_with_locations(df_):
+    machozot_locations_df = df_[['location_id', 'Machoz']]
+    D = {}
+    for Machoz in machozot_locations_df["Machoz"].unique():
+        # Get all location IDs associated with the current Machoz
+        location_ids = machozot_locations_df.loc[machozot_locations_df['Machoz'] == Machoz]["location_id"].tolist()
+        if Machoz not in D:
+            D[Machoz] = set(location_ids)  # Create a set with all locations for the Machoz
+        else:
+            D[Machoz].update(location_ids)  # Update the set with additional location_ids if any   
+    return D
+
+
+def adjust_energy_consumption_by_machoz(energy_consumption_by_machoz_, relevant_machozot_):
+    # creating energy consumption by machoz for only machozot in inputed df (relevant_machozot_),
+    # if machoz not in original energy_consumption_by_machoz, their yearly consumption will be 0
+    adjusted_df = pd.DataFrame(columns=['machoz', 'yearly energy consumption'])
+    for machoz in relevant_machozot_:
+        if machoz in energy_consumption_by_machoz_["machoz"].tolist():
+            # if machoz in input df, get it's machoz name and yearly energy consumption in the "row" var, then append the row to the adjusted_df
+            row = energy_consumption_by_machoz_.loc[energy_consumption_by_machoz_['machoz'] == machoz]
+            adjusted_df = adjusted_df.append(row, ignore_index = True)
+        else:
+            # otherwise, add the machoz name with yearly energy consumption of 0, so that the model wouldn't choose locations from that machoz
+            row = {'machoz': machoz, 'yearly energy consumption': 0.00}
+            adjusted_df = adjusted_df.append(row, ignore_index = True)
+    return adjusted_df
+
+
+
 def sort_df_by_list_order(df_, list_order, column_name):
     """
     Sort a DataFrame by the order of values in a list.
@@ -48,14 +80,15 @@ def sort_df_by_list_order(df_, list_order, column_name):
     df_sorted = df_.sort_values(column_name).reset_index(drop=True)
     return df_sorted
 
-def create_locations_in_eshkolot(eshkolot_with_locations_):
+def create_eshkolot_with_locations(df_):
+    eshkolot_locations_df = df_[['location_id', 'eshkol']]
     D = {}
-    eshkolot_lst = eshkolot_with_locations_["eshkol"].unique()
+    eshkolot_lst = eshkolot_locations_df["eshkol"].unique()
     eshkolot_lst = sorted(eshkolot_lst)
     print("eshkolot_lst",eshkolot_lst)
     for eshkol in eshkolot_lst:
         # Get all location IDs associated with the current eshkol
-        location_ids = eshkolot_with_locations_.loc[eshkolot_with_locations_['eshkol'] == eshkol]["location_id"].tolist()
+        location_ids = eshkolot_locations_df.loc[eshkolot_locations_df['eshkol'] == eshkol]["location_id"].tolist()
         if eshkol not in D:
             D[eshkol] = set(location_ids)  # Create a set with all locations for the eshkol
         else:
@@ -77,16 +110,15 @@ def adjust_energy_division_between_eshkolot(energy_division_between_eshkolot_, r
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
 
-def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshkolot):
+def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz):
     fix_energy_production = df_['Energy production (fix) mln kWh/year'].tolist()
     total_revenue = df_['Total revenue, mln NIS'].tolist()
     area_in_dunam = df_['Dunam'].tolist()
     influence_on_crops = df_['Average influence of PV on crops'].tolist()
     num_locations = len(fix_energy_production)
 
-    yeshuvim_with_locations = df_[['location_id', 'YeshuvName']]
-    locations_in_yeshuvim = create_locations_in_yeshuvim(yeshuvim_with_locations)
-    yeshuvim_with_locations = locations_in_yeshuvim
+
+    yeshuvim_with_locations = create_yeshuvim_with_locations(df_)
     # takes only yeshuvim that appear in the current dataset; values are unique since yeshuvim_with_locations is a dictionary
     relevant_yeshuvim = list(yeshuvim_with_locations.keys())
     num_yeshuvim = len(relevant_yeshuvim)
@@ -95,12 +127,18 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
     energy_consumption_by_yeshuv = energy_consumption_by_yeshuv['yearly energy consumption'].tolist()
 
 
+    machozot_with_locations = create_machozot_with_locations(df_)
+    # takes only machozot that appear in the current dataset; values are unique since machozot_with_locations is a dictionary
+    relevant_machozot = list(machozot_with_locations.keys())
+    num_machozot = len(relevant_machozot)
+    # adjust energy consumptions so that it will only include machozot from the dataset, and then convert it to a list
+    energy_consumption_by_machoz = adjust_energy_consumption_by_machoz(energy_consumption_by_machoz, relevant_machozot)
+    energy_consumption_by_machoz = energy_consumption_by_machoz['yearly energy consumption'].tolist()
+
+
     #eshkolot_with_locations = df_[['location_id', 'eshkol']][df_['eshkol'] == -1]
-    eshkolot_with_locations = df_[['location_id', 'eshkol']]
+    eshkolot_with_locations = create_eshkolot_with_locations(df_)
     print("eshkolot_with_locations:\n", eshkolot_with_locations)
-    locations_in_eshkolot = create_locations_in_eshkolot(eshkolot_with_locations)
-    #print("locations_in_eshkolot:\n",locations_in_eshkolot)
-    eshkolot_with_locations = locations_in_eshkolot
     # takes only eshkolot that appear in the current dataset; values are unique since eshkolot_with_locations is a dictionary
     relevant_eshkolot = list(eshkolot_with_locations.keys())
     #print("relevant_eshkolot:\n",relevant_eshkolot)
@@ -109,9 +147,7 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
     energy_division_between_eshkolot = adjust_energy_division_between_eshkolot(energy_division_between_eshkolot, relevant_eshkolot)
     energy_division_between_eshkolot = energy_division_between_eshkolot['percentage_of_energy_output'].tolist()
 
-    
-    
-    
+
     return {
         "num_locations" : num_locations, #need to be first here, otherwise there will be bug in the mod file
         "fix_energy_production" : fix_energy_production,
@@ -121,6 +157,9 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
         "yeshuvim_with_locations" : yeshuvim_with_locations,
         "num_yeshuvim" : num_yeshuvim,
         "energy_consumption_by_yeshuv" : energy_consumption_by_yeshuv,
+        "machozot_with_locations" : machozot_with_locations,
+        "num_machozot" : num_machozot,
+        "energy_consumption_by_machoz" : energy_consumption_by_machoz,
         "eshkolot_with_locations" : eshkolot_with_locations,
         "num_eshkolot" : num_eshkolot,
         "energy_division_between_eshkolot" : energy_division_between_eshkolot
@@ -128,6 +167,7 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
 
 def write_dat_file(dat_file, data, params):
     yeshuvim_with_locations = data.pop("yeshuvim_with_locations")
+    machozot_with_locations = data.pop("machozot_with_locations")
     eshkolot_with_locations = data.pop("eshkolot_with_locations")
     with open(dat_file, 'w') as f:
         for dict in [params, data]:
@@ -139,6 +179,11 @@ def write_dat_file(dat_file, data, params):
             f.write(f"{locations},\n")
         f.write("];\n")
         
+        f.write("M = [\n")
+        for machoz, locations in machozot_with_locations.items():
+            f.write(f"{locations},\n")
+        f.write("];")
+
         f.write("E = [\n")
         for eshkol, locations in eshkolot_with_locations.items():
             f.write(f"{locations},\n")
@@ -210,7 +255,7 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
 def main():
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
-    df_dataset = pd.read_excel('Agriplots dataset - 1000 rows.xlsx') # Read dataset from Excel
+    df_dataset = pd.read_excel('Agriplots dataset - 10000 rows.xlsx') # Read dataset from Excel
     df_dataset["location_id"] = df_dataset.index + 1
     print("df_dataset[location_id]\n", df_dataset["location_id"])
     df_dataset = remove_rows_with_missing_values(df_dataset)
@@ -226,7 +271,11 @@ def main():
     # add eshkolot to dataset based on yeshuvim_in_eshkolot
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     print("df_dataset after adding eshkolot:\n", df_dataset)
-    
+
+    energy_consumption_by_machoz = pd.read_excel("energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", sheet_name = "energy consumption by machoz")
+    print("energy_consumption_by_machoz\n", energy_consumption_by_machoz)
+
+
     # parameters of the model
     params = {
         "influence_on_crops_lower_limit": 0.00,
@@ -244,7 +293,7 @@ def main():
     # in the model (sanity check) etc.
     # I should probably implement that in a seperate python file that will import stuff from this file, and output the resluts as xlsx file.
     
-    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot)
+    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz)
     # Write data to .dat file
     write_dat_file(dat_file, data, params)
     # Solve the OPL model

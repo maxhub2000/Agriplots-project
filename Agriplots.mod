@@ -1,6 +1,7 @@
 // Parameters
 int num_locations = ...;
 int num_yeshuvim = ...;
+int num_machozot = ...;
 int num_eshkolot = ...;
 float influence_on_crops_lower_limit = ...;
 float minimal_total_revenue = ...;
@@ -13,12 +14,17 @@ float area_in_dunam[1..num_locations] = ...;
 
 range Yeshuvim = 1..num_yeshuvim;
 float energy_consumption_by_yeshuv[Yeshuvim] = ...;
+range Machozot = 1..num_machozot;
+float energy_consumption_by_machoz[Machozot] = ...;
 range Eshkolot = 1..num_eshkolot;
 float energy_division_between_eshkolot[Eshkolot] = ...;
 
 
 // Define sets S_j for each yeshuv j
 {int} S[j in Yeshuvim] = ...; // Load sets from .dat file
+
+// Define sets M_j for each machoz j
+{int} M[j in Machozot] = ...; // Load sets from .dat file
 
 // Define sets E_k for each eshkol k
 {int} E[k in Eshkolot] = ...; // Load sets from .dat file
@@ -33,8 +39,6 @@ maximize sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 // Constraints
 subject to {
 
-
-
     // Constraint for an upper bound of the total area used by installed PV's
     sum(i in 1..num_locations) (x[i] * area_in_dunam[i]) <= total_area_upper_bound;
 	    
@@ -45,11 +49,15 @@ subject to {
     sum(i in 1..num_locations) (x[i] * total_revenue[i]) >= minimal_total_revenue;
 
 
-
     // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
-    
     forall (j in Yeshuvim) {
         sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
+    }
+    
+
+    // Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz
+    forall (j in Machozot) {
+        sum(i in M[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_machoz[j];
     }
     
 
@@ -125,6 +133,30 @@ execute {
     yeshuv_str += "] total energy produced: " + total_energy_produced_by_yeshuv.toString();
     writeln(yeshuv_str);  
   }
+
+
+  writeln("\nEnergy produced by machoz: ")
+  for (var machoz in Machozot) {
+    var total_energy_produced_by_machoz = 0
+    var machoz_str = "machoz " + machoz.toString() + ": " + "allowed energy production: " + energy_consumption_by_machoz[machoz].toString();
+    machoz_str += " ,chosen locations: ["
+    for (var loc in M[machoz])
+      if (x[loc] == 1){
+        machoz_str += loc.toString() + ", "
+        total_energy_produced_by_machoz += x[loc]*fix_energy_production[loc]
+      }
+
+    if (total_energy_produced_by_machoz == 0){
+      continue
+    }
+
+    machoz_str += "] total energy produced: " + total_energy_produced_by_machoz.toString();
+    writeln(machoz_str);  
+  }
+
+
+
+
 
   writeln("\nEnergy produced by eshkol: ")
   for (var eshkol in Eshkolot) {
