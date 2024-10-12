@@ -3,16 +3,12 @@ int num_locations = ...;
 int num_yeshuvim = ...;
 int num_machozot = ...;
 int num_eshkolot = ...;
-float influence_on_crops_lower_limit = ...;
 float allowed_loss_from_influence_on_crops_percentage = ...;
-float minimal_total_revenue = ...;
 float total_area_upper_bound = ...;
 float fix_energy_production[1..num_locations] = ...;
 float influence_on_crops[1..num_locations] = ...;
-float total_revenue[1..num_locations] = ...;
 float potential_revenue_before_PV[1..num_locations] = ...;
 float area_in_dunam[1..num_locations] = ...;
-//float energy_consumption_by_yeshuv = ...;
 
 range Yeshuvim = 1..num_yeshuvim;
 float energy_consumption_by_yeshuv[Yeshuvim] = ...;
@@ -44,12 +40,6 @@ subject to {
     // Constraint for an upper bound of the total area used by installed PV's
     sum(i in 1..num_locations) (x[i] * area_in_dunam[i]) <= total_area_upper_bound;
 	    
-    // Constraint for minimal influence on crops after installment of PV's that can be tolerated 
-    sum(i in 1..num_locations) (x[i] * influence_on_crops[i]) >= influence_on_crops_lower_limit;
-	
-    // Constraint for minimal total revenue from installment of PV's
-    sum(i in 1..num_locations) (x[i] * total_revenue[i]) >= minimal_total_revenue;
-
     // Constraint for the revenue change in percentage as a result of installing the PV’s and influencing the crops, lower bounded by an inputed threshold
     sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i]) >= allowed_loss_from_influence_on_crops_percentage * sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i]);
 
@@ -93,7 +83,6 @@ execute {
 // Output results
 execute {
   var total_energy_produced = 0;
-  var total_influence = 0;
   var number_of_installed_PV = 0;
   var Overall_total_revenue = 0;
   var total_area = 0;
@@ -102,11 +91,9 @@ execute {
   writeln("Installation decisions:");
   for (var i in fix_energy_production) {
     if (x[i] == 1) {
-      writeln("Location ", i, ": ", fix_energy_production[i] * x[i], " mln Energy units Produced, area_in_dunam used: ", area_in_dunam[i], " potential revenue before PV: ", potential_revenue_before_PV[i], " total potential revenue after PV: ", potential_revenue_before_PV[i]*influence_on_crops[i]);
+      writeln("Location ", i, ": ", fix_energy_production[i] * x[i], " mln Energy units Produced, area_in_dunam used: ", area_in_dunam[i], ", potential revenue before PV: ", potential_revenue_before_PV[i], ", potential revenue after PV: ", potential_revenue_before_PV[i] * influence_on_crops[i]);
       total_energy_produced += fix_energy_production[i] * x[i]
-      total_influence += influence_on_crops[i]
       number_of_installed_PV += 1
-      Overall_total_revenue += total_revenue[i]
       total_area += area_in_dunam[i]
       total_potential_revenue_before_PV += potential_revenue_before_PV[i]
       total_potential_revenue_after_PV += potential_revenue_before_PV[i] * influence_on_crops[i]
@@ -117,8 +104,6 @@ execute {
 
   writeln("Total energy produced: ", total_energy_produced);
   writeln("Number of installed PV's: ", number_of_installed_PV);
-  writeln("Total influence on crops: ", total_influence);
-  writeln("Overall total revenue (in mln): ", Overall_total_revenue);
   writeln("total area (in dunam) used: ", total_area);
   writeln("total poetntial revenue before installing PV'S for locations included: ", total_potential_revenue_before_PV);
   writeln("total poetntial revenue after installing PV's for locations included, as a result of influence on crops: ", total_potential_revenue_after_PV);

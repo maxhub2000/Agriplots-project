@@ -31,7 +31,6 @@ def adjust_energy_consumption_by_yeshuv(energy_consumption_by_yeshuv_, relevant_
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
 
-
 def create_machozot_with_locations(df_):
     machozot_locations_df = df_[['location_id', 'Machoz']]
     D = {}
@@ -43,7 +42,6 @@ def create_machozot_with_locations(df_):
         else:
             D[Machoz].update(location_ids)  # Update the set with additional location_ids if any   
     return D
-
 
 def adjust_energy_consumption_by_machoz(energy_consumption_by_machoz_, relevant_machozot_):
     # creating energy consumption by machoz for only machozot in inputed df (relevant_machozot_),
@@ -59,8 +57,6 @@ def adjust_energy_consumption_by_machoz(energy_consumption_by_machoz_, relevant_
             row = {'machoz': machoz, 'yearly energy consumption': 0.00}
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
-
-
 
 def sort_df_by_list_order(df_, list_order, column_name):
     """
@@ -112,7 +108,6 @@ def adjust_energy_division_between_eshkolot(energy_division_between_eshkolot_, r
 
 def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz):
     fix_energy_production = df_['Energy production (fix) mln kWh/year'].tolist()
-    total_revenue = df_['Total revenue, mln NIS'].tolist()
     area_in_dunam = df_['Dunam'].tolist()
     influence_on_crops = df_['Average influence of PV on crops'].tolist()
     potential_revenue_before_PV = df_['Potential revenue from crops before PV, mln NIS'].tolist()
@@ -153,7 +148,6 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
         "num_locations" : num_locations, #need to be first here, otherwise there will be bug in the mod file
         "fix_energy_production" : fix_energy_production,
         "influence_on_crops" : influence_on_crops,
-        "total_revenue" : total_revenue,
         "potential_revenue_before_PV" : potential_revenue_before_PV,
         "area_in_dunam" : area_in_dunam,
         "yeshuvim_with_locations" : yeshuvim_with_locations,
@@ -191,7 +185,6 @@ def write_dat_file(dat_file, data, params):
             f.write(f"{locations},\n")
         f.write("];")
 
-
 def solve_opl_model(mod_file, dat_file, output_file=None):
     oplrun_path = "oplrun"
     if not shutil.which(oplrun_path):
@@ -224,16 +217,12 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
-
 def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
     influence_on_crops_data = pd.read_excel(synthetic_values_of_influence_on_crops_path)
-    print("original influence_on_crops_data syntetic values:\n", influence_on_crops_data)
-    #influence_on_crops_data["Average influence"] = (influence_on_crops_data["Average influence"]-1).round(2)
     influence_on_crops_dict = influence_on_crops_data.set_index("AnafSub")["Average influence"].to_dict()
     # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
     modified_influence_on_crops = df_['AnafSub'].map(influence_on_crops_dict).tolist()
-    print("modified_influence_on_crops:\n", modified_influence_on_crops)
     df_["Average influence of PV on crops"] = modified_influence_on_crops
     return df_
 
@@ -254,8 +243,6 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
     df_['eshkol'] = df_['eshkol'].astype(int)
     return df_
 
-
-
 def main():
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
@@ -267,7 +254,8 @@ def main():
     df_dataset = modify_influence_on_crops(df_dataset, 'Average influence of PV on crops - synthetic values.xlsx')
 
     energy_consumption_by_yeshuv = pd.read_excel("energy_consumption_by_yeshuv-average_consumption_times_population_per_yeshuv.xlsx")
-    
+    energy_consumption_by_machoz = pd.read_excel("energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", sheet_name = "energy consumption by machoz")
+
     #yeshuvim_in_eshkolot = pd.read_excel('yeshuvim_in_eshkolot.xlsx')
     yeshuvim_in_eshkolot = pd.read_excel('yeshuvim_in_eshkolot_modified_to_match_dataset.xlsx')
     yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True)
@@ -276,15 +264,9 @@ def main():
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     #print("df_dataset after adding eshkolot:\n", df_dataset)
 
-    energy_consumption_by_machoz = pd.read_excel("energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", sheet_name = "energy consumption by machoz")
-    #print("energy_consumption_by_machoz\n", energy_consumption_by_machoz)
-
-
     # parameters of the model
     params = {
-        "influence_on_crops_lower_limit": 0.00,
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
-        "minimal_total_revenue": 25.00,
         "total_area_upper_bound": 1500.00
     }
 
