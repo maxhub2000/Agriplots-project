@@ -115,6 +115,7 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
     total_revenue = df_['Total revenue, mln NIS'].tolist()
     area_in_dunam = df_['Dunam'].tolist()
     influence_on_crops = df_['Average influence of PV on crops'].tolist()
+    potential_revenue_before_PV = df_['Potential revenue from crops before PV, mln NIS'].tolist()
     num_locations = len(fix_energy_production)
 
 
@@ -138,7 +139,7 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
 
     #eshkolot_with_locations = df_[['location_id', 'eshkol']][df_['eshkol'] == -1]
     eshkolot_with_locations = create_eshkolot_with_locations(df_)
-    print("eshkolot_with_locations:\n", eshkolot_with_locations)
+    #print("eshkolot_with_locations:\n", eshkolot_with_locations)
     # takes only eshkolot that appear in the current dataset; values are unique since eshkolot_with_locations is a dictionary
     relevant_eshkolot = list(eshkolot_with_locations.keys())
     #print("relevant_eshkolot:\n",relevant_eshkolot)
@@ -153,6 +154,7 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
         "fix_energy_production" : fix_energy_production,
         "influence_on_crops" : influence_on_crops,
         "total_revenue" : total_revenue,
+        "potential_revenue_before_PV" : potential_revenue_before_PV,
         "area_in_dunam" : area_in_dunam,
         "yeshuvim_with_locations" : yeshuvim_with_locations,
         "num_yeshuvim" : num_yeshuvim,
@@ -226,10 +228,12 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
 def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
     influence_on_crops_data = pd.read_excel(synthetic_values_of_influence_on_crops_path)
-    influence_on_crops_data["Average influence"] = (influence_on_crops_data["Average influence"]-1).round(2)
+    print("original influence_on_crops_data syntetic values:\n", influence_on_crops_data)
+    #influence_on_crops_data["Average influence"] = (influence_on_crops_data["Average influence"]-1).round(2)
     influence_on_crops_dict = influence_on_crops_data.set_index("AnafSub")["Average influence"].to_dict()
     # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
     modified_influence_on_crops = df_['AnafSub'].map(influence_on_crops_dict).tolist()
+    print("modified_influence_on_crops:\n", modified_influence_on_crops)
     df_["Average influence of PV on crops"] = modified_influence_on_crops
     return df_
 
@@ -255,7 +259,7 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
 def main():
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
-    df_dataset = pd.read_excel('Agriplots dataset - 10000 rows.xlsx') # Read dataset from Excel
+    df_dataset = pd.read_excel('Agriplots dataset - 1000 rows.xlsx') # Read dataset from Excel
     df_dataset["location_id"] = df_dataset.index + 1
     print("df_dataset[location_id]\n", df_dataset["location_id"])
     df_dataset = remove_rows_with_missing_values(df_dataset)
@@ -270,15 +274,16 @@ def main():
     energy_division_between_eshkolot = pd.read_excel('energy_division_between_eshkolot-synthetic_values.xlsx')
     # add eshkolot to dataset based on yeshuvim_in_eshkolot
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
-    print("df_dataset after adding eshkolot:\n", df_dataset)
+    #print("df_dataset after adding eshkolot:\n", df_dataset)
 
     energy_consumption_by_machoz = pd.read_excel("energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", sheet_name = "energy consumption by machoz")
-    print("energy_consumption_by_machoz\n", energy_consumption_by_machoz)
+    #print("energy_consumption_by_machoz\n", energy_consumption_by_machoz)
 
 
     # parameters of the model
     params = {
         "influence_on_crops_lower_limit": 0.00,
+        "allowed_loss_from_influence_on_crops_percentage": 0.9,
         "minimal_total_revenue": 25.00,
         "total_area_upper_bound": 1500.00
     }
