@@ -214,6 +214,7 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
                 print("Return code:", result.returncode)
                 print("Standard Output:", result.stdout)
                 print("Standard Error:", result.stderr)
+        return result.stdout
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
@@ -243,6 +244,51 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
     df_['eshkol'] = df_['eshkol'].astype(int)
     return df_
 
+def raw_output_to_df(opl_raw_output_):
+    # Parse the result output here to extract the required values
+    # For simplicity, I'll assume we parse the output and extract needed results manually
+    output_results_for_excel = ""  # Variable to store multiple lines of output
+    capture_excel_output = False  # Flag to start capturing excel output
+    for line in opl_raw_output_.splitlines():
+        # Detect the start of the excel output block
+        if "Results for excel output file:" in line:
+            capture_excel_output = True  # Start capturing from the next line
+            continue  # Skip the current line
+        
+        # Capture subsequent lines after the keyword is detected
+        if capture_excel_output:
+            if line.strip() == "":  # Stop capturing when we hit an empty line (or define another end condition)
+                break
+            output_results_for_excel += line + "\n"  # Append the line to the result string
+
+    output_results_for_excel = output_results_for_excel.strip()
+    output_results_for_excel = output_results_for_excel.split("\n")  # Splitting at the \n delimiter
+    df_results = model_results_to_df(output_results_for_excel)
+    # Return the captured results, including the excel output block
+    return df_results
+
+def model_results_to_df(excel_output_results):
+    # Split the first element to get the column names
+    column_names = excel_output_results[0].split(',')
+    # Split each remaining element in the list to get the data rows
+    rows = [row.split(',') for row in excel_output_results[1:]]
+    # Create a pandas DataFrame using the rows and columns
+    df_results = pd.DataFrame(rows, columns = column_names)
+    return df_results
+
+def output_opl_results_to_excel(df_input, df_opl_results, output_path):
+    relevant_columns_from_input = ["location_id", "OBJECTID", "YeshuvName", "Machoz", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
+    relevant_df_from_input = df_input[relevant_columns_from_input]
+    # convert "OBJECTID" and "Location" column to int, so the merge will be successful
+    relevant_df_from_input['OBJECTID'] = relevant_df_from_input['OBJECTID'].astype('int')
+    df_opl_results['location_id'] = df_opl_results['location_id'].astype('int')
+    # left join installed locations from result of opl model to columns from input dataset
+    results_left_joined_input_columns = pd.merge(df_opl_results, relevant_df_from_input, on="location_id", how="left")    
+    # exporting results to excel
+    print(f"Excel output saved to {output_path}")
+    results_left_joined_input_columns.to_excel(output_path)
+
+
 def main():
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
@@ -269,22 +315,18 @@ def main():
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
         "total_area_upper_bound": 1500.00
     }
-
-    ### plan regarding outputting the results in a meanningful manner:
-    # I will create a location_to_object_id dict (again, maybe in differently from what I tried before):
-    # If I have that dictionary, I could have a "connecting table" between the results of the opl model,
-    # which is in term of location (a number) and the original data of each field, which is in term of OBJECTID.
-    # that will allow me to output more meaningful result and check myself, since I could create a table with OBJECTID as it's key that includes data
-    # about the relevant columns from the dataset for each field, for example yeshuv, energy consumption, dunam, influece on crops etc.
-    # and also add to that interesting results/data from the opl run, for example the location, whether or not it was included in the model, in which city/eshkol it was
-    # in the model (sanity check) etc.
-    # I should probably implement that in a seperate python file that will import stuff from this file, and output the resluts as xlsx file.
-    
     data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz)
     # Write data to .dat file
     write_dat_file(dat_file, data, params)
-    # Solve the OPL model
-    solve_opl_model(opl_model_file, dat_file, output_file)
+    # Solve the OPL model and put the opl output in the opl_raw_output variable
+    opl_raw_output = solve_opl_model(opl_model_file, dat_file, output_file)
+    df_results = raw_output_to_df(opl_raw_output)
+    print("model_results:\n", df_results)
+    final_results_excel_output_path = 'final_opl_results.xlsx'
+    output_opl_results_to_excel(df_dataset, df_results, final_results_excel_output_path)
+
+
+
 
 if __name__ == "__main__":
     main()

@@ -171,6 +171,20 @@ execute {
     eshkol_str += "] total energy produced: " + total_energy_produced_by_eshkol.toString();
     writeln(eshkol_str);  
   }
+
+
+
+
+  writeln("\nResults for excel output file:")
+  writeln("location_id,", "Energy units Produced in mln,", "influence on crops,", "area in dunam used");
+  for (var i in fix_energy_production) {
+    if (x[i] == 1) {
+      writeln(i, ",", fix_energy_production[i] * x[i], ",", influence_on_crops[i] * x[i], ",", area_in_dunam[i] * x[i]);
+
+   }
+  }
+  writeln("")
+
 }
 
 
