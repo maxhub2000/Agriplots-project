@@ -1,6 +1,8 @@
 import subprocess
 import shutil
 import pandas as pd
+import time
+
 
 
 def create_yeshuvim_with_locations(df_):
@@ -242,6 +244,9 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
     df_['eshkol'].fillna(-1, inplace=True)
     # Optionally, convert 'eshkol' to integer if needed
     df_['eshkol'] = df_['eshkol'].astype(int)
+    #remove rows that has eshkol -1
+    df_ = df_[df_['eshkol'] != -1]
+    #df_ = df_[df_['location_id'] != 990]
     return df_
 
 def raw_output_to_df(opl_raw_output_):
@@ -277,7 +282,7 @@ def model_results_to_df(excel_output_results):
     return df_results
 
 def output_opl_results_to_excel(df_input, df_opl_results, output_path):
-    relevant_columns_from_input = ["location_id", "OBJECTID", "YeshuvName", "Machoz", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
+    relevant_columns_from_input = ["location_id", "OBJECTID", "YeshuvName", "Machoz", "eshkol", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
     relevant_df_from_input = df_input[relevant_columns_from_input]
     # convert "OBJECTID" and "Location" column to int, so the merge will be successful
     relevant_df_from_input['OBJECTID'] = relevant_df_from_input['OBJECTID'].astype('int')
@@ -290,11 +295,13 @@ def output_opl_results_to_excel(df_input, df_opl_results, output_path):
 
 
 def main():
+    # Save timestamp
+    start_time_code = time.time()
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     df_dataset = pd.read_excel('Agriplots dataset - 1000 rows.xlsx') # Read dataset from Excel
-    df_dataset["location_id"] = df_dataset.index + 1
-    print("df_dataset[location_id]\n", df_dataset["location_id"])
+    # df_dataset["location_id"] = df_dataset.index + 1
+    # print("df_dataset[location_id]\n", df_dataset["location_id"])
     df_dataset = remove_rows_with_missing_values(df_dataset)
     # modify influence on crops column based on synthetic values
     df_dataset = modify_influence_on_crops(df_dataset, 'Average influence of PV on crops - synthetic values.xlsx')
@@ -309,17 +316,44 @@ def main():
     # add eshkolot to dataset based on yeshuvim_in_eshkolot
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     #print("df_dataset after adding eshkolot:\n", df_dataset)
+    df_dataset.to_excel("df_dataset_after_adding_eshkolot.xlsx")
+
 
     # parameters of the model
     params = {
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
-        "total_area_upper_bound": 1500.00
+        "total_area_upper_bound": 1500.00,
+        "G_max" : 0.05
     }
+
+
+    df_dataset = df_dataset.reset_index()
+    df_dataset["location_id"] = df_dataset.index + 1
+    print("df_dataset[location_id]\n", df_dataset["location_id"])
+
+
     data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz)
     # Write data to .dat file
     write_dat_file(dat_file, data, params)
+
+    # Save timestamp
+    end_time_code = time.time()
+    run_time_code_before_opl_model = end_time_code - start_time_code
+    print("\nrun_time_code_before_opl_model:",run_time_code_before_opl_model, "\n")
+    
+    # Save timestamp
+    start_time_opl_model = time.time()
+
     # Solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, output_file)
+
+    # Save timestamp
+    end_time_opl_model = time.time()
+
+    run_time_opl_model = end_time_opl_model - start_time_opl_model
+    print("\nrun_time_opl_model:",run_time_opl_model,"\n")
+
+
     df_results = raw_output_to_df(opl_raw_output)
     print("model_results:\n", df_results)
     final_results_excel_output_path = 'final_opl_results.xlsx'

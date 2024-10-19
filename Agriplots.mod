@@ -5,6 +5,7 @@ int num_machozot = ...;
 int num_eshkolot = ...;
 float allowed_loss_from_influence_on_crops_percentage = ...;
 float total_area_upper_bound = ...;
+float G_max = ...;
 float fix_energy_production[1..num_locations] = ...;
 float influence_on_crops[1..num_locations] = ...;
 float potential_revenue_before_PV[1..num_locations] = ...;
@@ -29,6 +30,8 @@ float energy_division_between_eshkolot[Eshkolot] = ...;
 
 // Decision Variables
 dvar boolean x[1..num_locations]; // binary (boolean) decision variables
+dexpr float y[k in Eshkolot] = sum(i in E[k]) x[i] * fix_energy_production[i];
+dvar float z[1..num_eshkolot][1..num_eshkolot];
 
 
 // Objective Function
@@ -52,6 +55,19 @@ subject to {
     forall (j in Machozot) {
         sum(i in M[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_machoz[j];
     }
+
+
+
+    // Linearized Gini coefficient constraint (only for i < j)
+    forall(i in Eshkolot, j in Eshkolot: i < j) {
+        z[i][j] >=  energy_division_between_eshkolot[j]*y[j] - energy_division_between_eshkolot[i]*y[i] ;
+        z[i][j] >=  energy_division_between_eshkolot[i]*y[i] - energy_division_between_eshkolot[j]*y[j] ;
+    }
+
+
+    // Gini constraint (now summing only over i < j)
+    sum(i in Eshkolot, j in Eshkolot: i < j) z[i][j] <= G_max * sum(i in 1..num_eshkolot) (y[i]);
+
     
     // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
     /*
@@ -169,6 +185,7 @@ execute {
     }
 
     eshkol_str += "] total energy produced: " + total_energy_produced_by_eshkol.toString();
+    eshkol_str += ", y[" + eshkol + "] = " + y[eshkol];
     writeln(eshkol_str);  
   }
 
@@ -176,7 +193,7 @@ execute {
 
 
   writeln("\nResults for excel output file:")
-  writeln("location_id,", "Energy units Produced in mln,", "influence on crops,", "area in dunam used");
+  writeln("location_id,", "Energy units Produced in mln,", "influence on crops,", "area in dunam used", "machoz");
   for (var i in fix_energy_production) {
     if (x[i] == 1) {
       writeln(i, ",", fix_energy_production[i] * x[i], ",", influence_on_crops[i] * x[i], ",", area_in_dunam[i] * x[i]);
