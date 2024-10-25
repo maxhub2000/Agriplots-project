@@ -244,14 +244,12 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
     df_['eshkol'].fillna(-1, inplace=True)
     # Optionally, convert 'eshkol' to integer if needed
     df_['eshkol'] = df_['eshkol'].astype(int)
-    #remove rows that has eshkol -1
+    #remove rows that has eshkol -1, meaning rows that their yeshuv doesn't have an eshkol
     df_ = df_[df_['eshkol'] != -1]
-    #df_ = df_[df_['location_id'] != 990]
     return df_
 
 def raw_output_to_df(opl_raw_output_):
-    # Parse the result output here to extract the required values
-    # For simplicity, I'll assume we parse the output and extract needed results manually
+    # parsing the result output to extract the required values
     output_results_for_excel = ""  # Variable to store multiple lines of output
     capture_excel_output = False  # Flag to start capturing excel output
     for line in opl_raw_output_.splitlines():
@@ -295,70 +293,60 @@ def output_opl_results_to_excel(df_input, df_opl_results, output_path):
 
 
 def main():
-    # Save timestamp
+    # Save start time of running of the code
     start_time_code = time.time()
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     df_dataset = pd.read_excel('Agriplots dataset - 1000 rows.xlsx') # Read dataset from Excel
-    # df_dataset["location_id"] = df_dataset.index + 1
-    # print("df_dataset[location_id]\n", df_dataset["location_id"])
     df_dataset = remove_rows_with_missing_values(df_dataset)
     # modify influence on crops column based on synthetic values
     df_dataset = modify_influence_on_crops(df_dataset, 'Average influence of PV on crops - synthetic values.xlsx')
-
+    # import energy consumptions by yeshuv and by machoz 
     energy_consumption_by_yeshuv = pd.read_excel("energy_consumption_by_yeshuv-average_consumption_times_population_per_yeshuv.xlsx")
     energy_consumption_by_machoz = pd.read_excel("energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", sheet_name = "energy consumption by machoz")
-
+    # import datasets relevant for using eshkolot in the model
     #yeshuvim_in_eshkolot = pd.read_excel('yeshuvim_in_eshkolot.xlsx')
     yeshuvim_in_eshkolot = pd.read_excel('yeshuvim_in_eshkolot_modified_to_match_dataset.xlsx')
-    yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True)
+    yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True) # rename column in the df
     energy_division_between_eshkolot = pd.read_excel('energy_division_between_eshkolot-synthetic_values.xlsx')
-    # add eshkolot to dataset based on yeshuvim_in_eshkolot
+    # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     #print("df_dataset after adding eshkolot:\n", df_dataset)
-    df_dataset.to_excel("df_dataset_after_adding_eshkolot.xlsx")
-
-
+    #df_dataset.to_excel("df_dataset_after_adding_eshkolot.xlsx")
+    # create location_id column in df_dataset that's based on index of the df
+    df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
+    df_dataset["location_id"] = df_dataset.index + 1 
+    print("df_dataset[location_id]\n", df_dataset["location_id"])
     # parameters of the model
     params = {
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
         "total_area_upper_bound": 1500.00,
         "G_max" : 0.05
     }
-
-
-    df_dataset = df_dataset.reset_index()
-    df_dataset["location_id"] = df_dataset.index + 1
-    print("df_dataset[location_id]\n", df_dataset["location_id"])
-
-
+    # get needed relevant data for running the model, in addition to the parameters (params)
     data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz)
-    # Write data to .dat file
+    # write data and params to .dat file
     write_dat_file(dat_file, data, params)
 
-    # Save timestamp
+    # Save end time of running of the code except for the opl model
     end_time_code = time.time()
     run_time_code_before_opl_model = end_time_code - start_time_code
     print("\nrun_time_code_before_opl_model:",run_time_code_before_opl_model, "\n")
-    
-    # Save timestamp
+    # Save start time of running of opl model
     start_time_opl_model = time.time()
-
     # Solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, output_file)
-
-    # Save timestamp
+    # Save end time of running of opl model
     end_time_opl_model = time.time()
-
     run_time_opl_model = end_time_opl_model - start_time_opl_model
     print("\nrun_time_opl_model:",run_time_opl_model,"\n")
 
-
+    # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
-    print("model_results:\n", df_results)
+    #print("model_results:\n", df_results)
+    # output the final results to excel file
     final_results_excel_output_path = 'final_opl_results.xlsx'
     output_opl_results_to_excel(df_dataset, df_results, final_results_excel_output_path)
-
 
 
 

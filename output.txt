@@ -6,287 +6,455 @@ Solution found:
 <<< generate
 
 Version identifier: 20.1.0.0 | 2020-11-10 | 9bedb6d68
-Found incumbent of value 0.000000 after 0.00 sec. (0.03 ticks)
+Found incumbent of value 0.000000 after 0.00 sec. (0.02 ticks)
 Tried aggregator 1 time.
-MIP Presolve eliminated 524 rows and 378 columns.
-MIP Presolve added 104 rows and 104 columns.
-Reduced MIP has 87 rows, 726 columns, and 974 nonzeros.
-Reduced MIP has 580 binaries, 146 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (1.90 ticks)
-Probing time = 0.02 sec. (0.12 ticks)
+MIP Presolve eliminated 404 rows and 57 columns.
+MIP Presolve added 23 rows and 23 columns.
+MIP Presolve modified 1 coefficients.
+Reduced MIP has 96 rows, 745 columns, and 12543 nonzeros.
+Reduced MIP has 670 binaries, 39 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.03 sec. (9.40 ticks)
+Probing fixed 0 vars, tightened 53 bounds.
+Probing time = 0.02 sec. (3.99 ticks)
+Cover probing fixed 0 vars, tightened 5 bounds.
 Tried aggregator 1 time.
 Detecting symmetries...
-MIP Presolve eliminated 85 rows and 85 columns.
-MIP Presolve added 105 rows and 105 columns.
-Reduced MIP has 107 rows, 746 columns, and 1053 nonzeros.
-Reduced MIP has 580 binaries, 166 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.00 sec. (1.10 ticks)
-Probing time = 0.00 sec. (0.13 ticks)
+MIP Presolve eliminated 21 rows and 21 columns.
+MIP Presolve added 23 rows and 23 columns.
+Reduced MIP has 98 rows, 747 columns, and 12549 nonzeros.
+Reduced MIP has 670 binaries, 41 generals, 0 SOSs, and 0 indicators.
+Presolve time = 0.01 sec. (5.75 ticks)
+Probing fixed 0 vars, tightened 38 bounds.
+Probing time = 0.00 sec. (3.74 ticks)
+Cover probing fixed 0 vars, tightened 32 bounds.
 MIP emphasis: balance optimality and feasibility.
 MIP search method: dynamic search.
 Parallel mode: deterministic, using up to 4 threads.
-Root relaxation solution time = 0.00 sec. (0.55 ticks)
+Root relaxation solution time = 0.00 sec. (3.96 ticks)
 
         Nodes                                         Cuts/
    Node  Left     Objective  IInf  Best Integer    Best Bound    ItCnt     Gap
 
-*     0+    0                            0.0000     1530.6000              --- 
-      0     0      163.2556     1        0.0000      163.2556        1     --- 
-*     0+    0                          163.2400      163.2556             0.01%
+*     0+    0                            0.0000     1451.0300              --- 
+      0     0      162.1647     8        0.0000      162.1647       63     --- 
+      0     0      161.9844    16        0.0000      Cuts: 37      102     --- 
+      0     0      161.9276    20        0.0000      Cuts: 29      155     --- 
+      0     0      161.9210    24        0.0000      Cuts: 26      183     --- 
+      0     0      161.9138    25        0.0000   MIRcuts: 21      212     --- 
+      0     0      161.9103    29        0.0000   MIRcuts: 22      237     --- 
+Detecting symmetries...
+*     0+    0                          161.5900      161.9103             0.20%
+      0     0      161.9024    34      161.5900      Cuts: 20      288    0.19%
+*     0+    0                          161.7200      161.9024             0.11%
+*     0+    0                          161.7800      161.8972             0.07%
+*     0+    0                          161.7900      161.8972             0.07%
+      0     0        cutoff            161.7900      161.8972      288    0.07%
+*     0+    0                          161.8000      161.8972             0.06%
+Detecting symmetries...
+      0     2      161.9024    34      161.8000      161.8518      288    0.03%
+Elapsed time = 0.41 sec. (222.98 ticks, tree = 0.02 MB, solutions = 6)
+*   300+   87                          161.8100      161.8518             0.03%
+*   328+   68                          161.8200      161.8518             0.02%
+
+Cover cuts applied:  7
+Flow cuts applied:  1
+Mixed integer rounding cuts applied:  38
+Lift and project cuts applied:  1
+Gomory fractional cuts applied:  2
 
 Root node processing (before b&c):
-  Real time             =    0.03 sec. (8.10 ticks)
+  Real time             =    0.39 sec. (222.60 ticks)
 Parallel b&c, 4 threads:
-  Real time             =    0.00 sec. (0.00 ticks)
-  Sync time (average)   =    0.00 sec.
+  Real time             =    0.14 sec. (94.73 ticks)
+  Sync time (average)   =    0.03 sec.
   Wait time (average)   =    0.00 sec.
                           ------------
-Total (root+branch&cut) =    0.03 sec. (8.10 ticks)
+Total (root+branch&cut) =    0.53 sec. (317.33 ticks)
 
 <<< solve
 
 
-OBJECTIVE: 163.24
+OBJECTIVE: 161.82
 Setting time limit to 60 seconds
-Total energy produced: 163.24
+Total energy produced: 161.82
 Installation decisions:
-Location 5: 0.09 mln Energy units Produced, area_in_dunam used: 0.8, potential revenue before PV: 0.0064, potential revenue after PV: 0.0064
-Location 10: 0.07 mln Energy units Produced, area_in_dunam used: 0.64225463, potential revenue before PV: 0.005138037, potential revenue after PV: 0.005138037
-Location 25: 0.09 mln Energy units Produced, area_in_dunam used: 0.85371174, potential revenue before PV: 0.020489082, potential revenue after PV: 0.021103754
-Location 32: 0.38 mln Energy units Produced, area_in_dunam used: 3.5, potential revenue before PV: 0, potential revenue after PV: 0
-Location 33: 1.67 mln Energy units Produced, area_in_dunam used: 15.4, potential revenue before PV: 0.154, potential revenue after PV: 0.14476
-Location 71: 19.38 mln Energy units Produced, area_in_dunam used: 180, potential revenue before PV: 0.72, potential revenue after PV: 0.7488
-Location 80: 0.21 mln Energy units Produced, area_in_dunam used: 1.9, potential revenue before PV: 0, potential revenue after PV: 0
-Location 89: 0.62 mln Energy units Produced, area_in_dunam used: 5.62169597, potential revenue before PV: 0.05621696, potential revenue after PV: 0.052843942
-Location 142: 0.07 mln Energy units Produced, area_in_dunam used: 0.6, potential revenue before PV: 0.0048, potential revenue after PV: 0.0048
-Location 153: 2.11 mln Energy units Produced, area_in_dunam used: 19, potential revenue before PV: 0.304, potential revenue after PV: 0.31312
-Location 166: 0.37 mln Energy units Produced, area_in_dunam used: 3.4, potential revenue before PV: 0.034, potential revenue after PV: 0.034
-Location 197: 1.47 mln Energy units Produced, area_in_dunam used: 13.1, potential revenue before PV: 0.1834, potential revenue after PV: 0.20174
-Location 198: 0.52 mln Energy units Produced, area_in_dunam used: 4.8, potential revenue before PV: 0.0384, potential revenue after PV: 0.0384
-Location 216: 0.06 mln Energy units Produced, area_in_dunam used: 0.5435032, potential revenue before PV: 0.005435032, potential revenue after PV: 0.005706784
-Location 227: 1.1 mln Energy units Produced, area_in_dunam used: 10.1, potential revenue before PV: 0, potential revenue after PV: 0
-Location 230: 0.24 mln Energy units Produced, area_in_dunam used: 2.2, potential revenue before PV: 0, potential revenue after PV: 0
-Location 254: 0.68 mln Energy units Produced, area_in_dunam used: 6.24484175, potential revenue before PV: 0, potential revenue after PV: 0
-Location 270: 0.06 mln Energy units Produced, area_in_dunam used: 0.55323396, potential revenue before PV: 0.004425872, potential revenue after PV: 0.004425872
-Location 288: 1.07 mln Energy units Produced, area_in_dunam used: 9.88423453, potential revenue before PV: 0.158147752, potential revenue after PV: 0.173962528
-Location 292: 2.32 mln Energy units Produced, area_in_dunam used: 20.6, potential revenue before PV: 0.2884, potential revenue after PV: 0.31724
-Location 295: 0.78 mln Energy units Produced, area_in_dunam used: 7.1, potential revenue before PV: 0.071, potential revenue after PV: 0.0781
-Location 296: 1.41 mln Energy units Produced, area_in_dunam used: 13, potential revenue before PV: 0.065, potential revenue after PV: 0.06305
-Location 304: 0.16 mln Energy units Produced, area_in_dunam used: 1.47938482, potential revenue before PV: 0.014793848, potential revenue after PV: 0.013906217
-Location 308: 13.08 mln Energy units Produced, area_in_dunam used: 120.2, potential revenue before PV: 1.202, potential revenue after PV: 1.202
-Location 319: 0.7 mln Energy units Produced, area_in_dunam used: 6.2, potential revenue before PV: 0.031, potential revenue after PV: 0.031
-Location 322: 0.91 mln Energy units Produced, area_in_dunam used: 8.4, potential revenue before PV: 0.084, potential revenue after PV: 0.07896
-Location 347: 0.06 mln Energy units Produced, area_in_dunam used: 0.54803103, potential revenue before PV: 0.00548031, potential revenue after PV: 0.006028341
-Location 365: 1.08 mln Energy units Produced, area_in_dunam used: 9.7, potential revenue before PV: 0.1164, potential revenue after PV: 0.12804
-Location 393: 0.55 mln Energy units Produced, area_in_dunam used: 5.1, potential revenue before PV: 0.0714, potential revenue after PV: 0.07854
-Location 400: 0.14 mln Energy units Produced, area_in_dunam used: 1.3, potential revenue before PV: 0.0104, potential revenue after PV: 0.0104
-Location 428: 0.12 mln Energy units Produced, area_in_dunam used: 1.1, potential revenue before PV: 0.011, potential revenue after PV: 0.01155
-Location 462: 0.39 mln Energy units Produced, area_in_dunam used: 3.6, potential revenue before PV: 0.036, potential revenue after PV: 0.0378
-Location 472: 4.7 mln Energy units Produced, area_in_dunam used: 43, potential revenue before PV: 0.43, potential revenue after PV: 0.4042
-Location 479: 0.07 mln Energy units Produced, area_in_dunam used: 0.6412014, potential revenue before PV: 0.005129611, potential revenue after PV: 0.005129611
-Location 487: 4.4 mln Energy units Produced, area_in_dunam used: 40.61100942, potential revenue before PV: 0.487332113, potential revenue after PV: 0.536065324
-Location 499: 1.7 mln Energy units Produced, area_in_dunam used: 15.7, potential revenue before PV: 0.1256, potential revenue after PV: 0.1256
-Location 525: 0.59 mln Energy units Produced, area_in_dunam used: 5.42169075, potential revenue before PV: 0, potential revenue after PV: 0
-Location 538: 0.65 mln Energy units Produced, area_in_dunam used: 5.8, potential revenue before PV: 0.0812, potential revenue after PV: 0.08932
-Location 550: 2.51 mln Energy units Produced, area_in_dunam used: 23.2, potential revenue before PV: 0.5568, potential revenue after PV: 0.573504
-Location 553: 0.12 mln Energy units Produced, area_in_dunam used: 1.10899231, potential revenue before PV: 0.011089923, potential revenue after PV: 0.010424528
-Location 565: 0.75 mln Energy units Produced, area_in_dunam used: 6.96197107, potential revenue before PV: 0.069619711, potential revenue after PV: 0.065442528
-Location 591: 0.25 mln Energy units Produced, area_in_dunam used: 2.3, potential revenue before PV: 0.023, potential revenue after PV: 0.02415
-Location 596: 2.63 mln Energy units Produced, area_in_dunam used: 24.1, potential revenue before PV: 0.241, potential revenue after PV: 0.241
-Location 604: 0.11 mln Energy units Produced, area_in_dunam used: 1, potential revenue before PV: 0.008, potential revenue after PV: 0.008
-Location 621: 0.36 mln Energy units Produced, area_in_dunam used: 3.3, potential revenue before PV: 0.0132, potential revenue after PV: 0.013728
-Location 646: 1.31 mln Energy units Produced, area_in_dunam used: 11.7, potential revenue before PV: 0.117, potential revenue after PV: 0.117
-Location 649: 0.26 mln Energy units Produced, area_in_dunam used: 2.4, potential revenue before PV: 0.0192, potential revenue after PV: 0.0192
-Location 661: 1.09 mln Energy units Produced, area_in_dunam used: 10.1, potential revenue before PV: 0.1212, potential revenue after PV: 0.13332
-Location 680: 3.75 mln Energy units Produced, area_in_dunam used: 33.5, potential revenue before PV: 0.335, potential revenue after PV: 0.335
-Location 685: 0.26 mln Energy units Produced, area_in_dunam used: 2.4, potential revenue before PV: 0.0192, potential revenue after PV: 0.0192
-Location 691: 0.05 mln Energy units Produced, area_in_dunam used: 0.43337819, potential revenue before PV: 0.003467026, potential revenue after PV: 0.003467026
-Location 696: 0.02 mln Energy units Produced, area_in_dunam used: 0.1, potential revenue before PV: 0, potential revenue after PV: 0
-Location 709: 1.87 mln Energy units Produced, area_in_dunam used: 17.3, potential revenue before PV: 0.0692, potential revenue after PV: 0.071968
-Location 726: 0.25 mln Energy units Produced, area_in_dunam used: 2.3, potential revenue before PV: 1.15, potential revenue after PV: 1.15
-Location 727: 0.4 mln Energy units Produced, area_in_dunam used: 3.7, potential revenue before PV: 0.0518, potential revenue after PV: 0.05698
-Location 731: 1.31 mln Energy units Produced, area_in_dunam used: 12.1, potential revenue before PV: 0, potential revenue after PV: 0
-Location 771: 6.99 mln Energy units Produced, area_in_dunam used: 61.6, potential revenue before PV: 0.616, potential revenue after PV: 0.57904
-Location 787: 1.42 mln Energy units Produced, area_in_dunam used: 13, potential revenue before PV: 0.065, potential revenue after PV: 0.06305
-Location 810: 0.99 mln Energy units Produced, area_in_dunam used: 8.8, potential revenue before PV: 0.088, potential revenue after PV: 0.088
-Location 820: 1.01 mln Energy units Produced, area_in_dunam used: 9.34990105, potential revenue before PV: 0.09349901, potential revenue after PV: 0.102848912
-Location 825: 14.48 mln Energy units Produced, area_in_dunam used: 134.5, potential revenue before PV: 3.228, potential revenue after PV: 3.32484
-Location 852: 0.69 mln Energy units Produced, area_in_dunam used: 6.4, potential revenue before PV: 0, potential revenue after PV: 0
-Location 855: 0.14 mln Energy units Produced, area_in_dunam used: 1.3, potential revenue before PV: 0.0104, potential revenue after PV: 0.0104
-Location 897: 0.82 mln Energy units Produced, area_in_dunam used: 7.6, potential revenue before PV: 0.152, potential revenue after PV: 0.152
-Location 910: 14.54 mln Energy units Produced, area_in_dunam used: 134.3, potential revenue before PV: 0.5372, potential revenue after PV: 0.558688
-Location 918: 0.79 mln Energy units Produced, area_in_dunam used: 7.3, potential revenue before PV: 0.073, potential revenue after PV: 0.07665
-Location 923: 4.26 mln Energy units Produced, area_in_dunam used: 38.7, potential revenue before PV: 0.3096, potential revenue after PV: 0.3096
-Location 931: 10.22 mln Energy units Produced, area_in_dunam used: 94.9, potential revenue before PV: 0.3796, potential revenue after PV: 0.394784
-Location 944: 2.24 mln Energy units Produced, area_in_dunam used: 20.7, potential revenue before PV: 0.207, potential revenue after PV: 0.19458
-Location 946: 1.18 mln Energy units Produced, area_in_dunam used: 10.6, potential revenue before PV: 0.1272, potential revenue after PV: 0.13992
-Location 948: 0.89 mln Energy units Produced, area_in_dunam used: 8, potential revenue before PV: 0.096, potential revenue after PV: 0.1056
-Location 954: 0.08 mln Energy units Produced, area_in_dunam used: 0.73690735, potential revenue before PV: 0.002947629, potential revenue after PV: 0.003065535
-Location 961: 1.76 mln Energy units Produced, area_in_dunam used: 15.9, potential revenue before PV: 0.159, potential revenue after PV: 0.159
-Location 963: 1.12 mln Energy units Produced, area_in_dunam used: 10.1, potential revenue before PV: 0.202, potential revenue after PV: 0.202
-Location 985: 0.07 mln Energy units Produced, area_in_dunam used: 0.63136682, potential revenue before PV: 0.005050935, potential revenue after PV: 0.005050935
-Location 986: 0.25 mln Energy units Produced, area_in_dunam used: 2.3, potential revenue before PV: 0.0184, potential revenue after PV: 0.0184
-Location 993: 0.53 mln Energy units Produced, area_in_dunam used: 4.89638416, potential revenue before PV: 0.05875661, potential revenue after PV: 0.064632271
-Location 1000: 17.4 mln Energy units Produced, area_in_dunam used: 161.7, potential revenue before PV: 0.6468, potential revenue after PV: 0.672672
-Total energy produced: 163.24
-Number of installed PV's: 78
-total area (in dunam) used: 1499.96369415
-total poetntial revenue before installing PV'S for locations included: 14.715219461
-total poetntial revenue after installing PV's for locations included, as a result of influence on crops: 15.039336143
+Location 4: 0.09 mln Energy units Produced, area_in_dunam used: 0.8, potential revenue before PV: 0.0064, potential revenue after PV: 0.0064
+Location 8: 0.07 mln Energy units Produced, area_in_dunam used: 0.64225463, potential revenue before PV: 0.005138037, potential revenue after PV: 0.005138037
+Location 17: 0.65 mln Energy units Produced, area_in_dunam used: 6.3, potential revenue before PV: 0.0504, potential revenue after PV: 0.0504
+Location 21: 0.09 mln Energy units Produced, area_in_dunam used: 0.85371174, potential revenue before PV: 0.020489082, potential revenue after PV: 0.021103754
+Location 27: 0.38 mln Energy units Produced, area_in_dunam used: 3.5, potential revenue before PV: 0, potential revenue after PV: 0
+Location 28: 1.67 mln Energy units Produced, area_in_dunam used: 15.4, potential revenue before PV: 0.154, potential revenue after PV: 0.14476
+Location 29: 0.09 mln Energy units Produced, area_in_dunam used: 0.86341871, potential revenue before PV: 0.00690735, potential revenue after PV: 0.00690735
+Location 33: 1.01 mln Energy units Produced, area_in_dunam used: 9.5, potential revenue before PV: 0.19, potential revenue after PV: 0.19
+Location 61: 19.38 mln Energy units Produced, area_in_dunam used: 180, potential revenue before PV: 0.72, potential revenue after PV: 0.7488
+Location 69: 0.21 mln Energy units Produced, area_in_dunam used: 1.9, potential revenue before PV: 0, potential revenue after PV: 0
+Location 74: 0.62 mln Energy units Produced, area_in_dunam used: 5.62169597, potential revenue before PV: 0.05621696, potential revenue after PV: 0.052843942
+Location 79: 0.77 mln Energy units Produced, area_in_dunam used: 7.29211573, potential revenue before PV: 0.175010778, potential revenue after PV: 0.180261101
+Location 83: 0.4 mln Energy units Produced, area_in_dunam used: 3.8, potential revenue before PV: 0.0304, potential revenue after PV: 0.0304
+Location 84: 0.6 mln Energy units Produced, area_in_dunam used: 5.7, potential revenue before PV: 0.114, potential revenue after PV: 0.114
+Location 91: 0.16 mln Energy units Produced, area_in_dunam used: 1.5, potential revenue before PV: 0.018, potential revenue after PV: 0.0198
+Location 94: 7.4 mln Energy units Produced, area_in_dunam used: 69.5, potential revenue before PV: 0.695, potential revenue after PV: 0.6533
+Location 107: 0.28 mln Energy units Produced, area_in_dunam used: 2.69365929, potential revenue before PV: 0.021549274, potential revenue after PV: 0.021549274
+Location 108: 1.2 mln Energy units Produced, area_in_dunam used: 11.58188131, potential revenue before PV: 0.09265505, potential revenue after PV: 0.09265505
+Location 109: 0.07 mln Energy units Produced, area_in_dunam used: 0.6, potential revenue before PV: 0.0048, potential revenue after PV: 0.0048
+Location 118: 2.11 mln Energy units Produced, area_in_dunam used: 19, potential revenue before PV: 0.304, potential revenue after PV: 0.31312
+Location 128: 0.78 mln Energy units Produced, area_in_dunam used: 7.3, potential revenue before PV: 0.0292, potential revenue after PV: 0.030368
+Location 136: 0.66 mln Energy units Produced, area_in_dunam used: 6.1513182, potential revenue before PV: 0.030756591, potential revenue after PV: 0.030756591
+Location 143: 0.15 mln Energy units Produced, area_in_dunam used: 1.4, potential revenue before PV: 0.0112, potential revenue after PV: 0.0112
+Location 147: 2.25 mln Energy units Produced, area_in_dunam used: 21.6, potential revenue before PV: 0.216, potential revenue after PV: 0.216
+Location 154: 0.51 mln Energy units Produced, area_in_dunam used: 4.93871193, potential revenue before PV: 0.039509695, potential revenue after PV: 0.039509695
+Location 156: 1.47 mln Energy units Produced, area_in_dunam used: 13.1, potential revenue before PV: 0.1834, potential revenue after PV: 0.20174
+Location 164: 1.07 mln Energy units Produced, area_in_dunam used: 10.07919559, potential revenue before PV: 0.040316782, potential revenue after PV: 0.041929454
+Location 172: 0.06 mln Energy units Produced, area_in_dunam used: 0.5435032, potential revenue before PV: 0.005435032, potential revenue after PV: 0.005706784
+Location 175: 1.7 mln Energy units Produced, area_in_dunam used: 15.8, potential revenue before PV: 0.2528, potential revenue after PV: 0.260384
+Location 178: 1.1 mln Energy units Produced, area_in_dunam used: 10.1, potential revenue before PV: 0, potential revenue after PV: 0
+Location 180: 2.22 mln Energy units Produced, area_in_dunam used: 21.06903003, potential revenue before PV: 0.08427612, potential revenue after PV: 0.087647165
+Location 181: 0.24 mln Energy units Produced, area_in_dunam used: 2.2, potential revenue before PV: 0, potential revenue after PV: 0
+Location 184: 0.37 mln Energy units Produced, area_in_dunam used: 3.49842913, potential revenue before PV: 0, potential revenue after PV: 0
+Location 191: 0.05 mln Energy units Produced, area_in_dunam used: 0.4764851, potential revenue before PV: 0.004764851, potential revenue after PV: 0.005003094
+Location 199: 0.68 mln Energy units Produced, area_in_dunam used: 6.24484175, potential revenue before PV: 0, potential revenue after PV: 0
+Location 217: 0.77 mln Energy units Produced, area_in_dunam used: 7.3, potential revenue before PV: 0.146, potential revenue after PV: 0.146
+Location 226: 1.07 mln Energy units Produced, area_in_dunam used: 9.88423453, potential revenue before PV: 0.158147752, potential revenue after PV: 0.173962528
+Location 230: 2.32 mln Energy units Produced, area_in_dunam used: 20.6, potential revenue before PV: 0.2884, potential revenue after PV: 0.31724
+Location 233: 0.78 mln Energy units Produced, area_in_dunam used: 7.1, potential revenue before PV: 0.071, potential revenue after PV: 0.0781
+Location 234: 1.41 mln Energy units Produced, area_in_dunam used: 13, potential revenue before PV: 0.065, potential revenue after PV: 0.06305
+Location 236: 0.96 mln Energy units Produced, area_in_dunam used: 9.0523811, potential revenue before PV: 0.090523811, potential revenue after PV: 0.095050002
+Location 239: 0.16 mln Energy units Produced, area_in_dunam used: 1.47938482, potential revenue before PV: 0.014793848, potential revenue after PV: 0.013906217
+Location 250: 4.31 mln Energy units Produced, area_in_dunam used: 40.44108014, potential revenue before PV: 0.161764321, potential revenue after PV: 0.168234893
+Location 252: 0.7 mln Energy units Produced, area_in_dunam used: 6.2, potential revenue before PV: 0.031, potential revenue after PV: 0.031
+Location 254: 0.91 mln Energy units Produced, area_in_dunam used: 8.4, potential revenue before PV: 0.084, potential revenue after PV: 0.07896
+Location 257: 3.93 mln Energy units Produced, area_in_dunam used: 36.7, potential revenue before PV: 0.8808, potential revenue after PV: 0.907224
+Location 265: 0.48 mln Energy units Produced, area_in_dunam used: 4.6, potential revenue before PV: 0.046, potential revenue after PV: 0.046
+Location 271: 0.06 mln Energy units Produced, area_in_dunam used: 0.54803103, potential revenue before PV: 0.00548031, potential revenue after PV: 0.006028341
+Location 283: 0.16 mln Energy units Produced, area_in_dunam used: 1.5, potential revenue before PV: 0.012, potential revenue after PV: 0.012
+Location 284: 1.08 mln Energy units Produced, area_in_dunam used: 9.7, potential revenue before PV: 0.1164, potential revenue after PV: 0.12804
+Location 285: 0.17 mln Energy units Produced, area_in_dunam used: 1.6026554, potential revenue before PV: 0, potential revenue after PV: 0
+Location 286: 0.35 mln Energy units Produced, area_in_dunam used: 3.3, potential revenue before PV: 0.0165, potential revenue after PV: 0.016005
+Location 291: 1.28 mln Energy units Produced, area_in_dunam used: 12, potential revenue before PV: 0.06, potential revenue after PV: 0.06
+Location 300: 0.55 mln Energy units Produced, area_in_dunam used: 5.1, potential revenue before PV: 0.0714, potential revenue after PV: 0.07854
+Location 306: 0.14 mln Energy units Produced, area_in_dunam used: 1.3, potential revenue before PV: 0.0104, potential revenue after PV: 0.0104
+Location 311: 0.18 mln Energy units Produced, area_in_dunam used: 1.74533718, potential revenue before PV: 0.020944046, potential revenue after PV: 0.023038451
+Location 318: 1.79 mln Energy units Produced, area_in_dunam used: 16.7, potential revenue before PV: 0.2672, potential revenue after PV: 0.275216
+Location 327: 0.12 mln Energy units Produced, area_in_dunam used: 1.1, potential revenue before PV: 0.011, potential revenue after PV: 0.01155
+Location 329: 0.7 mln Energy units Produced, area_in_dunam used: 6.6, potential revenue before PV: 0.132, potential revenue after PV: 0.132
+Location 339: 4.05 mln Energy units Produced, area_in_dunam used: 37.7823148, potential revenue before PV: 0.377823148, potential revenue after PV: 0.377823148
+Location 347: 1.33 mln Energy units Produced, area_in_dunam used: 12.55226914, potential revenue before PV: 0.050209077, potential revenue after PV: 0.05221744
+Location 365: 4.4 mln Energy units Produced, area_in_dunam used: 40.61100942, potential revenue before PV: 0.487332113, potential revenue after PV: 0.536065324
+Location 368: 0.11 mln Energy units Produced, area_in_dunam used: 1.02573822, potential revenue before PV: 0.010257382, potential revenue after PV: 0.010257382
+Location 370: 0.21 mln Energy units Produced, area_in_dunam used: 1.95162488, potential revenue before PV: 0.015612999, potential revenue after PV: 0.015612999
+Location 393: 0.59 mln Energy units Produced, area_in_dunam used: 5.42169075, potential revenue before PV: 0, potential revenue after PV: 0
+Location 399: 0.75 mln Energy units Produced, area_in_dunam used: 7.13551345, potential revenue before PV: 0.028542054, potential revenue after PV: 0.029683736
+Location 401: 0.65 mln Energy units Produced, area_in_dunam used: 5.8, potential revenue before PV: 0.0812, potential revenue after PV: 0.08932
+Location 411: 0.12 mln Energy units Produced, area_in_dunam used: 1.10899231, potential revenue before PV: 0.011089923, potential revenue after PV: 0.010424528
+Location 434: 0.32 mln Energy units Produced, area_in_dunam used: 3, potential revenue before PV: 0.048, potential revenue after PV: 0.04944
+Location 438: 0.91 mln Energy units Produced, area_in_dunam used: 8.56882042, potential revenue before PV: 0, potential revenue after PV: 0
+Location 442: 0.57 mln Energy units Produced, area_in_dunam used: 5.5, potential revenue before PV: 0, potential revenue after PV: 0
+Location 443: 0.25 mln Energy units Produced, area_in_dunam used: 2.3, potential revenue before PV: 0.023, potential revenue after PV: 0.02415
+Location 447: 2.63 mln Energy units Produced, area_in_dunam used: 24.1, potential revenue before PV: 0.241, potential revenue after PV: 0.241
+Location 474: 0.64 mln Energy units Produced, area_in_dunam used: 6, potential revenue before PV: 0.096, potential revenue after PV: 0.09888
+Location 496: 1.09 mln Energy units Produced, area_in_dunam used: 10.1, potential revenue before PV: 0.1212, potential revenue after PV: 0.13332
+Location 506: 3.75 mln Energy units Produced, area_in_dunam used: 33.5, potential revenue before PV: 0.335, potential revenue after PV: 0.335
+Location 517: 0.05 mln Energy units Produced, area_in_dunam used: 0.43337819, potential revenue before PV: 0.003467026, potential revenue after PV: 0.003467026
+Location 521: 0.02 mln Energy units Produced, area_in_dunam used: 0.1, potential revenue before PV: 0, potential revenue after PV: 0
+Location 529: 0.21 mln Energy units Produced, area_in_dunam used: 2, potential revenue before PV: 0.016, potential revenue after PV: 0.016
+Location 534: 0.13 mln Energy units Produced, area_in_dunam used: 1.22343978, potential revenue before PV: 0.009787518, potential revenue after PV: 0.009787518
+Location 543: 0.23 mln Energy units Produced, area_in_dunam used: 2.17, potential revenue before PV: 0.01085, potential revenue after PV: 0.0105245
+Location 546: 0.25 mln Energy units Produced, area_in_dunam used: 2.3, potential revenue before PV: 1.15, potential revenue after PV: 1.15
+Location 564: 0.43 mln Energy units Produced, area_in_dunam used: 4.06411577, potential revenue before PV: 0.020320579, potential revenue after PV: 0.020320579
+Location 574: 6.99 mln Energy units Produced, area_in_dunam used: 61.6, potential revenue before PV: 0.616, potential revenue after PV: 0.57904
+Location 575: 10.26 mln Energy units Produced, area_in_dunam used: 96.4, potential revenue before PV: 0.7712, potential revenue after PV: 0.802048
+Location 584: 1.42 mln Energy units Produced, area_in_dunam used: 13, potential revenue before PV: 0.065, potential revenue after PV: 0.06305
+Location 590: 0.31 mln Energy units Produced, area_in_dunam used: 2.9, potential revenue before PV: 0.0232, potential revenue after PV: 0.0232
+Location 601: 1.15 mln Energy units Produced, area_in_dunam used: 11, potential revenue before PV: 0.11, potential revenue after PV: 0.11
+Location 602: 0.99 mln Energy units Produced, area_in_dunam used: 8.8, potential revenue before PV: 0.088, potential revenue after PV: 0.088
+Location 604: 0.21 mln Energy units Produced, area_in_dunam used: 2.05671249, potential revenue before PV: 0.0164537, potential revenue after PV: 0.0164537
+Location 606: 0.84 mln Energy units Produced, area_in_dunam used: 8.0225854, potential revenue before PV: 0.064180683, potential revenue after PV: 0.064180683
+Location 611: 1.01 mln Energy units Produced, area_in_dunam used: 9.34990105, potential revenue before PV: 0.09349901, potential revenue after PV: 0.102848912
+Location 615: 1.21 mln Energy units Produced, area_in_dunam used: 11.5, potential revenue before PV: 0.23, potential revenue after PV: 0.23
+Location 618: 1.86 mln Energy units Produced, area_in_dunam used: 17.46109807, potential revenue before PV: 0.069844392, potential revenue after PV: 0.072638168
+Location 629: 3.28 mln Energy units Produced, area_in_dunam used: 30.95374262, potential revenue before PV: 0.12381497, potential revenue after PV: 0.128767569
+Location 637: 0.69 mln Energy units Produced, area_in_dunam used: 6.4, potential revenue before PV: 0, potential revenue after PV: 0
+Location 638: 0.14 mln Energy units Produced, area_in_dunam used: 1.3, potential revenue before PV: 0.0104, potential revenue after PV: 0.0104
+Location 642: 0.24 mln Energy units Produced, area_in_dunam used: 2.3098616, potential revenue before PV: 0.018478893, potential revenue after PV: 0.018478893
+Location 660: 0.53 mln Energy units Produced, area_in_dunam used: 5.07407424, potential revenue before PV: 0.040592594, potential revenue after PV: 0.040592594
+Location 664: 0.82 mln Energy units Produced, area_in_dunam used: 7.6, potential revenue before PV: 0.152, potential revenue after PV: 0.152
+Location 666: 0.83 mln Energy units Produced, area_in_dunam used: 7.74296481, potential revenue before PV: 0.185831155, potential revenue after PV: 0.19140609
+Location 672: 14.54 mln Energy units Produced, area_in_dunam used: 134.3, potential revenue before PV: 0.5372, potential revenue after PV: 0.558688
+Location 676: 1.96 mln Energy units Produced, area_in_dunam used: 18.38437801, potential revenue before PV: 0.073537512, potential revenue after PV: 0.076479013
+Location 679: 0.04 mln Energy units Produced, area_in_dunam used: 0.4, potential revenue before PV: 0.0032, potential revenue after PV: 0.0032
+Location 681: 4.26 mln Energy units Produced, area_in_dunam used: 38.7, potential revenue before PV: 0.3096, potential revenue after PV: 0.3096
+Location 692: 1.38 mln Energy units Produced, area_in_dunam used: 13.3, potential revenue before PV: 0.0532, potential revenue after PV: 0.055328
+Location 696: 2.24 mln Energy units Produced, area_in_dunam used: 20.7, potential revenue before PV: 0.207, potential revenue after PV: 0.19458
+Location 697: 1.18 mln Energy units Produced, area_in_dunam used: 10.6, potential revenue before PV: 0.1272, potential revenue after PV: 0.13992
+Location 698: 0.89 mln Energy units Produced, area_in_dunam used: 8, potential revenue before PV: 0.096, potential revenue after PV: 0.1056
+Location 702: 0.08 mln Energy units Produced, area_in_dunam used: 0.73690735, potential revenue before PV: 0.002947629, potential revenue after PV: 0.003065535
+Location 709: 1.76 mln Energy units Produced, area_in_dunam used: 15.9, potential revenue before PV: 0.159, potential revenue after PV: 0.159
+Location 711: 1.12 mln Energy units Produced, area_in_dunam used: 10.1, potential revenue before PV: 0.202, potential revenue after PV: 0.202
+Location 730: 0.07 mln Energy units Produced, area_in_dunam used: 0.63136682, potential revenue before PV: 0.005050935, potential revenue after PV: 0.005050935
+Location 737: 0.62 mln Energy units Produced, area_in_dunam used: 5.99011178, potential revenue before PV: 0.047920894, potential revenue after PV: 0.047920894
+Location 742: 0.27 mln Energy units Produced, area_in_dunam used: 2.53285339, potential revenue before PV: 0.060788481, potential revenue after PV: 0.062612136
+Total energy produced: 161.82
+Number of installed PV's: 115
+total area (in dunam) used: 1499.99882127
+total poetntial revenue before installing PV'S for locations included: 14.02321236
+total poetntial revenue after installing PV's for locations included, as a result of influence on crops: 14.287472023
 
 Energy produced by yeshuv: 
-yeshuv 5: allowed energy production: 22321.238992657 ,chosen locations: [5, ] total energy produced: 0.09
-yeshuv 10: allowed energy production: 70777.547224695 ,chosen locations: [10, 985, ] total energy produced: 0.14
-yeshuv 20: allowed energy production: 1037.21737904 ,chosen locations: [71, ] total energy produced: 19.38
-yeshuv 24: allowed energy production: 2363.330894603 ,chosen locations: [25, ] total energy produced: 0.09
-yeshuv 30: allowed energy production: 1330.125961903 ,chosen locations: [32, 487, ] total energy produced: 4.78
-yeshuv 31: allowed energy production: 790.451929095 ,chosen locations: [944, 33, 227, ] total energy produced: 5.01
-yeshuv 32: allowed energy production: 1915.943127628 ,chosen locations: [691, ] total energy produced: 0.05
-yeshuv 43: allowed energy production: 8690.9587737 ,chosen locations: [198, 685, 986, 604, ] total energy produced: 1.14
-yeshuv 70: allowed energy production: 922.862658334 ,chosen locations: [80, ] total energy produced: 0.21
-yeshuv 75: allowed energy production: 1913.936904458 ,chosen locations: [89, 963, 295, ] total energy produced: 2.52
-yeshuv 90: allowed energy production: 25962.534046735 ,chosen locations: [400, ] total energy produced: 0.14
-yeshuv 97: allowed energy production: 1149.565876577 ,chosen locations: [428, ] total energy produced: 0.12
-yeshuv 114: allowed energy production: 43523.005456292 ,chosen locations: [142, ] total energy produced: 0.07
-yeshuv 122: allowed energy production: 1145.553430236 ,chosen locations: [153, ] total energy produced: 2.11
-yeshuv 128: allowed energy production: 14260.234294428 ,chosen locations: [855, ] total energy produced: 0.14
-yeshuv 133: allowed energy production: 2301.137976324 ,chosen locations: [166, ] total energy produced: 0.37
-yeshuv 151: allowed energy production: 1267.933043624 ,chosen locations: [538, 292, 197, 319, ] total energy produced: 5.14
-yeshuv 164: allowed energy production: 1944.030252012 ,chosen locations: [216, ] total energy produced: 0.06
-yeshuv 165: allowed energy production: 1645.102999639 ,chosen locations: [621, ] total energy produced: 0.36
-yeshuv 174: allowed energy production: 2220.889049512 ,chosen locations: [726, 230, ] total energy produced: 0.49
-yeshuv 189: allowed energy production: 800.483044946 ,chosen locations: [254, ] total energy produced: 0.68
-yeshuv 200: allowed energy production: 17803.224413162 ,chosen locations: [270, ] total energy produced: 0.06
-yeshuv 201: allowed energy production: 856.657293714 ,chosen locations: [825, 709, 591, ] total energy produced: 16.6
-yeshuv 213: allowed energy production: 1067.310726595 ,chosen locations: [288, 393, ] total energy produced: 1.62
-yeshuv 216: allowed energy production: 18346.910892311 ,chosen locations: [296, ] total energy produced: 1.41
-yeshuv 219: allowed energy production: 1576.891411849 ,chosen locations: [304, 553, ] total energy produced: 0.28
-yeshuv 222: allowed energy production: 47266.617892055 ,chosen locations: [308, ] total energy produced: 13.08
-yeshuv 232: allowed energy production: 656.034976685 ,chosen locations: [993, 322, ] total energy produced: 1.44
-yeshuv 246: allowed energy production: 2399.442911668 ,chosen locations: [347, 820, ] total energy produced: 1.07
-yeshuv 250: allowed energy production: 1380.28154116 ,chosen locations: [918, ] total energy produced: 0.79
-yeshuv 252: allowed energy production: 762.364804711 ,chosen locations: [948, 365, ] total energy produced: 1.97
-yeshuv 301: allowed energy production: 1536.766948443 ,chosen locations: [462, ] total energy produced: 0.39
-yeshuv 304: allowed energy production: 114.354720707 ,chosen locations: [472, ] total energy produced: 4.7
-yeshuv 306: allowed energy production: 32904.066215942 ,chosen locations: [479, ] total energy produced: 0.07
-yeshuv 314: allowed energy production: 1199.721455834 ,chosen locations: [649, 499, ] total energy produced: 1.96
-yeshuv 328: allowed energy production: 2259.007289748 ,chosen locations: [731, 525, ] total energy produced: 1.9
-yeshuv 340: allowed energy production: 878.725748587 ,chosen locations: [550, ] total energy produced: 2.51
-yeshuv 345: allowed energy production: 1518.71093991 ,chosen locations: [565, ] total energy produced: 0.75
-yeshuv 348: allowed energy production: 1398.337549693 ,chosen locations: [696, ] total energy produced: 0.02
-yeshuv 360: allowed energy production: 25260.355937134 ,chosen locations: [596, ] total energy produced: 2.63
-yeshuv 373: allowed energy production: 2124.590337338 ,chosen locations: [1000, ] total energy produced: 17.4
-yeshuv 379: allowed energy production: 68839.535642194 ,chosen locations: [680, 810, 646, ] total energy produced: 6.05
-yeshuv 385: allowed energy production: 658.041199855 ,chosen locations: [661, ] total energy produced: 1.09
-yeshuv 406: allowed energy production: 2911.029820092 ,chosen locations: [727, ] total energy produced: 0.4
-yeshuv 420: allowed energy production: 501.555792573 ,chosen locations: [897, ] total energy produced: 0.82
-yeshuv 422: allowed energy production: 1940.017805671 ,chosen locations: [771, ] total energy produced: 6.99
-yeshuv 427: allowed energy production: 459244.545911307 ,chosen locations: [787, ] total energy produced: 1.42
-yeshuv 450: allowed energy production: 445.381543805 ,chosen locations: [852, ] total energy produced: 0.69
-yeshuv 472: allowed energy production: 1185.677893642 ,chosen locations: [931, 910, ] total energy produced: 24.76
-yeshuv 477: allowed energy production: 1923.968020309 ,chosen locations: [923, ] total energy produced: 4.26
-yeshuv 481: allowed energy production: 517.605577935 ,chosen locations: [946, ] total energy produced: 1.18
-yeshuv 484: allowed energy production: 2289.100637302 ,chosen locations: [954, ] total energy produced: 0.08
-yeshuv 488: allowed energy production: 6114.968223047 ,chosen locations: [961, ] total energy produced: 1.76
+yeshuv 4: allowed energy production: 22321.238992657 ,chosen locations: [4, 543, ] total energy produced: 0.32
+yeshuv 8: allowed energy production: 70777.547224695 ,chosen locations: [737, 8, 265, 108, 660, 730, 604, ] total energy produced: 3.18
+yeshuv 16: allowed energy production: 1185.677893642 ,chosen locations: [17, ] total energy produced: 0.65
+yeshuv 17: allowed energy production: 1037.21737904 ,chosen locations: [61, ] total energy produced: 19.38
+yeshuv 20: allowed energy production: 2363.330894603 ,chosen locations: [21, ] total energy produced: 0.09
+yeshuv 25: allowed energy production: 1330.125961903 ,chosen locations: [27, 365, ] total energy produced: 4.78
+yeshuv 26: allowed energy production: 790.451929095 ,chosen locations: [696, 178, 28, ] total energy produced: 5.01
+yeshuv 27: allowed energy production: 1915.943127628 ,chosen locations: [517, 107, 370, 534, 29, ] total energy produced: 0.76
+yeshuv 30: allowed energy production: 1813.625745943 ,chosen locations: [33, 615, 329, 84, 217, ] total energy produced: 4.29
+yeshuv 56: allowed energy production: 1833.687977646 ,chosen locations: [434, ] total energy produced: 0.32
+yeshuv 60: allowed energy production: 31792.618579601 ,chosen locations: [286, ] total energy produced: 0.35
+yeshuv 61: allowed energy production: 922.862658334 ,chosen locations: [69, ] total energy produced: 0.21
+yeshuv 65: allowed energy production: 1913.936904458 ,chosen locations: [233, 74, 711, ] total energy produced: 2.52
+yeshuv 69: allowed energy production: 1390.312657012 ,chosen locations: [79, ] total energy produced: 0.77
+yeshuv 72: allowed energy production: 25962.534046735 ,chosen locations: [679, 529, 306, 83, ] total energy produced: 0.79
+yeshuv 78: allowed energy production: 1149.565876577 ,chosen locations: [136, 91, 327, ] total energy produced: 0.94
+yeshuv 81: allowed energy production: 2373.362010454 ,chosen locations: [94, 575, ] total energy produced: 17.66
+yeshuv 91: allowed energy production: 43523.005456292 ,chosen locations: [109, ] total energy produced: 0.07
+yeshuv 98: allowed energy production: 1145.553430236 ,chosen locations: [118, ] total energy produced: 2.11
+yeshuv 101: allowed energy production: 14260.234294428 ,chosen locations: [638, ] total energy produced: 0.14
+yeshuv 106: allowed energy production: 1322.101069222 ,chosen locations: [128, ] total energy produced: 0.78
+yeshuv 114: allowed energy production: 2171917.141925304 ,chosen locations: [143, ] total energy produced: 0.15
+yeshuv 117: allowed energy production: 886.750641269 ,chosen locations: [147, 399, ] total energy produced: 3
+yeshuv 122: allowed energy production: 53748.724955265 ,chosen locations: [154, ] total energy produced: 0.51
+yeshuv 123: allowed energy production: 1267.933043624 ,chosen locations: [401, 156, 252, 230, ] total energy produced: 5.14
+yeshuv 127: allowed energy production: 1841.712870327 ,chosen locations: [285, ] total energy produced: 0.17
+yeshuv 128: allowed energy production: 1771.495059367 ,chosen locations: [180, 164, 236, ] total energy produced: 4.25
+yeshuv 131: allowed energy production: 2088.478320273 ,chosen locations: [175, ] total energy produced: 1.7
+yeshuv 135: allowed energy production: 1944.030252012 ,chosen locations: [172, 191, ] total energy produced: 0.11
+yeshuv 140: allowed energy production: 2220.889049512 ,chosen locations: [546, 181, ] total energy produced: 0.49
+yeshuv 143: allowed energy production: 2614.108790889 ,chosen locations: [184, ] total energy produced: 0.37
+yeshuv 152: allowed energy production: 800.483044946 ,chosen locations: [199, ] total energy produced: 0.68
+yeshuv 163: allowed energy production: 856.657293714 ,chosen locations: [443, ] total energy produced: 0.25
+yeshuv 173: allowed energy production: 1067.310726595 ,chosen locations: [226, 300, ] total energy produced: 1.62
+yeshuv 176: allowed energy production: 18346.910892311 ,chosen locations: [234, ] total energy produced: 1.41
+yeshuv 178: allowed energy production: 1576.891411849 ,chosen locations: [411, 239, ] total energy produced: 0.28
+yeshuv 180: allowed energy production: 22822.79478523 ,chosen locations: [601, ] total energy produced: 1.15
+yeshuv 187: allowed energy production: 1719.333256939 ,chosen locations: [250, ] total energy produced: 4.31
+yeshuv 190: allowed energy production: 656.034976685 ,chosen locations: [254, ] total energy produced: 0.91
+yeshuv 193: allowed energy production: 1891.868449584 ,chosen locations: [257, ] total energy produced: 3.93
+yeshuv 199: allowed energy production: 2399.442911668 ,chosen locations: [611, 271, ] total energy produced: 1.07
+yeshuv 204: allowed energy production: 1994.185831269 ,chosen locations: [283, ] total energy produced: 0.16
+yeshuv 205: allowed energy production: 762.364804711 ,chosen locations: [698, 284, ] total energy produced: 1.97
+yeshuv 210: allowed energy production: 2190.795701958 ,chosen locations: [291, ] total energy produced: 1.28
+yeshuv 221: allowed energy production: 15969.536435516 ,chosen locations: [311, ] total energy produced: 0.18
+yeshuv 227: allowed energy production: 1737.389265472 ,chosen locations: [318, ] total energy produced: 1.79
+yeshuv 234: allowed energy production: 4538.076811198 ,chosen locations: [339, ] total energy produced: 4.05
+yeshuv 235: allowed energy production: 1797.575960581 ,chosen locations: [666, ] total energy produced: 0.83
+yeshuv 238: allowed energy production: 1542.785617954 ,chosen locations: [347, ] total energy produced: 1.33
+yeshuv 248: allowed energy production: 571.773603533 ,chosen locations: [368, ] total energy produced: 0.11
+yeshuv 260: allowed energy production: 2259.007289748 ,chosen locations: [393, ] total energy produced: 0.59
+yeshuv 274: allowed energy production: 1398.337549693 ,chosen locations: [521, ] total energy produced: 0.02
+yeshuv 280: allowed energy production: 1328.119738733 ,chosen locations: [629, 438, ] total energy produced: 4.19
+yeshuv 281: allowed energy production: 706.190555942 ,chosen locations: [442, ] total energy produced: 0.57
+yeshuv 285: allowed energy production: 25260.355937134 ,chosen locations: [447, ] total energy produced: 2.63
+yeshuv 298: allowed energy production: 1111.447636341 ,chosen locations: [474, ] total energy produced: 0.64
+yeshuv 301: allowed energy production: 68839.535642194 ,chosen locations: [506, 602, ] total energy produced: 4.74
+yeshuv 307: allowed energy production: 658.041199855 ,chosen locations: [496, ] total energy produced: 1.09
+yeshuv 331: allowed energy production: 1655.13411549 ,chosen locations: [564, ] total energy produced: 0.43
+yeshuv 333: allowed energy production: 501.555792573 ,chosen locations: [664, ] total energy produced: 0.82
+yeshuv 335: allowed energy production: 1940.017805671 ,chosen locations: [574, ] total energy produced: 6.99
+yeshuv 337: allowed energy production: 459244.545911307 ,chosen locations: [584, ] total energy produced: 1.42
+yeshuv 342: allowed energy production: 10163.526580694 ,chosen locations: [590, ] total energy produced: 0.31
+yeshuv 346: allowed energy production: 2110.546775146 ,chosen locations: [606, ] total energy produced: 0.84
+yeshuv 350: allowed energy production: 1739.395488642 ,chosen locations: [618, ] total energy produced: 1.86
+yeshuv 356: allowed energy production: 445.381543805 ,chosen locations: [637, ] total energy produced: 0.69
+yeshuv 359: allowed energy production: 9278.782162596 ,chosen locations: [642, ] total energy produced: 0.24
+yeshuv 371: allowed energy production: 1185.677893642 ,chosen locations: [672, ] total energy produced: 14.54
+yeshuv 373: allowed energy production: 1737.389265472 ,chosen locations: [676, ] total energy produced: 1.96
+yeshuv 374: allowed energy production: 1923.968020309 ,chosen locations: [681, ] total energy produced: 4.26
+yeshuv 376: allowed energy production: 2632.164799422 ,chosen locations: [692, ] total energy produced: 1.38
+yeshuv 378: allowed energy production: 517.605577935 ,chosen locations: [697, ] total energy produced: 1.18
+yeshuv 381: allowed energy production: 2289.100637302 ,chosen locations: [702, ] total energy produced: 0.08
+yeshuv 385: allowed energy production: 6114.968223047 ,chosen locations: [709, ] total energy produced: 1.76
+yeshuv 395: allowed energy production: 762.364804711 ,chosen locations: [742, ] total energy produced: 0.27
 
 Energy produced by machoz: 
-machoz 1: allowed energy production: 2704796.0968558 ,chosen locations: [525, 538, 32, 33, 550, 565, 71, 591, 80, 596, 89, 621, 646, 661, 153, 166, 680, 696, 197, 709, 726, 727, 731, 227, 230, 254, 771, 787, 288, 292, 295, 296, 810, 308, 820, 825, 319, 322, 852, 347, 365, 393, 910, 918, 923, 931, 428, 944, 946, 948, 961, 963, 462, 472, 993, 487, 1000, ] total energy produced: 158.05
-machoz 3: allowed energy production: 3591336.08469153 ,chosen locations: [25, 553, 216, 304, 954, ] total energy produced: 0.51
-machoz 4: allowed energy production: 2629685.107583278 ,chosen locations: [5, 10, 198, 270, 400, 479, 499, 604, 649, 685, 691, 855, 897, 985, 986, ] total energy produced: 4.61
-machoz 5: allowed energy production: 2001002.977601876 ,chosen locations: [142, ] total energy produced: 0.07
+machoz 1: allowed energy production: 2704796.0968558 ,chosen locations: [521, 27, 28, 33, 546, 61, 574, 575, 69, 584, 74, 590, 84, 602, 91, 94, 611, 615, 618, 118, 637, 128, 136, 666, 156, 672, 676, 681, 175, 178, 181, 696, 697, 698, 709, 199, 711, 217, 226, 230, 233, 234, 252, 254, 257, 271, 284, 291, 300, 318, 327, 329, 339, 347, 365, 393, 401, 443, 447, 474, 496, 506, ] total energy produced: 130.81
+machoz 2: allowed energy production: 3591336.08469153 ,chosen locations: [21, 564, 79, 606, 629, 154, 164, 172, 180, 184, 702, 191, 742, 236, 239, 250, 285, 286, 311, 368, 411, 434, 438, ] total energy produced: 17.63
+machoz 3: allowed energy production: 2629685.107583278 ,chosen locations: [4, 8, 17, 29, 83, 107, 108, 265, 283, 306, 370, 442, 517, 529, 534, 543, 601, 604, 638, 642, 660, 664, 679, 692, 730, 737, ] total energy produced: 10.16
+machoz 4: allowed energy production: 2001002.977601876 ,chosen locations: [109, ] total energy produced: 0.07
+machoz 5: allowed energy production: 2672848.999092087 ,chosen locations: [143, 399, 147, ] total energy produced: 3.15
 
 Energy produced by eshkol: 
-eshkol 1: allowed energy production: 0 ,chosen locations: [621, 649, 472, 499, ] total energy produced: 7.02
-eshkol 2: allowed energy production: 32.648 ,chosen locations: [961, 308, ] total energy produced: 14.84
-eshkol 3: allowed energy production: 29.3832 ,chosen locations: [5, ] total energy produced: 0.09
-eshkol 4: allowed energy production: 24.486 ,chosen locations: [604, 646, 166, 680, 685, 198, 771, 270, 810, 986, 479, ] total energy produced: 14.68
-eshkol 5: allowed energy production: 19.5888 ,chosen locations: [10, 142, 400, 691, 855, 985, ] total energy produced: 0.54
-eshkol 6: allowed energy production: 16.324 ,chosen locations: [787, 923, 852, ] total energy produced: 6.37
-eshkol 7: allowed energy production: 13.0592 ,chosen locations: [565, 71, 946, 1000, ] total energy produced: 38.71
-eshkol 8: allowed energy production: 11.4268 ,chosen locations: [525, 32, 550, 591, 89, 696, 709, 727, 731, 295, 825, 322, 910, 918, 931, 963, 462, 993, 487, ] total energy produced: 56.11
-eshkol 9: allowed energy production: 8.162 ,chosen locations: [538, 33, 80, 661, 153, 197, 227, 254, 288, 292, 820, 319, 347, 365, 897, 393, 944, 948, ] total energy produced: 19.72
-eshkol 10: allowed energy production: 4.8972 ,chosen locations: [25, 553, 596, 726, 216, 230, 296, 304, 428, 954, ] total energy produced: 5.16
+eshkol 1: allowed energy production: 32.364 ,chosen locations: [709, 590, 17, 339, ] total energy produced: 6.77, y[1] = 6.77
+eshkol 2: allowed energy production: 29.1276 ,chosen locations: [4, 606, 250, 143, 692, 283, 543, ] total energy produced: 7.16, y[2] = 7.16
+eshkol 3: allowed energy production: 24.273 ,chosen locations: [574, 602, 506, ] total energy produced: 11.73, y[3] = 11.73
+eshkol 4: allowed energy production: 19.4184 ,chosen locations: [642, 517, 8, 265, 399, 529, 147, 534, 660, 154, 29, 679, 306, 311, 442, 83, 601, 730, 604, 737, 107, 108, 109, 370, 638, ] total energy produced: 10.59, y[4] = 10.59
+eshkol 5: allowed energy production: 16.182 ,chosen locations: [128, 257, 637, 681, 584, 474, 618, ] total energy produced: 13.58, y[5] = 13.58
+eshkol 6: allowed energy production: 12.9456 ,chosen locations: [61, 697, ] total energy produced: 20.56, y[6] = 20.56
+eshkol 7: allowed energy production: 11.3274 ,chosen locations: [521, 27, 74, 672, 711, 233, 254, 365, 393, 443, ] total energy produced: 23.61, y[7] = 23.61
+eshkol 8: allowed energy production: 8.091 ,chosen locations: [28, 69, 611, 118, 664, 666, 156, 676, 175, 178, 696, 698, 199, 226, 230, 252, 271, 284, 291, 300, 318, 401, 496, ] total energy produced: 27.28, y[8] = 27.28
+eshkol 9: allowed energy production: 4.8546 ,chosen locations: [21, 33, 546, 564, 575, 79, 84, 91, 94, 615, 629, 136, 164, 172, 180, 181, 184, 191, 702, 217, 742, 234, 236, 239, 285, 286, 327, 329, 347, 368, 411, 434, 438, 447, ] total energy produced: 40.54, y[9] = 40.54
+
+
+Sum of y[i]: 161.82
+
+results of Gini coefficient: 
+i: 1, j: 2, e[i]: 0.2, e[j]: 0.18, e[j]*y[j] - e[i]*y[i]: -0.0652, e[i]*y[i] - e[j]*y[j]: 0.0652, z[i][j]: 0.0652
+i: 1, j: 3, e[i]: 0.2, e[j]: 0.15, e[j]*y[j] - e[i]*y[i]: 0.4055, e[i]*y[i] - e[j]*y[j]: -0.4055, z[i][j]: 0.4055
+i: 1, j: 4, e[i]: 0.2, e[j]: 0.12, e[j]*y[j] - e[i]*y[i]: -0.0832, e[i]*y[i] - e[j]*y[j]: 0.0832, z[i][j]: 0.0924
+i: 1, j: 5, e[i]: 0.2, e[j]: 0.1, e[j]*y[j] - e[i]*y[i]: 0.004, e[i]*y[i] - e[j]*y[j]: -0.004, z[i][j]: 0.004
+i: 1, j: 6, e[i]: 0.2, e[j]: 0.08, e[j]*y[j] - e[i]*y[i]: 0.2908, e[i]*y[i] - e[j]*y[j]: -0.2908, z[i][j]: 0.2908
+i: 1, j: 7, e[i]: 0.2, e[j]: 0.07, e[j]*y[j] - e[i]*y[i]: 0.2987, e[i]*y[i] - e[j]*y[j]: -0.2987, z[i][j]: 0.2987
+i: 1, j: 8, e[i]: 0.2, e[j]: 0.05, e[j]*y[j] - e[i]*y[i]: 0.01, e[i]*y[i] - e[j]*y[j]: -0.01, z[i][j]: 0.01
+i: 1, j: 9, e[i]: 0.2, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.1378, e[i]*y[i] - e[j]*y[j]: 0.1378, z[i][j]: 0.1378
+i: 2, j: 3, e[i]: 0.18, e[j]: 0.15, e[j]*y[j] - e[i]*y[i]: 0.4707, e[i]*y[i] - e[j]*y[j]: -0.4707, z[i][j]: 0.4707
+i: 2, j: 4, e[i]: 0.18, e[j]: 0.12, e[j]*y[j] - e[i]*y[i]: -0.018, e[i]*y[i] - e[j]*y[j]: 0.018, z[i][j]: 0.018
+i: 2, j: 5, e[i]: 0.18, e[j]: 0.1, e[j]*y[j] - e[i]*y[i]: 0.0692, e[i]*y[i] - e[j]*y[j]: -0.0692, z[i][j]: 0.0692
+i: 2, j: 6, e[i]: 0.18, e[j]: 0.08, e[j]*y[j] - e[i]*y[i]: 0.356, e[i]*y[i] - e[j]*y[j]: -0.356, z[i][j]: 0.356
+i: 2, j: 7, e[i]: 0.18, e[j]: 0.07, e[j]*y[j] - e[i]*y[i]: 0.3639, e[i]*y[i] - e[j]*y[j]: -0.3639, z[i][j]: 0.3639
+i: 2, j: 8, e[i]: 0.18, e[j]: 0.05, e[j]*y[j] - e[i]*y[i]: 0.0752, e[i]*y[i] - e[j]*y[j]: -0.0752, z[i][j]: 0.0752
+i: 2, j: 9, e[i]: 0.18, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.0726, e[i]*y[i] - e[j]*y[j]: 0.0726, z[i][j]: 0.0726
+i: 3, j: 4, e[i]: 0.15, e[j]: 0.12, e[j]*y[j] - e[i]*y[i]: -0.4887, e[i]*y[i] - e[j]*y[j]: 0.4887, z[i][j]: 0.4887
+i: 3, j: 5, e[i]: 0.15, e[j]: 0.1, e[j]*y[j] - e[i]*y[i]: -0.4015, e[i]*y[i] - e[j]*y[j]: 0.4015, z[i][j]: 0.4015
+i: 3, j: 6, e[i]: 0.15, e[j]: 0.08, e[j]*y[j] - e[i]*y[i]: -0.1147, e[i]*y[i] - e[j]*y[j]: 0.1147, z[i][j]: 0.1147
+i: 3, j: 7, e[i]: 0.15, e[j]: 0.07, e[j]*y[j] - e[i]*y[i]: -0.1068, e[i]*y[i] - e[j]*y[j]: 0.1068, z[i][j]: 0.1068
+i: 3, j: 8, e[i]: 0.15, e[j]: 0.05, e[j]*y[j] - e[i]*y[i]: -0.3955, e[i]*y[i] - e[j]*y[j]: 0.3955, z[i][j]: 0.3955
+i: 3, j: 9, e[i]: 0.15, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.5433, e[i]*y[i] - e[j]*y[j]: 0.5433, z[i][j]: 0.5433
+i: 4, j: 5, e[i]: 0.12, e[j]: 0.1, e[j]*y[j] - e[i]*y[i]: 0.0872, e[i]*y[i] - e[j]*y[j]: -0.0872, z[i][j]: 0.0872
+i: 4, j: 6, e[i]: 0.12, e[j]: 0.08, e[j]*y[j] - e[i]*y[i]: 0.374, e[i]*y[i] - e[j]*y[j]: -0.374, z[i][j]: 0.374
+i: 4, j: 7, e[i]: 0.12, e[j]: 0.07, e[j]*y[j] - e[i]*y[i]: 0.3819, e[i]*y[i] - e[j]*y[j]: -0.3819, z[i][j]: 0.3819
+i: 4, j: 8, e[i]: 0.12, e[j]: 0.05, e[j]*y[j] - e[i]*y[i]: 0.0932, e[i]*y[i] - e[j]*y[j]: -0.0932, z[i][j]: 0.0932
+i: 4, j: 9, e[i]: 0.12, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.0546, e[i]*y[i] - e[j]*y[j]: 0.0546, z[i][j]: 0.0546
+i: 5, j: 6, e[i]: 0.1, e[j]: 0.08, e[j]*y[j] - e[i]*y[i]: 0.2868, e[i]*y[i] - e[j]*y[j]: -0.2868, z[i][j]: 0.2868
+i: 5, j: 7, e[i]: 0.1, e[j]: 0.07, e[j]*y[j] - e[i]*y[i]: 0.2947, e[i]*y[i] - e[j]*y[j]: -0.2947, z[i][j]: 0.2947
+i: 5, j: 8, e[i]: 0.1, e[j]: 0.05, e[j]*y[j] - e[i]*y[i]: 0.006, e[i]*y[i] - e[j]*y[j]: -0.006, z[i][j]: 0.006
+i: 5, j: 9, e[i]: 0.1, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.1418, e[i]*y[i] - e[j]*y[j]: 0.1418, z[i][j]: 0.1418
+i: 6, j: 7, e[i]: 0.08, e[j]: 0.07, e[j]*y[j] - e[i]*y[i]: 0.0079, e[i]*y[i] - e[j]*y[j]: -0.0079, z[i][j]: 0.0079
+i: 6, j: 8, e[i]: 0.08, e[j]: 0.05, e[j]*y[j] - e[i]*y[i]: -0.2808, e[i]*y[i] - e[j]*y[j]: 0.2808, z[i][j]: 0.2808
+i: 6, j: 9, e[i]: 0.08, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.4286, e[i]*y[i] - e[j]*y[j]: 0.4286, z[i][j]: 0.4286
+i: 7, j: 8, e[i]: 0.07, e[j]: 0.05, e[j]*y[j] - e[i]*y[i]: -0.2887, e[i]*y[i] - e[j]*y[j]: 0.2887, z[i][j]: 0.2887
+i: 7, j: 9, e[i]: 0.07, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.4365, e[i]*y[i] - e[j]*y[j]: 0.4365, z[i][j]: 0.4365
+i: 8, j: 9, e[i]: 0.05, e[j]: 0.03, e[j]*y[j] - e[i]*y[i]: -0.1478, e[i]*y[i] - e[j]*y[j]: 0.1478, z[i][j]: 0.1478
+
+Sum of z[i][j]: 8.091
+inequality of wealth: Sum of z[i][j] / Sum of y[i] = 0.05
 
 Results for excel output file:
-location_id,Energy units Produced in mln,influence on crops,area in dunam used
-5,0.09,1,0.8
-10,0.07,1,0.64225463
-25,0.09,1.03,0.85371174
-32,0.38,1,3.5
-33,1.67,0.94,15.4
-71,19.38,1.04,180
-80,0.21,1,1.9
-89,0.62,0.94,5.62169597
-142,0.07,1,0.6
-153,2.11,1.03,19
-166,0.37,1,3.4
-197,1.47,1.1,13.1
-198,0.52,1,4.8
-216,0.06,1.05,0.5435032
-227,1.1,1,10.1
-230,0.24,1,2.2
-254,0.68,1,6.24484175
-270,0.06,1,0.55323396
-288,1.07,1.1,9.88423453
-292,2.32,1.1,20.6
-295,0.78,1.1,7.1
-296,1.41,0.97,13
-304,0.16,0.94,1.47938482
-308,13.08,1,120.2
-319,0.7,1,6.2
-322,0.91,0.94,8.4
-347,0.06,1.1,0.54803103
-365,1.08,1.1,9.7
-393,0.55,1.1,5.1
-400,0.14,1,1.3
-428,0.12,1.05,1.1
-462,0.39,1.05,3.6
-472,4.7,0.94,43
-479,0.07,1,0.6412014
-487,4.4,1.1,40.61100942
-499,1.7,1,15.7
-525,0.59,1,5.42169075
-538,0.65,1.1,5.8
-550,2.51,1.03,23.2
-553,0.12,0.94,1.10899231
-565,0.75,0.94,6.96197107
-591,0.25,1.05,2.3
-596,2.63,1,24.1
-604,0.11,1,1
-621,0.36,1.04,3.3
-646,1.31,1,11.7
-649,0.26,1,2.4
-661,1.09,1.1,10.1
-680,3.75,1,33.5
-685,0.26,1,2.4
-691,0.05,1,0.43337819
-696,0.02,1,0.1
-709,1.87,1.04,17.3
-726,0.25,1,2.3
-727,0.4,1.1,3.7
-731,1.31,1,12.1
-771,6.99,0.94,61.6
-787,1.42,0.97,13
-810,0.99,1,8.8
-820,1.01,1.1,9.34990105
-825,14.48,1.03,134.5
-852,0.69,1,6.4
-855,0.14,1,1.3
-897,0.82,1,7.6
-910,14.54,1.04,134.3
-918,0.79,1.05,7.3
-923,4.26,1,38.7
-931,10.22,1.04,94.9
-944,2.24,0.94,20.7
-946,1.18,1.1,10.6
-948,0.89,1.1,8
-954,0.08,1.04,0.73690735
-961,1.76,1,15.9
-963,1.12,1,10.1
-985,0.07,1,0.63136682
-986,0.25,1,2.3
-993,0.53,1.1,4.89638416
-1000,17.4,1.04,161.7
+location_id,Energy units Produced in mln,influence on crops,area in dunam usedmachoz
+4,0.09,1,0.8
+8,0.07,1,0.64225463
+17,0.65,1,6.3
+21,0.09,1.03,0.85371174
+27,0.38,1,3.5
+28,1.67,0.94,15.4
+29,0.09,1,0.86341871
+33,1.01,1,9.5
+61,19.38,1.04,180
+69,0.21,1,1.9
+74,0.62,0.94,5.62169597
+79,0.77,1.03,7.29211573
+83,0.4,1,3.8
+84,0.6,1,5.7
+91,0.16,1.1,1.5
+94,7.4,0.94,69.5
+107,0.28,1,2.69365929
+108,1.2,1,11.58188131
+109,0.07,1,0.6
+118,2.11,1.03,19
+128,0.78,1.04,7.3
+136,0.66,1,6.1513182
+143,0.15,1,1.4
+147,2.25,1,21.6
+154,0.51,1,4.93871193
+156,1.47,1.1,13.1
+164,1.07,1.04,10.07919559
+172,0.06,1.05,0.5435032
+175,1.7,1.03,15.8
+178,1.1,1,10.1
+180,2.22,1.04,21.06903003
+181,0.24,1,2.2
+184,0.37,1,3.49842913
+191,0.05,1.05,0.4764851
+199,0.68,1,6.24484175
+217,0.77,1,7.3
+226,1.07,1.1,9.88423453
+230,2.32,1.1,20.6
+233,0.78,1.1,7.1
+234,1.41,0.97,13
+236,0.96,1.05,9.0523811
+239,0.16,0.94,1.47938482
+250,4.31,1.04,40.44108014
+252,0.7,1,6.2
+254,0.91,0.94,8.4
+257,3.93,1.03,36.7
+265,0.48,1,4.6
+271,0.06,1.1,0.54803103
+283,0.16,1,1.5
+284,1.08,1.1,9.7
+285,0.17,1,1.6026554
+286,0.35,0.97,3.3
+291,1.28,1,12
+300,0.55,1.1,5.1
+306,0.14,1,1.3
+311,0.18,1.1,1.74533718
+318,1.79,1.03,16.7
+327,0.12,1.05,1.1
+329,0.7,1,6.6
+339,4.05,1,37.7823148
+347,1.33,1.04,12.55226914
+365,4.4,1.1,40.61100942
+368,0.11,1,1.02573822
+370,0.21,1,1.95162488
+393,0.59,1,5.42169075
+399,0.75,1.04,7.13551345
+401,0.65,1.1,5.8
+411,0.12,0.94,1.10899231
+434,0.32,1.03,3
+438,0.91,1,8.56882042
+442,0.57,1,5.5
+443,0.25,1.05,2.3
+447,2.63,1,24.1
+474,0.64,1.03,6
+496,1.09,1.1,10.1
+506,3.75,1,33.5
+517,0.05,1,0.43337819
+521,0.02,1,0.1
+529,0.21,1,2
+534,0.13,1,1.22343978
+543,0.23,0.97,2.17
+546,0.25,1,2.3
+564,0.43,1,4.06411577
+574,6.99,0.94,61.6
+575,10.26,1.04,96.4
+584,1.42,0.97,13
+590,0.31,1,2.9
+601,1.15,1,11
+602,0.99,1,8.8
+604,0.21,1,2.05671249
+606,0.84,1,8.0225854
+611,1.01,1.1,9.34990105
+615,1.21,1,11.5
+618,1.86,1.04,17.46109807
+629,3.28,1.04,30.95374262
+637,0.69,1,6.4
+638,0.14,1,1.3
+642,0.24,1,2.3098616
+660,0.53,1,5.07407424
+664,0.82,1,7.6
+666,0.83,1.03,7.74296481
+672,14.54,1.04,134.3
+676,1.96,1.04,18.38437801
+679,0.04,1,0.4
+681,4.26,1,38.7
+692,1.38,1.04,13.3
+696,2.24,0.94,20.7
+697,1.18,1.1,10.6
+698,0.89,1.1,8
+702,0.08,1.04,0.73690735
+709,1.76,1,15.9
+711,1.12,1,10.1
+730,0.07,1,0.63136682
+737,0.62,1,5.99011178
+742,0.27,1.03,2.53285339
 
 1
 2
@@ -297,7 +465,6 @@ location_id,Energy units Produced in mln,influence on crops,area in dunam used
 7
 8
 9
-10
 
 <<< post process
 

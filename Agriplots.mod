@@ -186,10 +186,37 @@ execute {
 
     eshkol_str += "] total energy produced: " + total_energy_produced_by_eshkol.toString();
     eshkol_str += ", y[" + eshkol + "] = " + y[eshkol];
-    writeln(eshkol_str);  
+    writeln(eshkol_str);
+
+
   }
 
 
+  writeln("\n")
+  var total_energy_produced_from_y = 0;
+  for (var i in Eshkolot) {
+    total_energy_produced_from_y += y[i];
+    }
+  writeln("Sum of y[i]: ", total_energy_produced_from_y);
+
+
+  writeln("\nresults of Gini coefficient: ")
+  var sum_of_z = 0
+  for (var i in Eshkolot){
+    for (var j in Eshkolot){
+      if (i>=j){
+        continue
+      }
+      else{
+        writeln("i: ",i,", j: ",j,", e[i]: ",energy_division_between_eshkolot[i],", e[j]: ",energy_division_between_eshkolot[j], ", e[j]*y[j] - e[i]*y[i]: ",energy_division_between_eshkolot[j]*y[j] - energy_division_between_eshkolot[i]*y[i], ", e[i]*y[i] - e[j]*y[j]: ",energy_division_between_eshkolot[i]*y[i] - energy_division_between_eshkolot[j]*y[j], ", z[i][j]: ",z[i][j])
+        sum_of_z += z[i][j]
+      }
+
+    }
+  }
+
+  writeln("\nSum of z[i][j]: ",sum_of_z)
+  writeln("inequality of wealth: Sum of z[i][j] / Sum of y[i] = ",sum_of_z/total_energy_produced_from_y)
 
 
   writeln("\nResults for excel output file:")
