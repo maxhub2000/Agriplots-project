@@ -46,18 +46,6 @@ subject to {
     // Constraint for the revenue change in percentage as a result of installing the PV’s and influencing the crops, lower bounded by an inputed threshold
     sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i]) >= allowed_loss_from_influence_on_crops_percentage * sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i]);
 
-    // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
-    forall (j in Yeshuvim) {
-        sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
-    }
-    
-    // Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz
-    forall (j in Machozot) {
-        sum(i in M[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_machoz[j];
-    }
-
-
-
     // Linearized Gini coefficient constraint (only for i < j)
     forall(i in Eshkolot, j in Eshkolot: i < j) {
         z[i][j] >=  energy_division_between_eshkolot[j]*y[j] - energy_division_between_eshkolot[i]*y[i] ;
@@ -67,14 +55,6 @@ subject to {
 
     // Gini constraint (now summing only over i < j)
     sum(i in Eshkolot, j in Eshkolot: i < j) z[i][j] <= G_max * sum(i in 1..num_eshkolot) (y[i]);
-
-    
-    // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
-    /*
-    forall (k in Eshkolot) {
-        sum(i in E[k]) x[i] * fix_energy_production[i] <= energy_division_between_eshkolot[k] * sum(j in 1..num_locations) (fix_energy_production[j] * x[j]);
-    }
-    */
 
 
 }
@@ -125,41 +105,6 @@ execute {
   writeln("total poetntial revenue after installing PV's for locations included, as a result of influence on crops: ", total_potential_revenue_after_PV);
 
 
-  writeln("\nEnergy produced by yeshuv: ")
-  for (var yeshuv in Yeshuvim) {
-    var total_energy_produced_by_yeshuv = 0
-    var yeshuv_str = "yeshuv " + yeshuv.toString() + ": " + "allowed energy production: " + energy_consumption_by_yeshuv[yeshuv].toString();
-    yeshuv_str += " ,chosen locations: ["
-    for (var loc in S[yeshuv])
-      if (x[loc] == 1){
-        yeshuv_str += loc.toString() + ", "
-        total_energy_produced_by_yeshuv += x[loc]*fix_energy_production[loc]
-      }
-    if (total_energy_produced_by_yeshuv == 0){
-      continue
-    }
-    yeshuv_str += "] total energy produced: " + total_energy_produced_by_yeshuv.toString();
-    writeln(yeshuv_str);  
-  }
-
-
-  writeln("\nEnergy produced by machoz: ")
-  for (var machoz in Machozot) {
-    var total_energy_produced_by_machoz = 0
-    var machoz_str = "machoz " + machoz.toString() + ": " + "allowed energy production: " + energy_consumption_by_machoz[machoz].toString();
-    machoz_str += " ,chosen locations: ["
-    for (var loc in M[machoz])
-      if (x[loc] == 1){
-        machoz_str += loc.toString() + ", "
-        total_energy_produced_by_machoz += x[loc]*fix_energy_production[loc]
-      }
-    if (total_energy_produced_by_machoz == 0){
-      continue
-    }
-    machoz_str += "] total energy produced: " + total_energy_produced_by_machoz.toString();
-    writeln(machoz_str);  
-  }
-
 
   writeln("\nEnergy produced by eshkol: ")
   for (var eshkol in Eshkolot) {
@@ -172,6 +117,7 @@ execute {
     eshkol_str += "] total energy produced: " + y[eshkol];
     writeln(eshkol_str);
   }
+
 
 
   writeln("\n")
@@ -202,7 +148,7 @@ execute {
 
 
   writeln("\nResults for excel output file:")
-  writeln("location_id,", "Energy units Produced in mln,", "influence on crops,", "area in dunam used", "machoz");
+  writeln("location_id,", "Energy units Produced in mln,", "influence on crops,", "area in dunam used");
   for (var i in fix_energy_production) {
     if (x[i] == 1) {
       writeln(i, ",", fix_energy_production[i] * x[i], ",", influence_on_crops[i] * x[i], ",", area_in_dunam[i] * x[i]);

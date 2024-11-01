@@ -3,6 +3,12 @@ import shutil
 import pandas as pd
 import time
 
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import ttk
+import os
+
+from choose_files_for_model import *
 
 
 def create_yeshuvim_with_locations(df_):
@@ -293,11 +299,27 @@ def output_opl_results_to_excel(df_input, df_opl_results, output_path):
 
 
 def main():
+    # Display the file selection interface
+    # opl_model_file, dat_file = select_files()
+    
+    # if not opl_model_file or not dat_file:
+    #     print("Please select both the .mod and .dat files to proceed.")
+    #     return
+    
+    output_file = 'output.txt'
+
     # Save start time of running of the code
     start_time_code = time.time()
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
-    df_dataset = pd.read_excel('Agriplots dataset - 1000 rows.xlsx') # Read dataset from Excel
+    opl_model_file = 'models/basic_model_with_gini/Agriplots_basic_with_gini.mod'
+    #opl_model_file = 'advanced_model_with_gini_in_objective_function/Agriplots_advanced_model_with_gini_in_objective_function.mod'
+    
+    # Call the function to get the selected .mod file path
+    opl_model_file, dataset_path = open_file_selector()
+    #dataset_path = 'Agriplots dataset - 1000 rows.xlsx'
+    
+    df_dataset = pd.read_excel(dataset_path) # Read dataset from Excel
     df_dataset = remove_rows_with_missing_values(df_dataset)
     # modify influence on crops column based on synthetic values
     df_dataset = modify_influence_on_crops(df_dataset, 'Average influence of PV on crops - synthetic values.xlsx')
@@ -347,6 +369,12 @@ def main():
     # output the final results to excel file
     final_results_excel_output_path = 'final_opl_results.xlsx'
     output_opl_results_to_excel(df_dataset, df_results, final_results_excel_output_path)
+
+    time.sleep(1)
+
+    # Specify the path to your Excel file
+    file_path = "final_opl_results.xlsx"
+    os.startfile(file_path)
 
 
 

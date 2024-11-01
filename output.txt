@@ -13,9 +13,9 @@ MIP Presolve added 23 rows and 23 columns.
 MIP Presolve modified 1 coefficients.
 Reduced MIP has 96 rows, 745 columns, and 12543 nonzeros.
 Reduced MIP has 670 binaries, 39 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.03 sec. (9.40 ticks)
+Presolve time = 0.02 sec. (9.40 ticks)
 Probing fixed 0 vars, tightened 53 bounds.
-Probing time = 0.02 sec. (3.99 ticks)
+Probing time = 0.05 sec. (3.99 ticks)
 Cover probing fixed 0 vars, tightened 5 bounds.
 Tried aggregator 1 time.
 Detecting symmetries...
@@ -23,9 +23,9 @@ MIP Presolve eliminated 21 rows and 21 columns.
 MIP Presolve added 23 rows and 23 columns.
 Reduced MIP has 98 rows, 747 columns, and 12549 nonzeros.
 Reduced MIP has 670 binaries, 41 generals, 0 SOSs, and 0 indicators.
-Presolve time = 0.01 sec. (5.75 ticks)
+Presolve time = 0.02 sec. (5.75 ticks)
 Probing fixed 0 vars, tightened 38 bounds.
-Probing time = 0.00 sec. (3.74 ticks)
+Probing time = 0.02 sec. (3.74 ticks)
 Cover probing fixed 0 vars, tightened 32 bounds.
 MIP emphasis: balance optimality and feasibility.
 MIP search method: dynamic search.
@@ -52,7 +52,7 @@ Detecting symmetries...
 *     0+    0                          161.8000      161.8972             0.06%
 Detecting symmetries...
       0     2      161.9024    34      161.8000      161.8518      288    0.03%
-Elapsed time = 0.41 sec. (222.98 ticks, tree = 0.02 MB, solutions = 6)
+Elapsed time = 0.45 sec. (222.98 ticks, tree = 0.02 MB, solutions = 6)
 *   300+   87                          161.8100      161.8518             0.03%
 *   328+   68                          161.8200      161.8518             0.02%
 
@@ -63,13 +63,13 @@ Lift and project cuts applied:  1
 Gomory fractional cuts applied:  2
 
 Root node processing (before b&c):
-  Real time             =    0.39 sec. (222.60 ticks)
+  Real time             =    0.44 sec. (222.60 ticks)
 Parallel b&c, 4 threads:
-  Real time             =    0.14 sec. (94.73 ticks)
-  Sync time (average)   =    0.03 sec.
+  Real time             =    0.20 sec. (94.73 ticks)
+  Sync time (average)   =    0.04 sec.
   Wait time (average)   =    0.00 sec.
                           ------------
-Total (root+branch&cut) =    0.53 sec. (317.33 ticks)
+Total (root+branch&cut) =    0.64 sec. (317.33 ticks)
 
 <<< solve
 
@@ -284,15 +284,15 @@ machoz 4: allowed energy production: 2001002.977601876 ,chosen locations: [109, 
 machoz 5: allowed energy production: 2672848.999092087 ,chosen locations: [143, 399, 147, ] total energy produced: 3.15
 
 Energy produced by eshkol: 
-eshkol 1: allowed energy production: 32.364 ,chosen locations: [709, 590, 17, 339, ] total energy produced: 6.77, y[1] = 6.77
-eshkol 2: allowed energy production: 29.1276 ,chosen locations: [4, 606, 250, 143, 692, 283, 543, ] total energy produced: 7.16, y[2] = 7.16
-eshkol 3: allowed energy production: 24.273 ,chosen locations: [574, 602, 506, ] total energy produced: 11.73, y[3] = 11.73
-eshkol 4: allowed energy production: 19.4184 ,chosen locations: [642, 517, 8, 265, 399, 529, 147, 534, 660, 154, 29, 679, 306, 311, 442, 83, 601, 730, 604, 737, 107, 108, 109, 370, 638, ] total energy produced: 10.59, y[4] = 10.59
-eshkol 5: allowed energy production: 16.182 ,chosen locations: [128, 257, 637, 681, 584, 474, 618, ] total energy produced: 13.58, y[5] = 13.58
-eshkol 6: allowed energy production: 12.9456 ,chosen locations: [61, 697, ] total energy produced: 20.56, y[6] = 20.56
-eshkol 7: allowed energy production: 11.3274 ,chosen locations: [521, 27, 74, 672, 711, 233, 254, 365, 393, 443, ] total energy produced: 23.61, y[7] = 23.61
-eshkol 8: allowed energy production: 8.091 ,chosen locations: [28, 69, 611, 118, 664, 666, 156, 676, 175, 178, 696, 698, 199, 226, 230, 252, 271, 284, 291, 300, 318, 401, 496, ] total energy produced: 27.28, y[8] = 27.28
-eshkol 9: allowed energy production: 4.8546 ,chosen locations: [21, 33, 546, 564, 575, 79, 84, 91, 94, 615, 629, 136, 164, 172, 180, 181, 184, 191, 702, 217, 742, 234, 236, 239, 285, 286, 327, 329, 347, 368, 411, 434, 438, 447, ] total energy produced: 40.54, y[9] = 40.54
+eshkol 1: chosen locations: [709, 590, 17, 339, ] total energy produced: 6.77
+eshkol 2: chosen locations: [4, 606, 250, 143, 692, 283, 543, ] total energy produced: 7.16
+eshkol 3: chosen locations: [574, 602, 506, ] total energy produced: 11.73
+eshkol 4: chosen locations: [642, 517, 8, 265, 399, 529, 147, 534, 660, 154, 29, 679, 306, 311, 442, 83, 601, 730, 604, 737, 107, 108, 109, 370, 638, ] total energy produced: 10.59
+eshkol 5: chosen locations: [128, 257, 637, 681, 584, 474, 618, ] total energy produced: 13.58
+eshkol 6: chosen locations: [61, 697, ] total energy produced: 20.56
+eshkol 7: chosen locations: [521, 27, 74, 672, 711, 233, 254, 365, 393, 443, ] total energy produced: 23.61
+eshkol 8: chosen locations: [28, 69, 611, 118, 664, 666, 156, 676, 175, 178, 696, 698, 199, 226, 230, 252, 271, 284, 291, 300, 318, 401, 496, ] total energy produced: 27.28
+eshkol 9: chosen locations: [21, 33, 546, 564, 575, 79, 84, 91, 94, 615, 629, 136, 164, 172, 180, 181, 184, 191, 702, 217, 742, 234, 236, 239, 285, 286, 327, 329, 347, 368, 411, 434, 438, 447, ] total energy produced: 40.54
 
 
 Sum of y[i]: 161.82
