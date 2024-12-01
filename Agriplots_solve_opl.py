@@ -8,7 +8,17 @@ from tkinter import filedialog
 from tkinter import ttk
 import os
 
-from choose_files_for_model import *
+from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, PatternFill, Font
+from openpyxl.utils import get_column_letter
+
+
+# from choose_files_for_model import *
+from choosing_parameters_interface import *
+
+
+
+
 
 
 def create_yeshuvim_with_locations(df_):
@@ -193,6 +203,8 @@ def write_dat_file(dat_file, data, params):
             f.write(f"{locations},\n")
         f.write("];")
 
+
+# ORIGINAL FUNCTION
 def solve_opl_model(mod_file, dat_file, output_file=None):
     oplrun_path = "oplrun"
     if not shutil.which(oplrun_path):
@@ -226,6 +238,66 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
+
+# def solve_opl_model(mod_file, dat_file, output_file=None, time_limit=600, mip_gap=0.01):
+#     oplrun_path = "oplrun"
+#     if not shutil.which(oplrun_path):
+#         print(f"{oplrun_path} not found in PATH. Make sure CPLEX Optimization Studio is installed and oplrun is in the PATH.")
+#         return
+
+#     # Create a temporary .ops file for solver settings
+#     ops_file_content = f"""
+#     execute {{
+#         cplex.tilim = {time_limit};  // Time limit in seconds
+#         cplex.tolerances.mipgap = {mip_gap};  // MIP optimality gap
+#     }};
+#     """
+
+#     ops_file = "temp.ops"
+#     with open(ops_file, "w") as f:
+#         f.write(ops_file_content)
+
+#     # Add the .ops file to the command
+#     command = [oplrun_path, mod_file, dat_file, ops_file]
+
+#     try:
+#         result = subprocess.run(command, capture_output=True, text=True)
+#         if output_file:
+#             with open(output_file, 'w') as f:
+#                 if result.returncode == 0:
+#                     f.write("Solution found:\n")
+#                     f.write(result.stdout)
+#                 else:
+#                     f.write("Error in solving the model:\n")
+#                     f.write("Return code: " + str(result.returncode) + "\n")
+#                     f.write("Standard Output: " + result.stdout + "\n")
+#                     f.write("Standard Error: " + result.stderr + "\n")
+#             print(f"Output saved to {output_file}")
+#         else:
+#             if result.returncode == 0:
+#                 print("Solution found:")
+#                 print(result.stdout)
+#             else:
+#                 print("Error in solving the model:")
+#                 print("Return code:", result.returncode)
+#                 print("Standard Output:", result.stdout)
+#                 print("Standard Error:", result.stderr)
+#         return result.stdout
+#     except Exception as e:
+#         print(f"Error running oplrun: {e}")
+#     finally:
+#         # Clean up the temporary .ops file
+#         try:
+#             os.remove(ops_file)
+#         except Exception as e:
+#             print(f"Error cleaning up ops file: {e}")
+
+
+
+
+
+
+
 def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
     influence_on_crops_data = pd.read_excel(synthetic_values_of_influence_on_crops_path)
@@ -256,23 +328,68 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
 
 def raw_output_to_df(opl_raw_output_):
     # parsing the result output to extract the required values
-    output_results_for_excel = ""  # Variable to store multiple lines of output
-    capture_excel_output = False  # Flag to start capturing excel output
+    main_results = pd.DataFrame()
+    locations_with_installed_PVs = ""  # Variable to store multiple lines of output
+    energy_produced_per_eshkol = ""  # Variable to store multiple lines of output
+    capture_main_results = False
+    capture_locations_with_installed_PVs_results = False  # Flag to start capturing excel output
+    capture_energy_produced_per_eshkol_results = False  # Flag to start capturing excel output
+
     for line in opl_raw_output_.splitlines():
         # Detect the start of the excel output block
         if "Results for excel output file:" in line:
-            capture_excel_output = True  # Start capturing from the next line
+            # print("in first condition")
+            capture_main_results = True  # Start capturing from the next line
             continue  # Skip the current line
-        
-        # Capture subsequent lines after the keyword is detected
-        if capture_excel_output:
-            if line.strip() == "":  # Stop capturing when we hit an empty line (or define another end condition)
-                break
-            output_results_for_excel += line + "\n"  # Append the line to the result string
 
-    output_results_for_excel = output_results_for_excel.strip()
-    output_results_for_excel = output_results_for_excel.split("\n")  # Splitting at the \n delimiter
-    df_results = model_results_to_df(output_results_for_excel)
+
+        if "Locations with installed PV's:" in line:
+            # print("in second condition")
+            capture_main_results = False
+            capture_locations_with_installed_PVs_results = True
+            continue
+
+
+        if capture_main_results:
+            # print("in third condition")
+            if line.strip() == "Locations with installed PV's:":  # Stop capturing when we hit an empty line (or define another end condition)
+                capture_locations_with_installed_PVs_results = False
+                capture_energy_produced_per_eshkol_results = True
+                continue
+            splitted_line = line.strip().split(": ")
+            metric, value = splitted_line 
+            main_results[metric] = [value]
+        
+    
+        
+        if capture_locations_with_installed_PVs_results:
+            # print("in third condition")
+            if line.strip() == "Energy produced per Eshkol:":  # Stop capturing when we hit an empty line (or define another end condition)
+                capture_locations_with_installed_PVs_results = False
+                capture_energy_produced_per_eshkol_results = True
+                continue
+            locations_with_installed_PVs += line + "\n"  # Append the line to the result string
+
+        # Capture subsequent lines after the keyword is detected
+        if capture_energy_produced_per_eshkol_results:
+            # print("in fourth condition")
+            if line.strip() == "End of Results for excel output file":  # Stop capturing when we hit an empty line (or define another end condition)
+                break
+            energy_produced_per_eshkol += line + "\n"  # Append the line to the result string
+
+    locations_with_installed_PVs = locations_with_installed_PVs.strip()
+    locations_with_installed_PVs = locations_with_installed_PVs.split("\n")  # Splitting at the \n delimiter
+
+    energy_produced_per_eshkol = energy_produced_per_eshkol.strip()
+    energy_produced_per_eshkol = energy_produced_per_eshkol.split("\n")  # Splitting at the \n delimiter
+
+    locations_with_installed_PVs_results = model_results_to_df(locations_with_installed_PVs)
+    energy_produced_per_eshkol_results = model_results_to_df(energy_produced_per_eshkol)
+    print("locations_with_installed_PVs_results:\n",locations_with_installed_PVs_results)
+    print("energy_produced_per_eshkol_results:\n",energy_produced_per_eshkol_results)
+
+    print("main_results:\n", main_results)
+    df_results = [main_results, locations_with_installed_PVs_results, energy_produced_per_eshkol_results]
     # Return the captured results, including the excel output block
     return df_results
 
@@ -285,17 +402,213 @@ def model_results_to_df(excel_output_results):
     df_results = pd.DataFrame(rows, columns = column_names)
     return df_results
 
-def output_opl_results_to_excel(df_input, df_opl_results, output_path):
-    relevant_columns_from_input = ["location_id", "OBJECTID", "YeshuvName", "Machoz", "eshkol", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
+def output_opl_results_to_excel(df_input, df_opl_results, model_params, output_path):
+    main_results_df, locations_with_installed_PVs_results, energy_produced_per_eshkol_results = df_opl_results
+
+    relevant_columns_from_input = ["location_id", "OBJECTID", "AnafSub", "YeshuvName", "Machoz", "eshkol", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
     relevant_df_from_input = df_input[relevant_columns_from_input]
     # convert "OBJECTID" and "Location" column to int, so the merge will be successful
     relevant_df_from_input['OBJECTID'] = relevant_df_from_input['OBJECTID'].astype('int')
-    df_opl_results['location_id'] = df_opl_results['location_id'].astype('int')
+    locations_with_installed_PVs_results['location_id'] = locations_with_installed_PVs_results['location_id'].astype('int')
+    # convert "area in dunam used" column to numeric
+    locations_with_installed_PVs_results["area in dunam used"] = pd.to_numeric(locations_with_installed_PVs_results["area in dunam used"], errors="coerce")
     # left join installed locations from result of opl model to columns from input dataset
-    results_left_joined_input_columns = pd.merge(df_opl_results, relevant_df_from_input, on="location_id", how="left")    
+    merged_data = pd.merge(locations_with_installed_PVs_results, relevant_df_from_input, on="location_id", how="left")    
     # exporting results to excel
+
+    area_used_per_machoz = merged_data[["Machoz", "area in dunam used"]].groupby("Machoz", as_index=False)["area in dunam used"].sum()
+    print("area_used_per_machoz:\n",area_used_per_machoz)
+
+    area_used_per_anafSub = merged_data[["AnafSub", "area in dunam used"]].groupby("AnafSub", as_index=False)["area in dunam used"].sum()
+    print("area_used_per_AnafSub:\n",area_used_per_anafSub)
+
+ 
+    model_params_df = pd.DataFrame([model_params])
+    print(model_params_df)
+
     print(f"Excel output saved to {output_path}")
-    results_left_joined_input_columns.to_excel(output_path)
+    merged_data.to_excel(output_path)
+
+    full_results = [main_results_df, model_params_df, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub]
+    export_full_output_to_excel(full_results)
+
+
+# Helper function to apply styling in output excel results
+def style_range(ws, start_cell, end_cell, alignment=None, fill=None, font=None):
+    for row in ws[start_cell:end_cell]:
+        for cell in row:
+            if alignment:
+                cell.alignment = alignment
+            if fill:
+                cell.fill = fill
+            if font:
+                cell.font = font
+
+
+def export_full_output_to_excel(full_results):
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+    from openpyxl import Workbook
+    import os
+
+    main_results, model_params, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub = full_results
+
+    # Create a new workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Results"
+
+    # Apply column widths
+    column_widths = [30, 30, 30, 30, 30, 30]
+    for i, width in enumerate(column_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    # Write the "Model Results" table with formatting
+    ws.append(["Model Results"])
+    style_range(
+        ws,
+        "A1", "F1",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),
+        font=Font(bold=True, size=16)
+    )
+    ws.merge_cells("A1:F1")
+    ws.row_dimensions[1].height = 30  # Increase row height for better visibility
+
+    ws.append([
+        "Total energy produced in mln", "Total area (in dunam) used",
+        "Gini Coefficient value", "Potential revenue before installing PV's",
+        "Potential revenue after installing PV's", "Percentage change in revenue"
+    ])
+    style_range(
+        ws,
+        "A2", "F2",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+    ws.row_dimensions[2].height = 40  # Adjust height for header row
+
+    for row in main_results.itertuples(index=False):
+        ws.append(row)
+
+    # Add spacing
+    ws.append([])
+
+    # Write the "Model Parameters (input)" tables
+    ws.append(["Model Parameters (input)"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"F{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),
+        font=Font(bold=True, size=16)
+    )
+    ws.merge_cells(f"A{ws.max_row}:C{ws.max_row}")
+    ws.row_dimensions[ws.max_row].height = 30  # Increase row height
+
+    ws.append([
+        "Percentage change in revenue lower bound", "Total area upper bound",
+        "Gini Coefficient upper bound"
+    ])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"F{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+    ws.row_dimensions[ws.max_row].height = 40  # Adjust height for parameter row
+
+    for row in model_params.itertuples(index=False):
+        ws.append(row)
+
+    # Add similar logic for other parameter DataFrames
+    ws.append([])
+    ws.append(["Energy produced per Eshkol"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=16)
+    )
+    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
+    ws.row_dimensions[ws.max_row].height = 25
+
+    ws.append(["Eshkol num", "Energy Produced"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+
+    for row in energy_produced_per_eshkol_results.itertuples(index=False):
+        ws.append(row)
+
+    ws.append([])
+    ws.append(["Area user per Machoz"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=16)
+    )
+    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
+    ws.row_dimensions[ws.max_row].height = 25
+
+    ws.append(["Machoz", "Area in dunam Used"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+
+    for row in area_used_per_machoz.itertuples(index=False):
+        ws.append(row)
+
+    ws.append([])
+    ws.append(["Area user per AnafSub"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=16)
+    )
+    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
+    ws.row_dimensions[ws.max_row].height = 25
+
+    ws.append(["AnafSub", "Area in dunam Used"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+
+    for row in area_used_per_anafSub.itertuples(index=False):
+        ws.append(row)
+
+    # Adjust alignment for all cells
+    for row in ws.iter_rows():
+        for cell in row:
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    # Save the file
+    full_results_output_path = "full_results.xlsx"
+    wb.save(full_results_output_path)
+    print(f"Excel output saved to {full_results_output_path}")
+
+    os.startfile(full_results_output_path)
+
+
 
 
 def main():
@@ -312,12 +625,12 @@ def main():
     start_time_code = time.time()
     # File paths and parameters
     opl_model_file, dat_file, output_file = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
-    opl_model_file = 'models/basic_model_with_gini/Agriplots_basic_with_gini.mod'
+    # opl_model_file = 'models/basic_model_with_gini/Agriplots_basic_with_gini.mod'
     #opl_model_file = 'advanced_model_with_gini_in_objective_function/Agriplots_advanced_model_with_gini_in_objective_function.mod'
     
     # Call the function to get the selected .mod file path
-    opl_model_file, dataset_path = open_file_selector()
-    #dataset_path = 'Agriplots dataset - 1000 rows.xlsx'
+    # opl_model_file, dataset_path = open_file_selector()
+    dataset_path = 'Agriplots_final - Feasible Fields.xlsx'
     
     df_dataset = pd.read_excel(dataset_path) # Read dataset from Excel
     df_dataset = remove_rows_with_missing_values(df_dataset)
@@ -342,9 +655,18 @@ def main():
     # parameters of the model
     params = {
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
-        "total_area_upper_bound": 1500.00,
+        "total_area_upper_bound": 30000.00,
         "G_max" : 0.05
+        # "G_max" : 1.00
     }
+
+
+    # user_input_params = activate_interface()
+    # params["allowed_loss_from_influence_on_crops_percentage"] = user_input_params[1]/100
+    # params["total_area_upper_bound"] = user_input_params[0]
+    #params["G_max"] = 0.05
+
+
     # get needed relevant data for running the model, in addition to the parameters (params)
     data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz)
     # write data and params to .dat file
@@ -368,13 +690,13 @@ def main():
     #print("model_results:\n", df_results)
     # output the final results to excel file
     final_results_excel_output_path = 'final_opl_results.xlsx'
-    output_opl_results_to_excel(df_dataset, df_results, final_results_excel_output_path)
+    output_opl_results_to_excel(df_dataset, df_results, params, final_results_excel_output_path)
 
     time.sleep(1)
 
     # Specify the path to your Excel file
     file_path = "final_opl_results.xlsx"
-    os.startfile(file_path)
+    #os.startfile(file_path)
 
 
 

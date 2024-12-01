@@ -34,6 +34,14 @@ dexpr float y[k in Eshkolot] = sum(i in E[k]) x[i] * fix_energy_production[i];
 dvar float z[1..num_eshkolot][1..num_eshkolot];
 
 
+// Solver settings (added at the end of the file)
+execute {
+    cplex.tilim = 3600;  // Time limit in seconds
+    cplex.epgap = 0.01;
+    //cplex.tolerances.mipgap = 0.01;  // Optimality gap
+}
+
+
 // Objective Function
 maximize sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 
@@ -80,10 +88,12 @@ subject to {
 }
 
 // Execute block to set the CPLEX time limit
-execute {
-    writeln("Setting time limit to 60 seconds");
-    cplex.tilim = 60; // Set the time limit to 60 seconds
-}
+//execute {
+  //  writeln("Setting time limit to 60 seconds");
+    //cplex.tilim = 60; // Set the time limit to 60 seconds
+//}
+
+
 
 
 
@@ -197,19 +207,38 @@ execute {
     }
   }
 
+  Gini_coefficient_value_from_model = sum_of_z/total_energy_produced_from_y
+
   writeln("\nSum of z[i][j]: ",sum_of_z)
-  writeln("inequality of wealth: Sum of z[i][j] / Sum of y[i] = ",sum_of_z/total_energy_produced_from_y)
+  writeln("inequality of wealth: Sum of z[i][j] / Sum of y[i] = ",Gini_coefficient_value_from_model)
 
 
   writeln("\nResults for excel output file:")
-  writeln("location_id,", "Energy units Produced in mln,", "influence on crops,", "area in dunam used", "machoz");
+  writeln("Total energy produced in mln: ", total_energy_produced);
+  writeln("Total area (in dunam) used: ", total_area);
+  writeln("Gini Coefficient value: ", Gini_coefficient_value_from_model);
+  writeln("Poetntial revenue before installing PV'S: ", total_potential_revenue_before_PV);
+  writeln("Poetntial revenue after installing PV'S: ", total_potential_revenue_after_PV);
+  writeln("Percentage change in revenue: ", total_potential_revenue_after_PV/total_potential_revenue_before_PV);
+
+
+  writeln("Locations with installed PV's:")
+  writeln("location_id,", "Energy units Produced in mln,", "influence on crops,", "area in dunam used");
   for (var i in fix_energy_production) {
     if (x[i] == 1) {
       writeln(i, ",", fix_energy_production[i] * x[i], ",", influence_on_crops[i] * x[i], ",", area_in_dunam[i] * x[i]);
 
    }
   }
-  writeln("")
+  writeln("Energy produced per Eshkol:")
+  writeln("Eshkol_num,", "Energy Produced");
+  for (var eshkol in Eshkolot) {
+    writeln(eshkol, ",", y[eshkol])
+  }
+ 
+
+writeln("End of Results for excel output file")
+
 
 }
 
