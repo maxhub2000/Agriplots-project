@@ -232,11 +232,11 @@ def activate_interface():
     return window.dunam_upper_bound_value, window.allowed_loss_percentage_value, window.removed_constraints
 
 
-if __name__ == "__main__":
-    user_input = activate_interface()
-    user_input_dunam_upper_bound = user_input[0]
-    user_input_allowed_loss_percentage = user_input[1]
-    removed_constraints = user_input[2]
-    print("Dunam Upper Bound:", user_input_dunam_upper_bound)
-    print("Allowed Loss Percentage:", user_input_allowed_loss_percentage)
-    print("Removed Constraints:", removed_constraints)
+# if __name__ == "__main__":
+#     user_input = activate_interface()
+#     user_input_dunam_upper_bound = user_input[0]
+#     user_input_allowed_loss_percentage = user_input[1]
+#     removed_constraints = user_input[2]
+#     print("Dunam Upper Bound:", user_input_dunam_upper_bound)
+#     print("Allowed Loss Percentage:", user_input_allowed_loss_percentage)
+#     print("Removed Constraints:", removed_constraints)
