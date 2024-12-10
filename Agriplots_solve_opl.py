@@ -13,8 +13,11 @@ from openpyxl.styles import Alignment, PatternFill, Font
 from openpyxl.utils import get_column_letter
 
 
+
+
 # from choose_files_for_model import *
 from choosing_parameters_interface import *
+from editing_mod_file import *
 
 
 
@@ -99,7 +102,7 @@ def create_eshkolot_with_locations(df_):
     D = {}
     eshkolot_lst = eshkolot_locations_df["eshkol"].unique()
     eshkolot_lst = sorted(eshkolot_lst)
-    print("eshkolot_lst",eshkolot_lst)
+    #print("eshkolot_lst",eshkolot_lst)
     for eshkol in eshkolot_lst:
         # Get all location IDs associated with the current eshkol
         location_ids = eshkolot_locations_df.loc[eshkolot_locations_df['eshkol'] == eshkol]["location_id"].tolist()
@@ -124,7 +127,7 @@ def adjust_energy_division_between_eshkolot(energy_division_between_eshkolot_, r
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
 
-def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz):
+def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset):
     fix_energy_production = df_['Energy production (fix) mln kWh/year'].tolist()
     area_in_dunam = df_['Dunam'].tolist()
     influence_on_crops = df_['Average influence of PV on crops'].tolist()
@@ -167,6 +170,7 @@ def prepare_data(df_, energy_consumption_by_yeshuv, energy_division_between_eshk
         "fix_energy_production" : fix_energy_production,
         "influence_on_crops" : influence_on_crops,
         "potential_revenue_before_PV" : potential_revenue_before_PV,
+        "total_potential_revenue_before_PV_of_full_dataset" : total_potential_revenue_before_PV_of_full_dataset,
         "area_in_dunam" : area_in_dunam,
         "yeshuvim_with_locations" : yeshuvim_with_locations,
         "num_yeshuvim" : num_yeshuvim,
@@ -203,8 +207,6 @@ def write_dat_file(dat_file, data, params):
             f.write(f"{locations},\n")
         f.write("];")
 
-
-# ORIGINAL FUNCTION
 def solve_opl_model(mod_file, dat_file, output_file=None):
     oplrun_path = "oplrun"
     if not shutil.which(oplrun_path):
@@ -238,66 +240,6 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
-
-# def solve_opl_model(mod_file, dat_file, output_file=None, time_limit=600, mip_gap=0.01):
-#     oplrun_path = "oplrun"
-#     if not shutil.which(oplrun_path):
-#         print(f"{oplrun_path} not found in PATH. Make sure CPLEX Optimization Studio is installed and oplrun is in the PATH.")
-#         return
-
-#     # Create a temporary .ops file for solver settings
-#     ops_file_content = f"""
-#     execute {{
-#         cplex.tilim = {time_limit};  // Time limit in seconds
-#         cplex.tolerances.mipgap = {mip_gap};  // MIP optimality gap
-#     }};
-#     """
-
-#     ops_file = "temp.ops"
-#     with open(ops_file, "w") as f:
-#         f.write(ops_file_content)
-
-#     # Add the .ops file to the command
-#     command = [oplrun_path, mod_file, dat_file, ops_file]
-
-#     try:
-#         result = subprocess.run(command, capture_output=True, text=True)
-#         if output_file:
-#             with open(output_file, 'w') as f:
-#                 if result.returncode == 0:
-#                     f.write("Solution found:\n")
-#                     f.write(result.stdout)
-#                 else:
-#                     f.write("Error in solving the model:\n")
-#                     f.write("Return code: " + str(result.returncode) + "\n")
-#                     f.write("Standard Output: " + result.stdout + "\n")
-#                     f.write("Standard Error: " + result.stderr + "\n")
-#             print(f"Output saved to {output_file}")
-#         else:
-#             if result.returncode == 0:
-#                 print("Solution found:")
-#                 print(result.stdout)
-#             else:
-#                 print("Error in solving the model:")
-#                 print("Return code:", result.returncode)
-#                 print("Standard Output:", result.stdout)
-#                 print("Standard Error:", result.stderr)
-#         return result.stdout
-#     except Exception as e:
-#         print(f"Error running oplrun: {e}")
-#     finally:
-#         # Clean up the temporary .ops file
-#         try:
-#             os.remove(ops_file)
-#         except Exception as e:
-#             print(f"Error cleaning up ops file: {e}")
-
-
-
-
-
-
-
 def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
     influence_on_crops_data = pd.read_excel(synthetic_values_of_influence_on_crops_path)
@@ -314,6 +256,13 @@ def remove_rows_with_missing_values(df_):
                            'Total revenue, mln NIS',
                            'Dunam'])
     return df_
+
+
+def remove_rows_with_non_feasible_locations(df_):
+    # remove rows with non feasible locations for installing PV's
+    df_ = df_[df_['Feasability to install PVs?'] != 0]
+    return df_
+
 
 def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
     # Perform a left join to add the 'eshkol' column from yeshuvim_in_eshkolot_ to df_
@@ -415,16 +364,14 @@ def output_opl_results_to_excel(df_input, df_opl_results, model_params, output_p
     # left join installed locations from result of opl model to columns from input dataset
     merged_data = pd.merge(locations_with_installed_PVs_results, relevant_df_from_input, on="location_id", how="left")    
     # exporting results to excel
-
     area_used_per_machoz = merged_data[["Machoz", "area in dunam used"]].groupby("Machoz", as_index=False)["area in dunam used"].sum()
-    print("area_used_per_machoz:\n",area_used_per_machoz)
-
+    #print("area_used_per_machoz:\n",area_used_per_machoz)
     area_used_per_anafSub = merged_data[["AnafSub", "area in dunam used"]].groupby("AnafSub", as_index=False)["area in dunam used"].sum()
-    print("area_used_per_AnafSub:\n",area_used_per_anafSub)
-
- 
+    #print("area_used_per_AnafSub:\n",area_used_per_anafSub)
+    if model_params["total_area_upper_bound"] == 1e12:
+        model_params["total_area_upper_bound"] = "No Upper Bound"
     model_params_df = pd.DataFrame([model_params])
-    print(model_params_df)
+    #print(model_params_df)
 
     print(f"Excel output saved to {output_path}")
     merged_data.to_excel(output_path)
@@ -446,10 +393,6 @@ def style_range(ws, start_cell, end_cell, alignment=None, fill=None, font=None):
 
 
 def export_full_output_to_excel(full_results):
-    from openpyxl.styles import Alignment, Font, PatternFill
-    from openpyxl.utils import get_column_letter
-    from openpyxl import Workbook
-    import os
 
     main_results, model_params, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub = full_results
 
@@ -630,10 +573,18 @@ def main():
     
     # Call the function to get the selected .mod file path
     # opl_model_file, dataset_path = open_file_selector()
-    dataset_path = 'Agriplots_final - Feasible Fields.xlsx'
+    dataset_path = 'Agriplots_final - Full data.xlsx'
+    dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
+
     
     df_dataset = pd.read_excel(dataset_path) # Read dataset from Excel
+    print("number of rows in full dataset :", len(df_dataset))
+    total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
+    print("total_potential_revenue_before_PV:",total_potential_revenue_before_PV_of_full_dataset)
     df_dataset = remove_rows_with_missing_values(df_dataset)
+    print("number of rows in dataset after removing rows with missing values:", len(df_dataset))
+    df_dataset = remove_rows_with_non_feasible_locations(df_dataset)
+    print("number of rows in dataset after removing rows with non feasible locations:", len(df_dataset))
     # modify influence on crops column based on synthetic values
     df_dataset = modify_influence_on_crops(df_dataset, 'Average influence of PV on crops - synthetic values.xlsx')
     # import energy consumptions by yeshuv and by machoz 
@@ -646,12 +597,14 @@ def main():
     energy_division_between_eshkolot = pd.read_excel('energy_division_between_eshkolot-synthetic_values.xlsx')
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
+    print("number of rows in dataset after adding eshkolot:", len(df_dataset))
+
     #print("df_dataset after adding eshkolot:\n", df_dataset)
     #df_dataset.to_excel("df_dataset_after_adding_eshkolot.xlsx")
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1 
-    print("df_dataset[location_id]\n", df_dataset["location_id"])
+    #print("df_dataset[location_id]\n", df_dataset["location_id"])
     # parameters of the model
     params = {
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
@@ -661,14 +614,51 @@ def main():
     }
 
 
-    # user_input_params = activate_interface()
-    # params["allowed_loss_from_influence_on_crops_percentage"] = user_input_params[1]/100
-    # params["total_area_upper_bound"] = user_input_params[0]
+    user_input_params = activate_interface()
+    trillion = 1e12 # float form of trillion that's also compatible with .mod and .dat files
+    if user_input_params[0]:
+        params["total_area_upper_bound"] = user_input_params[0]
+    else:
+        params["total_area_upper_bound"] = trillion # simulating infinity to show it won't be used in the model
+    params["allowed_loss_from_influence_on_crops_percentage"] = user_input_params[1]/100
+    removed_constraints = user_input_params[2]
+
+    template_file_path = "edit_mod_file/template.mod"
+    edited_file_path = "edit_mod_file/edited.mod"
+
+    constraints_to_comment_texts = {
+        "total_area_constraint" : "Constraint for an upper bound of the total area used by installed PV's",
+        "revenue_change_constraint" : "Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
+        "energy_production_per_yeshuv_constraint" : "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
+        "energy_production_per_machoz_constraint" : "Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz",
+        "name_space_gini_constraint1": "Linearized Gini coefficient constraint (only for i < j)",
+        "name_space_gini_constraint2": "Gini constraint (now summing only over i < j)",
+    }
+
+    def remove_constraints_from_model(removed_constraints, template_file_path, edited_file_path, constraints_to_comment_texts):
+        comments_in_mod_file = []
+        for removed_constraint in removed_constraints:
+            comments_in_mod_file.append(constraints_to_comment_texts[removed_constraint])
+        comment_multiple_sections_in_mod(template_file_path, edited_file_path, comments_in_mod_file)
+        print("\n")
+        print("The following constraints were removed from the model:")
+        for removed_constraint in removed_constraints:
+            print(removed_constraint)
+        print("\n")
+
+
+    remove_constraints_from_model(removed_constraints, template_file_path, edited_file_path, constraints_to_comment_texts)
+
+    time.sleep(10)
+
+    opl_model_file = edited_file_path
+
+    
     #params["G_max"] = 0.05
 
 
     # get needed relevant data for running the model, in addition to the parameters (params)
-    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz)
+    data = prepare_data(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset)
     # write data and params to .dat file
     write_dat_file(dat_file, data, params)
 
