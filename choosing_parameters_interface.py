@@ -7,12 +7,12 @@ dunam_upper_bound, allowed_loss_percentage = 0, 0
 
 
 class LinearProgrammingInterface(QWidget):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.init_ui()
         self.resize(800, 300)
 
-    def init_ui(self):
+    def init_ui(self) -> None:
         screen_geometry = QGuiApplication.primaryScreen().geometry()
         self.setGeometry(0, 0, screen_geometry.width(), screen_geometry.height())
         self.setWindowTitle("Choose Your Agriplots Model")
@@ -43,7 +43,7 @@ class LinearProgrammingInterface(QWidget):
 
         # Add each constraint with indicative names
         self.add_constraint("Total Area PV Installations ≤", "Dunam", True, name="total_area_constraint")
-        self.add_constraint("Percentage Change in Revenue ≤", "%", True, can_remove=False, name="revenue_change_constraint")
+        self.add_constraint("Percentage Change in Revenue ≥", "%", True, can_remove=False, name="revenue_change_constraint")
         self.add_constraint("Total Energy Production of yeshuv ≤ <b>Total Energy Consumption of yeshuv</b>", "", False, name="energy_production_per_yeshuv_constraint")
         self.add_constraint("Total Energy Production of machoz ≤ <b>Total Energy Consumption of machoz</b>", "", False, name="energy_production_per_machoz_constraint", default_removed=True)
 
