@@ -12,10 +12,27 @@ from typing import List, Dict, Optional, Callable, Union
 from utils import measure_time
 
 
-
-
 @measure_time
-def prepare_data_for_model(df_, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset):
+def prepare_data_for_model(
+    df_: pd.DataFrame,
+    energy_consumption_by_yeshuv: pd.DataFrame,
+    energy_division_between_eshkolot: pd.DataFrame,
+    energy_consumption_by_machoz: pd.DataFrame,
+    total_potential_revenue_before_PV_of_full_dataset: float
+) -> Dict[str, Union[List[float], int, float, Dict[str, set[int]]]]:
+    """
+    Prepare data for the optimization model.
+
+    Args:
+        df_ (pd.DataFrame): input data: df_dataset.
+        energy_consumption_by_yeshuv (pd.DataFrame): Yeshuv energy consumption data.
+        energy_division_between_eshkolot (pd.DataFrame): Eshkol energy division data.
+        energy_consumption_by_machoz (pd.DataFrame): Machoz energy consumption data.
+        total_potential_revenue_before_PV_of_full_dataset (float): Total potential revenue before PV installation.
+
+    Returns:
+        Dict[str, Union[List[float], int, float, Dict[str, Set[int]]]]: Prepared data for the model.
+    """
     fix_energy_production = df_['Energy production (fix) mln kWh/year'].tolist()
     area_in_dunam = df_['Dunam'].tolist()
     influence_on_crops = df_['Average influence of PV on crops'].tolist()
@@ -66,6 +83,15 @@ def prepare_data_for_model(df_, energy_consumption_by_yeshuv, energy_division_be
     }
 
 def create_yeshuvim_with_locations(df_: pd.DataFrame) -> Dict[str, set]:
+    """
+    Create a mapping of Yeshuv names to their associated location IDs.
+    
+    Args:
+        df_ (pd.DataFrame): DataFrame containing 'location_id' and 'YeshuvName' columns.
+    
+    Returns:
+        Dict[str, set]: Mapping of Yeshuv names to sets of location IDs.
+    """
     yeshuvim_locations_df = df_[['location_id', 'YeshuvName']]
     D = {}
     for YeshuvName in yeshuvim_locations_df["YeshuvName"].unique():
@@ -77,10 +103,22 @@ def create_yeshuvim_with_locations(df_: pd.DataFrame) -> Dict[str, set]:
             D[YeshuvName].update(location_ids)  # Update the set with additional location_ids if any   
     return D
   
-def adjust_energy_consumption_by_yeshuv(energy_consumption_by_yeshuv_, relevant_yeshuvim_):
+def adjust_energy_consumption_by_yeshuv(
+    energy_consumption_by_yeshuv_: pd.DataFrame, 
+    relevant_yeshuvim_: List[str]
+) -> pd.DataFrame:
+    """
+    Adjust energy consumption data to include only relevant Yeshuvim (that appears in df_dataset).
+    if yeshuv not in original energy_consumption_by_yeshuv, their yearly consumption will be 0.
+    
+    Args:
+        energy_consumption_by_yeshuv_ (pd.DataFrame): Original energy consumption DataFrame.
+        relevant_yeshuvim_ (List[str]): List of relevant Yeshuvim names.
+    
+    Returns:
+        pd.DataFrame: Adjusted energy consumption DataFrame.
+    """
     energy_consumption_by_yeshuv_ = energy_consumption_by_yeshuv_.drop(['yeshuv_symbol'], axis=1) # remove yeshuv_symbol column
-    # creating energy consumption by yeshuv for only yeshuvim in inputed df (relevant_yeshuvim_),
-    # if yeshuv not in original energy_consumption_by_yeshuv, their yearly consumption will be 0
     adjusted_df = pd.DataFrame(columns=['yeshuv_name', 'yearly energy consumption'])
     for yeshuv in relevant_yeshuvim_:
         if yeshuv in energy_consumption_by_yeshuv_["yeshuv_name"].tolist():
@@ -93,7 +131,16 @@ def adjust_energy_consumption_by_yeshuv(energy_consumption_by_yeshuv_, relevant_
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
 
-def create_machozot_with_locations(df_):
+def create_machozot_with_locations(df_: pd.DataFrame) -> Dict[str, set[int]]:
+    """
+    Create a mapping of Machoz names to their associated location IDs.
+
+    Args:
+        df_ (pd.DataFrame): DataFrame containing 'location_id' and 'Machoz' columns.
+
+    Returns:
+        Dict[str, Set[int]]: Mapping of Machoz names to sets of location IDs.
+    """
     machozot_locations_df = df_[['location_id', 'Machoz']]
     D = {}
     for Machoz in machozot_locations_df["Machoz"].unique():
@@ -105,9 +152,21 @@ def create_machozot_with_locations(df_):
             D[Machoz].update(location_ids)  # Update the set with additional location_ids if any   
     return D
 
-def adjust_energy_consumption_by_machoz(energy_consumption_by_machoz_, relevant_machozot_):
-    # creating energy consumption by machoz for only machozot in inputed df (relevant_machozot_),
-    # if machoz not in original energy_consumption_by_machoz, their yearly consumption will be 0
+def adjust_energy_consumption_by_machoz(
+    energy_consumption_by_machoz_: pd.DataFrame, 
+    relevant_machozot_: List[str]
+) -> pd.DataFrame:
+    """
+    Adjust energy consumption data to include only relevant machozot (that appears in df_dataset).
+    if machoz not in original energy_consumption_by_machoz, their yearly consumption will be 0.
+
+    Args:
+        energy_consumption_by_machoz_ (pd.DataFrame): Original energy consumption DataFrame.
+        relevant_machozot_ (List[str]): List of relevant Machozot names.
+
+    Returns:
+        pd.DataFrame: Adjusted energy consumption DataFrame.
+    """
     adjusted_df = pd.DataFrame(columns=['machoz', 'yearly energy consumption'])
     for machoz in relevant_machozot_:
         if machoz in energy_consumption_by_machoz_["machoz"].tolist():
@@ -122,7 +181,16 @@ def adjust_energy_consumption_by_machoz(energy_consumption_by_machoz_, relevant_
 
 
 
-def create_eshkolot_with_locations(df_):
+def create_eshkolot_with_locations(df_: pd.DataFrame) -> Dict[str, set[int]]:
+    """
+    Create a mapping of Eshkol numbers to their associated location IDs.
+
+    Args:
+        df_ (pd.DataFrame): DataFrame containing 'location_id' and 'eshkol' columns.
+
+    Returns:
+        Dict[str, set[int]]: Mapping of Eshkol numbers to sets of location IDs.
+    """
     eshkolot_locations_df = df_[['location_id', 'eshkol']]
     D = {}
     eshkolot_lst = eshkolot_locations_df["eshkol"].unique()
@@ -137,9 +205,21 @@ def create_eshkolot_with_locations(df_):
             D[eshkol].update(location_ids)  # Update the set with additional location_ids if any   
     return D
 
-def adjust_energy_division_between_eshkolot(energy_division_between_eshkolot_, relevant_eshkolot_):
-    # creating energy division between eshkolot for only eshkolot in inputed df (relevant_eshkolot_),
-    # if eshkol not in original energy_division_between_eshkolot_, their percentage_of_energy_output will be 0
+def adjust_energy_division_between_eshkolot(
+    energy_division_between_eshkolot_: pd.DataFrame, 
+    relevant_eshkolot_: List[str]
+) -> pd.DataFrame:
+    """
+    Adjust energy division data to include only relevant Eshkolot(that appears in df_dataset).
+    if eshkol not in original energy_division_between_eshkolot_, their percentage_of_energy_output will be 0.
+
+    Args:
+        energy_division_between_eshkolot_ (pd.DataFrame): Original energy division DataFrame.
+        relevant_eshkolot_ (List[str]): List of relevant Eshkol numbers.
+
+    Returns:
+        pd.DataFrame: Adjusted energy division DataFrame.
+    """
     adjusted_df = pd.DataFrame(columns=['eshkol', 'percentage_of_energy_output'])
     for eshkol in relevant_eshkolot_:
         if eshkol in energy_division_between_eshkolot_["eshkol"].tolist():

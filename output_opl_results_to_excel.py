@@ -139,7 +139,7 @@ def output_final_results_to_excel(full_results, final_results_output_path):
         ws.append(row)
 
     ws.append([])
-    ws.append(["Area user per Machoz"])
+    ws.append(["Area used per Machoz"])
     style_range(
         ws,
         f"A{ws.max_row}", f"B{ws.max_row}",
@@ -163,7 +163,7 @@ def output_final_results_to_excel(full_results, final_results_output_path):
         ws.append(row)
 
     ws.append([])
-    ws.append(["Area user per AnafSub"])
+    ws.append(["Area used per AnafSub"])
     style_range(
         ws,
         f"A{ws.max_row}", f"B{ws.max_row}",

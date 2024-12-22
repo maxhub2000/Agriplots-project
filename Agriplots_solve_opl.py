@@ -13,13 +13,8 @@ from choosing_parameters_interface import activate_interface
 from remove_constraints_from_model import remove_constraints_from_model
 from output_opl_results_to_excel import output_opl_results_to_excel
 from prepare_data_for_model import prepare_data_for_model
-from utils import measure_time
+from utils import measure_time, track_row_changes
 
-
-
-
-
-@measure_time 
 def write_dat_file(dat_file, data, params):
     yeshuvim_with_locations = data.pop("yeshuvim_with_locations")
     machozot_with_locations = data.pop("machozot_with_locations")
@@ -87,7 +82,7 @@ def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
     df_["Average influence of PV on crops"] = modified_influence_on_crops
     return df_
 
-@measure_time 
+@track_row_changes
 def remove_rows_with_missing_values(df_):
     # remove rows with nan values (Ideally should find a better way to handle those nan values later on)
     df_ = df_.dropna(subset=['Energy production (fix) mln kWh/year',
@@ -96,13 +91,14 @@ def remove_rows_with_missing_values(df_):
                            'Dunam'])
     return df_
 
-@measure_time 
+@track_row_changes
 def remove_rows_with_non_feasible_locations(df_):
     # remove rows with non feasible locations for installing PV's
     df_ = df_[df_['Feasability to install PVs?'] != 0]
     return df_
 
-
+@measure_time
+@track_row_changes
 def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
     # Perform a left join to add the 'eshkol' column from yeshuvim_in_eshkolot_ to df_
     df_ = pd.merge(df_, yeshuvim_in_eshkolot_, on='YeshuvName', how='left')
@@ -115,7 +111,6 @@ def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
     df_ = df_[df_['eshkol'] != -1]
     return df_
 
-@measure_time
 def raw_output_to_df(opl_raw_output_):
     # parsing the result output to extract the required values
     main_results = pd.DataFrame()
@@ -168,7 +163,6 @@ def raw_output_to_df(opl_raw_output_):
     # Return the captured results, including the excel output block
     return df_results
 
-@measure_time
 def model_results_to_df(excel_output_results):
     # Split the first element to get the column names
     column_names = excel_output_results[0].split(',')
@@ -177,7 +171,6 @@ def model_results_to_df(excel_output_results):
     # Create a pandas DataFrame using the rows and columns
     df_results = pd.DataFrame(rows, columns = column_names)
     return df_results
-
 
 def assign_different_yeshuv_names(df_, new_yeshuv_names_path):
     new_yeshuv_names = pd.read_excel(new_yeshuv_names_path)
@@ -196,7 +189,7 @@ def main():
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     dataset_path = 'Agriplots_final - Full data.xlsx'
-    dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
+    # dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
     influence_on_crops_synthetic_values_path = 'Average influence of PV on crops - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = "energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx"
@@ -217,15 +210,11 @@ def main():
     df_dataset = pd.read_excel(dataset_path) # Read dataset from Excel
     elapsed_time = time.time() - load_df_dataset_start_time
     print(f"loading df_dataset took {elapsed_time:.2f} seconds")
-
-    
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
     total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
     df_dataset = remove_rows_with_missing_values(df_dataset)
-    print("number of rows in dataset after removing rows with missing values:", len(df_dataset))
     df_dataset = remove_rows_with_non_feasible_locations(df_dataset)
-    print("number of rows in dataset after removing rows with non feasible locations:", len(df_dataset))
     print("number of yeshuvim after removing some rows from dataset:",df_dataset["YeshuvName"].nunique())
     # modify influence on crops column based on synthetic values
     df_dataset = modify_influence_on_crops(df_dataset, influence_on_crops_synthetic_values_path)
@@ -240,13 +229,12 @@ def main():
     energy_division_between_eshkolot = pd.read_excel(energy_division_between_eshkolot_path)
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
-    print("number of rows in dataset after adding eshkolot:", len(df_dataset))
     print("number of yeshuvim after adding eshkolot:",df_dataset["YeshuvName"].nunique())
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1 
     
-    is_user_interface = True
+    is_user_interface = False
     if is_user_interface:
         user_input_params = activate_interface()
         trillion = 1e12 # float form of trillion that's also compatible with .mod and .dat files
