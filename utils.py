@@ -39,9 +39,6 @@ def sort_df_by_list_order(df_, list_order, column_name):
     df_sorted = df_.sort_values(column_name).reset_index(drop=True)
     return df_sorted
 
-
-
-
 def track_row_changes(func):
     """
     Decorator to track how many rows are removed and how many rows are left

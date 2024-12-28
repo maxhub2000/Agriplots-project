@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, PatternFill, Font
 from openpyxl.utils import get_column_letter
@@ -34,12 +33,6 @@ def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_re
     print(f"installation decisions results saved to {installation_decisions_output_path}")
     merged_data.to_excel(installation_decisions_output_path)
     return merged_data
-
-
-
-
-
-
 
 def output_final_results_to_excel(full_results, final_results_output_path):
     main_results, model_params, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub = full_results
@@ -196,8 +189,6 @@ def output_final_results_to_excel(full_results, final_results_output_path):
     wb.save(final_results_output_path)
     print(f"final results saved to {final_results_output_path}")
     os.startfile(final_results_output_path)
-
-
 
 # Helper function to apply styling in output excel results
 def style_range(ws, start_cell, end_cell, alignment=None, fill=None, font=None):

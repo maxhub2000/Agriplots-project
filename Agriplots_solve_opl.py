@@ -2,11 +2,6 @@ import subprocess
 import shutil
 import pandas as pd
 import time
-
-import tkinter as tk
-from tkinter import filedialog
-from tkinter import ttk
-import os
 from typing import List, Dict, Optional, Callable, Union
 
 from choosing_parameters_interface import activate_interface
@@ -73,9 +68,8 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
-def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
+def modify_influence_on_crops(df_, influence_on_crops_data):
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
-    influence_on_crops_data = pd.read_excel(synthetic_values_of_influence_on_crops_path)
     influence_on_crops_dict = influence_on_crops_data.set_index("AnafSub")["Average influence"].to_dict()
     # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
     modified_influence_on_crops = df_['AnafSub'].map(influence_on_crops_dict).tolist()
@@ -86,8 +80,6 @@ def modify_influence_on_crops(df_, synthetic_values_of_influence_on_crops_path):
 def remove_rows_with_missing_values(df_):
     # remove rows with nan values (Ideally should find a better way to handle those nan values later on)
     df_ = df_.dropna(subset=['Energy production (fix) mln kWh/year',
-                           'Average influence of PV on crops',
-                           'Total revenue, mln NIS',
                            'Dunam'])
     return df_
 
@@ -182,14 +174,31 @@ def assign_different_yeshuv_names(df_, new_yeshuv_names_path):
     print("number of yeshuvim after assigning different names to yeshuvim:",df_["YeshuvName"].nunique())
     return df_
 
+def load_dataset(dataset_path_, sheet_name = None):
+    if not sheet_name:
+        loaded_dataset = pd.read_excel(dataset_path_)
+    else:
+        loaded_dataset = pd.read_excel(dataset_path_, sheet_name = sheet_name)
+    return loaded_dataset
+
+def test_model(testing_data_and_parameters_path):
+    df_dataset = pd.read_excel(testing_data_and_parameters_path, sheet_name="data")
+    influence_on_crops_data = pd.read_excel(testing_data_and_parameters_path, sheet_name="Influence on crops")
+    params = pd.read_excel(testing_data_and_parameters_path, sheet_name="parameters")
+    params.columns = ['allowed_loss_from_influence_on_crops_percentage', 'total_area_upper_bound', 'G_max']
+    # convert params to dict so it will be the same type as the params in the main() function
+    params = params.to_dict(orient='records')[0]
+    return df_dataset, influence_on_crops_data, params
 
 
 @measure_time 
 def main():
+    USER_INTERFACE = False
+    TESTING_MODE = True
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     dataset_path = 'Agriplots_final - Full data.xlsx'
-    # dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
+    dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
     influence_on_crops_synthetic_values_path = 'Average influence of PV on crops - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = "energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx"
@@ -198,6 +207,7 @@ def main():
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values.xlsx'
     installation_decisions_output_path = 'installation_decisions_results.xlsx'
     final_results_output_path = 'final_results.xlsx'
+    testing_data_and_parameters_path = 'model_testing_data_and_parameters.xlsx'
     # parameters of the model
     params = {
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
@@ -206,10 +216,14 @@ def main():
         # "G_max" : 1.00
     }
 
-    load_df_dataset_start_time = time.time()
-    df_dataset = pd.read_excel(dataset_path) # Read dataset from Excel
-    elapsed_time = time.time() - load_df_dataset_start_time
-    print(f"loading df_dataset took {elapsed_time:.2f} seconds")
+    if TESTING_MODE:
+        df_dataset, influence_on_crops_data, params = test_model(testing_data_and_parameters_path)
+    else:
+        load_df_dataset_start_time = time.time()
+        df_dataset = pd.read_excel(dataset_path) # Read dataset from Excel
+        elapsed_time = time.time() - load_df_dataset_start_time
+        print(f"loading df_dataset took {elapsed_time:.2f} seconds")
+        influence_on_crops_data = pd.read_excel(influence_on_crops_synthetic_values_path)
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
     total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
@@ -217,7 +231,7 @@ def main():
     df_dataset = remove_rows_with_non_feasible_locations(df_dataset)
     print("number of yeshuvim after removing some rows from dataset:",df_dataset["YeshuvName"].nunique())
     # modify influence on crops column based on synthetic values
-    df_dataset = modify_influence_on_crops(df_dataset, influence_on_crops_synthetic_values_path)
+    df_dataset = modify_influence_on_crops(df_dataset, influence_on_crops_data)
     # import energy consumptions by yeshuv and by machoz 
     energy_consumption_by_yeshuv = pd.read_excel(energy_consumption_by_yeshuv_path)
     energy_consumption_by_machoz = pd.read_excel(energy_consumption_by_machoz_path, sheet_name = "energy consumption by machoz")
@@ -234,8 +248,7 @@ def main():
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1 
     
-    is_user_interface = False
-    if is_user_interface:
+    if USER_INTERFACE:
         user_input_params = activate_interface()
         trillion = 1e12 # float form of trillion that's also compatible with .mod and .dat files
         if user_input_params[0]:

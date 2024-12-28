@@ -1,16 +1,6 @@
-import subprocess
-import shutil
 import pandas as pd
-import time
-
-import tkinter as tk
-from tkinter import filedialog
-from tkinter import ttk
-import os
 from typing import List, Dict, Optional, Callable, Union
-
 from utils import measure_time
-
 
 @measure_time
 def prepare_data_for_model(
@@ -178,8 +168,6 @@ def adjust_energy_consumption_by_machoz(
             row = {'machoz': machoz, 'yearly energy consumption': 0.00}
             adjusted_df = adjusted_df.append(row, ignore_index = True)
     return adjusted_df
-
-
 
 def create_eshkolot_with_locations(df_: pd.DataFrame) -> Dict[str, set[int]]:
     """

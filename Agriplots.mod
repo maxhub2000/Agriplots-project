@@ -6,6 +6,7 @@ int num_eshkolot = ...;
 float allowed_loss_from_influence_on_crops_percentage = ...;
 float total_area_upper_bound = ...;
 float G_max = ...;
+float total_potential_revenue_before_PV_of_full_dataset = ...;
 float fix_energy_production[1..num_locations] = ...;
 float influence_on_crops[1..num_locations] = ...;
 float potential_revenue_before_PV[1..num_locations] = ...;
@@ -30,6 +31,7 @@ float energy_division_between_eshkolot[Eshkolot] = ...;
 
 // Decision Variables
 dvar boolean x[1..num_locations]; // binary (boolean) decision variables
+//dvar float+ x[1..num_locations]; // float decision variables (0 <= x[i] <= 1)
 dexpr float y[k in Eshkolot] = sum(i in E[k]) x[i] * fix_energy_production[i];
 dvar float z[1..num_eshkolot][1..num_eshkolot];
 
@@ -52,7 +54,7 @@ subject to {
     sum(i in 1..num_locations) (x[i] * area_in_dunam[i]) <= total_area_upper_bound;
 	    
     // Constraint for the revenue change in percentage as a result of installing the PV’s and influencing the crops, lower bounded by an inputed threshold
-    sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i]) >= allowed_loss_from_influence_on_crops_percentage * sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i]);
+    total_potential_revenue_before_PV_of_full_dataset + sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i] - x[i] * potential_revenue_before_PV[i]) >= allowed_loss_from_influence_on_crops_percentage * total_potential_revenue_before_PV_of_full_dataset;
 
     // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
     forall (j in Yeshuvim) {
@@ -85,6 +87,10 @@ subject to {
     */
 
 
+    // Constraint that limits the value of x[i] to be less or equal than 1
+    forall(i in 1..num_locations) 
+        x[i] <= 1;                  
+
 }
 
 // Execute block to set the CPLEX time limit
@@ -98,6 +104,17 @@ subject to {
 
 
 execute {
+  /*
+  writeln("Decision variable values:")
+  for (var i in fix_energy_production) {
+    var dec_variable_str = "x[" + i +"] = " + x[i]
+    if (!(x[i] != 1 && x[i] != 0)){
+      dec_variable_str += "Non-Binary value";
+    }
+    writeln(dec_variable_str);
+  }
+  */
+
   var total_energy_produced = 0;
   for (var i in fix_energy_production) {
     total_energy_produced += fix_energy_production[i] * x[i];
@@ -112,17 +129,21 @@ execute {
   var number_of_installed_PV = 0;
   var Overall_total_revenue = 0;
   var total_area = 0;
-  var total_potential_revenue_before_PV = 0
-  var total_potential_revenue_after_PV = 0
+  var total_potential_revenue_before_PV_for_included_locations = 0
+  var total_potential_revenue_after_PV_for_included_locations = 0
+  var num_of_non_binary_dec_variables = 0;
   writeln("Installation decisions:");
   for (var i in fix_energy_production) {
-    if (x[i] == 1) {
-      writeln("Location ", i, ": ", fix_energy_production[i] * x[i], " mln Energy units Produced, area_in_dunam used: ", area_in_dunam[i], ", potential revenue before PV: ", potential_revenue_before_PV[i], ", potential revenue after PV: ", potential_revenue_before_PV[i] * influence_on_crops[i]);
+    if (x[i] > 0) {
+      writeln("Location ", i, ": ", fix_energy_production[i] * x[i], " mln Energy units Produced, area_in_dunam used: ", area_in_dunam[i], ", potential revenue before PV: ", potential_revenue_before_PV[i], ", potential revenue after PV: ", potential_revenue_before_PV[i] * influence_on_crops[i], " x[",i,"] = ", x[i]);
       total_energy_produced += fix_energy_production[i] * x[i]
       number_of_installed_PV += 1
       total_area += area_in_dunam[i]
-      total_potential_revenue_before_PV += potential_revenue_before_PV[i]
-      total_potential_revenue_after_PV += potential_revenue_before_PV[i] * influence_on_crops[i]
+      total_potential_revenue_before_PV_for_included_locations += potential_revenue_before_PV[i]
+      total_potential_revenue_after_PV_for_included_locations += potential_revenue_before_PV[i] * influence_on_crops[i]
+      if (x[i] != 1){
+        num_of_non_binary_dec_variables +=1
+      }
 
 
 	 }
@@ -131,8 +152,19 @@ execute {
   writeln("Total energy produced: ", total_energy_produced);
   writeln("Number of installed PV's: ", number_of_installed_PV);
   writeln("total area (in dunam) used: ", total_area);
-  writeln("total poetntial revenue before installing PV'S for locations included: ", total_potential_revenue_before_PV);
-  writeln("total poetntial revenue after installing PV's for locations included, as a result of influence on crops: ", total_potential_revenue_after_PV);
+  writeln("total poetntial revenue before installing PV'S for locations included: ", total_potential_revenue_before_PV_for_included_locations);
+  writeln("total poetntial revenue after installing PV's for locations included, as a result of influence on crops: ", total_potential_revenue_after_PV_for_included_locations);
+  writeln("Number of Non-Binary decision variables: ", num_of_non_binary_dec_variables);
+
+
+  var total_potential_revenue_before_PV = total_potential_revenue_before_PV_of_full_dataset
+
+  var xi_ci_ri = total_potential_revenue_after_PV_for_included_locations
+  var xi_ri = total_potential_revenue_before_PV_for_included_locations
+  var r_i = total_potential_revenue_before_PV_of_full_dataset
+  writeln("xi_ci_ri: ", xi_ci_ri, "xi_ri: ", xi_ri, "r_i: ", r_i);
+  var total_potential_revenue_after_PV = xi_ci_ri + r_i - xi_ri
+
 
 
   writeln("\nEnergy produced by yeshuv: ")
