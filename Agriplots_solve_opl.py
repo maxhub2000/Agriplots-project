@@ -190,11 +190,67 @@ def test_model(testing_data_and_parameters_path):
     params = params.to_dict(orient='records')[0]
     return df_dataset, influence_on_crops_data, params
 
+def set_decision_variable_type(file_path, model_type):
+    """
+    Modify a .mod file based on the model_type argument.
+
+    Args:
+        file_path (str): The path to the .mod file.
+        model_type (str): Either "binary decision variables" or "continuous decision variables".
+
+    Raises:
+        ValueError: If the model_type is not valid.
+    """
+    # Define the mappings for replacement based on model_type
+    replacements = {
+        "binary decision variables": (
+            "dvar float+ x[1..num_locations]; // float decision variables (0 <= x[i] <= 1)",
+            "dvar boolean x[1..num_locations]; // binary (boolean) decision variables"
+        ),
+        "continuous decision variables": (
+            "dvar boolean x[1..num_locations]; // binary (boolean) decision variables",
+            "dvar float+ x[1..num_locations]; // float decision variables (0 <= x[i] <= 1)"
+        ),
+    }
+
+    if model_type not in replacements:
+        raise ValueError("Invalid model_type. Use 'binary decision variables' or 'continuous decision variables'.")
+
+    # Extract the original and replacement strings
+    original_line, replacement_line = replacements[model_type]
+
+    # Read the file content
+    try:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"The file '{file_path}' does not exist.")
+
+    # Update the file content if the original line exists
+    modified = False
+    for i, line in enumerate(lines):
+        if line.strip() == original_line:
+            lines[i] = replacement_line + "\n"
+            modified = True
+            break
+
+    # Write back to the file if modifications were made
+    if modified:
+        with open(file_path, 'w') as file:
+            file.writelines(lines)
+    else:
+        print("No matching line found. No changes were made.")
+
+
+
+
 
 @measure_time 
 def main():
     USER_INTERFACE = False
-    TESTING_MODE = True
+    TESTING_MODE = False
+    MODEL_TYPE = "binary decision variables" # can either be "binary decision variables" or continuous decision variables"
+    set_decision_variable_type('Agriplots.mod', MODEL_TYPE)
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     dataset_path = 'Agriplots_final - Full data.xlsx'

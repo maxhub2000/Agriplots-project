@@ -30,8 +30,7 @@ float energy_division_between_eshkolot[Eshkolot] = ...;
 {int} E[k in Eshkolot] = ...; // Load sets from .dat file
 
 // Decision Variables
-dvar boolean x[1..num_locations]; // binary (boolean) decision variables
-//dvar float+ x[1..num_locations]; // float decision variables (0 <= x[i] <= 1)
+dvar float+ x[1..num_locations]; // float decision variables (0 <= x[i] <= 1)
 dexpr float y[k in Eshkolot] = sum(i in E[k]) x[i] * fix_energy_production[i];
 dvar float z[1..num_eshkolot][1..num_eshkolot];
 
