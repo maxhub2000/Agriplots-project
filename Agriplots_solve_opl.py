@@ -68,7 +68,8 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
-def modify_influence_on_crops(df_, influence_on_crops_data):
+def modify_influence_on_crops(df_, influence_on_crops_synthetic_values_path):
+    influence_on_crops_data = load_excel(influence_on_crops_synthetic_values_path)
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
     influence_on_crops_dict = influence_on_crops_data.set_index("AnafSub")["Average influence"].to_dict()
     # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
@@ -165,7 +166,7 @@ def model_results_to_df(excel_output_results):
     return df_results
 
 def assign_different_yeshuv_names(df_, new_yeshuv_names_path):
-    new_yeshuv_names = pd.read_excel(new_yeshuv_names_path)
+    new_yeshuv_names = load_excel(new_yeshuv_names_path)
     # Create a mapping from the assignment_of_missing_yeshuv_names DataFrame
     yeshuv_name_mapping = dict(zip(new_yeshuv_names['old_yeshuv_name'], new_yeshuv_names['new_yeshuv_name']))
     # Apply the mapping to the dataset
@@ -174,21 +175,25 @@ def assign_different_yeshuv_names(df_, new_yeshuv_names_path):
     print("number of yeshuvim after assigning different names to yeshuvim:",df_["YeshuvName"].nunique())
     return df_
 
-def load_dataset(dataset_path_, sheet_name = None):
-    if not sheet_name:
-        loaded_dataset = pd.read_excel(dataset_path_)
+def load_excel(dataset_path_):
+    # if dataset_path_ is a list that includes sheet_name, read excel using sheet name
+    if isinstance(dataset_path_, list):
+        loaded_dataset = pd.read_excel(dataset_path_[0], sheet_name = dataset_path_[1])
+    # otherwise, just use the file path to read the excel
     else:
-        loaded_dataset = pd.read_excel(dataset_path_, sheet_name = sheet_name)
+        loaded_dataset = pd.read_excel(dataset_path_)
     return loaded_dataset
 
 def test_model(testing_data_and_parameters_path):
-    df_dataset = pd.read_excel(testing_data_and_parameters_path, sheet_name="data")
-    influence_on_crops_data = pd.read_excel(testing_data_and_parameters_path, sheet_name="Influence on crops")
-    params = pd.read_excel(testing_data_and_parameters_path, sheet_name="parameters")
+    dataset_path = [testing_data_and_parameters_path, "data"]
+    influence_on_crops_synthetic_values_path = [testing_data_and_parameters_path, "Influence on crops"]
+    energy_consumption_by_yeshuv_path = [testing_data_and_parameters_path, "energy consumption by yeshuv"]
+    energy_consumption_by_machoz_path = [testing_data_and_parameters_path, "energy consumption by machoz"]
+    params = load_excel([testing_data_and_parameters_path, "parameters"])
     params.columns = ['allowed_loss_from_influence_on_crops_percentage', 'total_area_upper_bound', 'G_max']
     # convert params to dict so it will be the same type as the params in the main() function
     params = params.to_dict(orient='records')[0]
-    return df_dataset, influence_on_crops_data, params
+    return dataset_path, influence_on_crops_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params
 
 def set_decision_variable_type(file_path, model_type):
     """
@@ -243,12 +248,10 @@ def set_decision_variable_type(file_path, model_type):
 
 
 
-
-
-@measure_time 
+@measure_time
 def main():
     USER_INTERFACE = False
-    TESTING_MODE = False
+    TESTING_MODE = True
     MODEL_TYPE = "binary decision variables" # can either be "binary decision variables" or continuous decision variables"
     set_decision_variable_type('Agriplots.mod', MODEL_TYPE)
     # File paths
@@ -257,13 +260,14 @@ def main():
     dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
     influence_on_crops_synthetic_values_path = 'Average influence of PV on crops - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
-    energy_consumption_by_machoz_path = "energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx"
+    energy_consumption_by_machoz_path = ["energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", "energy consumption by machoz"]
     assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names.xlsx'
     yeshuvim_in_eshkolot_path = 'yeshuvim_in_eshkolot.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values.xlsx'
     installation_decisions_output_path = 'installation_decisions_results.xlsx'
     final_results_output_path = 'final_results.xlsx'
-    testing_data_and_parameters_path = 'model_testing_data_and_parameters.xlsx'
+    # testing_data_and_parameters_path = 'model_testing_data_and_parameters.xlsx'
+    testing_data_and_parameters_path = 'sanity_check_8-infeasibility_due_to_machoz_constraint.xlsx'
     # parameters of the model
     params = {
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
@@ -273,13 +277,11 @@ def main():
     }
 
     if TESTING_MODE:
-        df_dataset, influence_on_crops_data, params = test_model(testing_data_and_parameters_path)
-    else:
-        load_df_dataset_start_time = time.time()
-        df_dataset = pd.read_excel(dataset_path) # Read dataset from Excel
-        elapsed_time = time.time() - load_df_dataset_start_time
-        print(f"loading df_dataset took {elapsed_time:.2f} seconds")
-        influence_on_crops_data = pd.read_excel(influence_on_crops_synthetic_values_path)
+        dataset_path, influence_on_crops_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params = test_model(testing_data_and_parameters_path)
+    load_df_dataset_start_time = time.time()
+    df_dataset = load_excel(dataset_path) # Read dataset from Excel
+    elapsed_time = time.time() - load_df_dataset_start_time
+    print(f"loading df_dataset took {elapsed_time:.2f} seconds")
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
     total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
@@ -287,16 +289,16 @@ def main():
     df_dataset = remove_rows_with_non_feasible_locations(df_dataset)
     print("number of yeshuvim after removing some rows from dataset:",df_dataset["YeshuvName"].nunique())
     # modify influence on crops column based on synthetic values
-    df_dataset = modify_influence_on_crops(df_dataset, influence_on_crops_data)
+    df_dataset = modify_influence_on_crops(df_dataset, influence_on_crops_synthetic_values_path)
     # import energy consumptions by yeshuv and by machoz 
-    energy_consumption_by_yeshuv = pd.read_excel(energy_consumption_by_yeshuv_path)
-    energy_consumption_by_machoz = pd.read_excel(energy_consumption_by_machoz_path, sheet_name = "energy consumption by machoz")
+    energy_consumption_by_yeshuv = load_excel(energy_consumption_by_yeshuv_path)
+    energy_consumption_by_machoz = load_excel(energy_consumption_by_machoz_path)
     # assign different names for some yeshuvim in dataset to match energy_consumption_by_yeshuv and yeshuvim_in_eshkolot dataframes
     df_dataset = assign_different_yeshuv_names(df_dataset, assignment_of_missing_yeshuv_names_path)
     # import datasets relevant for using eshkolot in the model
-    yeshuvim_in_eshkolot = pd.read_excel(yeshuvim_in_eshkolot_path)
+    yeshuvim_in_eshkolot = load_excel(yeshuvim_in_eshkolot_path)
     yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True) # rename column in the df
-    energy_division_between_eshkolot = pd.read_excel(energy_division_between_eshkolot_path)
+    energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     print("number of yeshuvim after adding eshkolot:",df_dataset["YeshuvName"].nunique())

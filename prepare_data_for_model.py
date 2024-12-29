@@ -108,7 +108,8 @@ def adjust_energy_consumption_by_yeshuv(
     Returns:
         pd.DataFrame: Adjusted energy consumption DataFrame.
     """
-    energy_consumption_by_yeshuv_ = energy_consumption_by_yeshuv_.drop(['yeshuv_symbol'], axis=1) # remove yeshuv_symbol column
+    if 'yeshuv_symbol' in energy_consumption_by_yeshuv_.columns:
+        energy_consumption_by_yeshuv_ = energy_consumption_by_yeshuv_.drop(['yeshuv_symbol'], axis=1) # remove yeshuv_symbol column
     adjusted_df = pd.DataFrame(columns=['yeshuv_name', 'yearly energy consumption'])
     for yeshuv in relevant_yeshuvim_:
         if yeshuv in energy_consumption_by_yeshuv_["yeshuv_name"].tolist():
