@@ -251,17 +251,22 @@ def set_decision_variable_type(file_path, model_type):
 @measure_time
 def main():
     USER_INTERFACE = False
-    TESTING_MODE = True
-    MODEL_TYPE = "binary decision variables" # can either be "binary decision variables" or continuous decision variables"
-    set_decision_variable_type('Agriplots.mod', MODEL_TYPE)
+    TESTING_MODE = False
+    MODEL_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
+    GINI_IN_OBJECTIVE_FUNCTION = True
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
+    if GINI_IN_OBJECTIVE_FUNCTION:
+        opl_model_file = 'Agriplots_Gini_in_objective.mod'
+    # opl_model_file = 'Agriplots_Gini_in_objective.mod' #Gini in Objective
     dataset_path = 'Agriplots_final - Full data.xlsx'
-    dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
+    dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
+    # dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
     influence_on_crops_synthetic_values_path = 'Average influence of PV on crops - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ["energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", "energy consumption by machoz"]
     assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names.xlsx'
+    assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names_mali.xlsx'
     yeshuvim_in_eshkolot_path = 'yeshuvim_in_eshkolot.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values.xlsx'
     installation_decisions_output_path = 'installation_decisions_results.xlsx'
@@ -273,7 +278,7 @@ def main():
         "allowed_loss_from_influence_on_crops_percentage": 0.9,
         "total_area_upper_bound": 30000.00,
         "G_max" : 0.05
-        # "G_max" : 1.00
+        # "G_max" : 0.075100193
     }
 
     if TESTING_MODE:
@@ -300,11 +305,13 @@ def main():
     yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True) # rename column in the df
     energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
+    df_dataset["YeshuvName"].to_excel("yeshuvim_before_adding_eshkolot.xlsx")
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
+    df_dataset["YeshuvName"].to_excel("yeshuvim_after_adding_eshkolot.xlsx")
     print("number of yeshuvim after adding eshkolot:",df_dataset["YeshuvName"].nunique())
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
-    df_dataset["location_id"] = df_dataset.index + 1 
+    df_dataset["location_id"] = df_dataset.index + 1
     
     if USER_INTERFACE:
         user_input_params = activate_interface()
@@ -334,13 +341,14 @@ def main():
     data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset)
     # write data and params to .dat file
     write_dat_file(dat_file, data, params)
-    
+
+    set_decision_variable_type(opl_model_file, MODEL_TYPE)
     # Solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, txt_output_path)
     # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
     # output the final results to excel file
-    output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path)
+    output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, MODEL_TYPE, GINI_IN_OBJECTIVE_FUNCTION)
 
 if __name__ == "__main__":
     main()
