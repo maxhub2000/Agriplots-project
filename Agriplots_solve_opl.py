@@ -324,7 +324,7 @@ def main():
     USER_INTERFACE = False
     TESTING_MODE = False
     OBJECTIVE_FUNCTION_TYPE = "multi objective" # can either be "single objective" or "multi objective"
-    DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
+    DECISION_VARIABLES_TYPE = "continuous decision variables" # can either be "binary decision variables" or "continuous decision variables"
     FULL_CONTINUOUS_MODEL = False
 
     constraints_to_comment_texts = {
@@ -336,7 +336,7 @@ def main():
             "name_space_gini_constraint2": "Gini constraint (now summing only over i < j)",
         }
     
-       # File paths
+    # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     
     opl_base_model_file_path = "edit_mod_file/Agriplots_base_model.mod"

@@ -9,14 +9,15 @@ from utils import measure_time
 
 @measure_time
 def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, installation_decisions_output_path, final_results_output_path, decision_variables_type, objective_function_type):
-    main_results_df, installed_PVs_results, energy_produced_per_eshkol_results = df_opl_results
+    main_results_df, installed_PVs_results, energy_produced_per_eshkol = df_opl_results
     installation_decisions = output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_results, installation_decisions_output_path)
+    energy_produced_per_machoz = installation_decisions[["Machoz", "Energy units Produced in mln"]].groupby("Machoz", as_index=False)["Energy units Produced in mln"].sum()
     area_used_per_machoz = installation_decisions[["Machoz", "area in dunam used"]].groupby("Machoz", as_index=False)["area in dunam used"].sum()
     area_used_per_anafSub = installation_decisions[["AnafSub", "area in dunam used"]].groupby("AnafSub", as_index=False)["area in dunam used"].sum()
     if model_params["total_area_upper_bound"] == 1e12:
         model_params["total_area_upper_bound"] = "No Upper Bound"
     model_params_df = pd.DataFrame([model_params])
-    full_results = [main_results_df, model_params_df, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub]
+    full_results = [main_results_df, model_params_df, energy_produced_per_eshkol, energy_produced_per_machoz, area_used_per_machoz, area_used_per_anafSub]
     output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type)
 
 def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_results, installation_decisions_output_path):
@@ -28,7 +29,8 @@ def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_re
     if "OBJECTID" in list(df_dataset_.columns):
         relevant_df_from_input['OBJECTID'] = relevant_df_from_input['OBJECTID'].astype('int')
     installed_PVs_results['location_id'] = installed_PVs_results['location_id'].astype('int')
-    # convert "area in dunam used" column to numeric
+    # convert "Energy units Produced in mln" and "area in dunam used" columns to numeric
+    installed_PVs_results["Energy units Produced in mln"] = pd.to_numeric(installed_PVs_results["Energy units Produced in mln"], errors="coerce")
     installed_PVs_results["area in dunam used"] = pd.to_numeric(installed_PVs_results["area in dunam used"], errors="coerce")
     # left join installed locations from result of opl model to columns from input dataset
     merged_data = pd.merge(installed_PVs_results, relevant_df_from_input, on="location_id", how="left")    
@@ -38,7 +40,7 @@ def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_re
     return merged_data
 
 def output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type):
-    main_results, model_params, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub = full_results
+    main_results, model_params, energy_produced_per_eshkol, energy_produced_per_machoz, area_used_per_machoz, area_used_per_anafSub = full_results
     if decision_variables_type == "binary decision variables":
         model_type_text = "Binary"
     else:
@@ -141,8 +143,35 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
         font=Font(bold=True, size=14)
     )
 
-    for row in energy_produced_per_eshkol_results.itertuples(index=False):
+    for row in energy_produced_per_eshkol.itertuples(index=False):
         ws.append(row)
+
+
+
+    ws.append([])
+    ws.append(["Energy produced per Machoz"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=16)
+    )
+    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
+    ws.row_dimensions[ws.max_row].height = 25
+
+    ws.append(["Machoz", "Energy Produced"])
+    style_range(
+        ws,
+        f"A{ws.max_row}", f"B{ws.max_row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+
+    for row in energy_produced_per_machoz.itertuples(index=False):
+        ws.append(row)
+
 
     ws.append([])
     ws.append(["Area used per Machoz"])
@@ -155,6 +184,8 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
     )
     ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
     ws.row_dimensions[ws.max_row].height = 25
+
+    
 
     ws.append(["Machoz", "Area in dunam Used"])
     style_range(
