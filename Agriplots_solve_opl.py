@@ -323,7 +323,7 @@ def create_copy_of_mod_file(original_file_path, new_file_path):
 def main():
     USER_INTERFACE = False
     TESTING_MODE = False
-    OBJECTIVE_FUNCTION_TYPE = "single objective" # can either be "single objective" or "multi objective"
+    OBJECTIVE_FUNCTION_TYPE = "multi objective" # can either be "single objective" or "multi objective"
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
     FULL_CONTINUOUS_MODEL = False
 
@@ -417,20 +417,8 @@ def main():
             params["total_area_upper_bound"] = trillion # simulating infinity to show it won't be used in the model
         params["allowed_loss_from_influence_on_crops_percentage"] = user_input_params[1]/100
         
-        removed_constraints = user_input_params[2]
-        template_file_path = "edit_mod_file/template.mod"
-        edited_file_path = "edit_mod_file/edited.mod"
-        constraints_to_comment_texts = {
-            "total_area_constraint" : "Constraint for an upper bound of the total area used by installed PV's",
-            "revenue_change_constraint" : "Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
-            "energy_production_per_yeshuv_constraint" : "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
-            "energy_production_per_machoz_constraint" : "Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz",
-            "name_space_gini_constraint1": "Linearized Gini coefficient constraint (only for i < j)",
-            "name_space_gini_constraint2": "Gini constraint (now summing only over i < j)",
-        }
-        remove_constraints_from_model(removed_constraints, template_file_path, edited_file_path, constraints_to_comment_texts)
-        time.sleep(10)
-        opl_model_file = edited_file_path
+        removed_constraints.extend(user_input_params[2])
+        time.sleep(5)
 
     # get needed relevant data for running the model, in addition to the parameters (params)
     data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset)
@@ -452,7 +440,7 @@ def main():
     
     resutls_for_GIS = get_results_for_GIS_tool(df_dataset, df_results, "results_for_GIS_temp.xlsx")
 
-    return resutls_for_GIS 
+    return resutls_for_GIS
 
 
 def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):

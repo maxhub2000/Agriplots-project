@@ -31,9 +31,6 @@ def comment_multiple_sections_in_mod(mod_file_path, start_texts):
     Returns:
         None
     """
-    
-    # Create a copy of the template file to edit
-    # shutil.copy(template_file, edited_file)
 
     with open(mod_file_path, 'r') as file:
         lines = file.readlines()
@@ -67,7 +64,7 @@ def comment_multiple_sections_in_mod(mod_file_path, start_texts):
             commented_lines.append(line)  # Unmodified lines
 
     # Check if any new comments were added before overwriting the file,
-    # If there were new comments, won't make any changes to the file
+    # if there were new comments, won't make any changes to the file
     if not already_commented:
         with open(mod_file_path, 'w') as file:
             file.writelines(commented_lines)
