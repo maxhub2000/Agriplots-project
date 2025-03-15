@@ -7,11 +7,11 @@ import shutil
 
 
 
-def remove_constraints_from_model(removed_constraints, template_file_path, edited_file_path, constraints_to_comment_texts):
+def remove_constraints_from_model(removed_constraints, mod_file_path, constraints_to_comment_texts):
     comments_in_mod_file = []
     for removed_constraint in removed_constraints:
         comments_in_mod_file.append(constraints_to_comment_texts[removed_constraint])
-    comment_multiple_sections_in_mod(template_file_path, edited_file_path, comments_in_mod_file)
+    comment_multiple_sections_in_mod(mod_file_path, comments_in_mod_file)
     print("\n")
     print("The following constraints were removed from the model:")
     for removed_constraint in removed_constraints:
@@ -19,14 +19,13 @@ def remove_constraints_from_model(removed_constraints, template_file_path, edite
     print("\n")
 
 
-def comment_multiple_sections_in_mod(template_file, edited_file, start_texts):
+def comment_multiple_sections_in_mod(mod_file_path, start_texts):
     """
-    Creates a copy of the template file, applies comments to multiple specified sections,
-    and saves the result in the new file. Handles both single-line and multi-line sections.
+    Applies comments to multiple specified sections and saves the changes in the given file.
+    Handles both single-line and multi-line sections.
 
     Args:
-        template_file (str): Path to the original template file.
-        edited_file (str): Path where the modified file will be saved.
+        mod_file_path (str): Path to the .mod file that's being modified.
         start_texts (List[str]): List of strings marking the beginning of sections to comment.
 
     Returns:
@@ -34,9 +33,9 @@ def comment_multiple_sections_in_mod(template_file, edited_file, start_texts):
     """
     
     # Create a copy of the template file to edit
-    shutil.copy(template_file, edited_file)
+    # shutil.copy(template_file, edited_file)
 
-    with open(edited_file, 'r') as file:
+    with open(mod_file_path, 'r') as file:
         lines = file.readlines()
 
     inside_section = False
@@ -67,43 +66,9 @@ def comment_multiple_sections_in_mod(template_file, edited_file, start_texts):
         else:
             commented_lines.append(line)  # Unmodified lines
 
-    # Check if any new comments were added before overwriting the file
+    # Check if any new comments were added before overwriting the file,
+    # If there were new comments, won't make any changes to the file
     if not already_commented:
-        with open(edited_file, 'w') as file:
+        with open(mod_file_path, 'w') as file:
             file.writelines(commented_lines)
 
-
-# Example usage:
-template_file_path = "edit_mod_file/template.mod"
-edited_file_path = os.path.join("edit_mod_file", "edited.mod")
-start_texts_to_comment = [
-    "Constraint for an upper bound of the total area used by installed PV's",
-    "Linearized Gini coefficient constraint (only for i < j)",
-    "Gini constraint (now summing only over i < j)",
-    "Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz",
-    "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
-    "Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold"
-]
-
-# comment_multiple_sections_in_mod(template_file_path, edited_file_path, start_texts_to_comment)
-
-
-
-
-# if __name__ == "__main__":
-#     user_input = activate_interface()
-#     user_input_total_area_upper_bound = user_input[0]
-#     user_input_allowed_loss_from_influence_on_crops_percentage = user_input[1]
-#     removed_constraints = user_input[2]
-#     print("user_input_total_area_upper_bound:",user_input_total_area_upper_bound)
-#     print("user_input_allowed_loss_from_influence_on_crops_percentage:",user_input_allowed_loss_from_influence_on_crops_percentage)
-#     print("removed_constraints:",removed_constraints)
-
-    
-
-
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     window = LinearProgrammingInterface()
-#     window.show()
-#     sys.exit(app.exec_())

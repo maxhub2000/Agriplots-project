@@ -159,6 +159,7 @@ def raw_output_to_df(opl_raw_output_):
 def model_results_to_df(excel_output_results):
     # Split the first element to get the column names
     column_names = excel_output_results[0].split(',')
+    print("column_names: ", column_names)
     # Split each remaining element in the list to get the data rows
     rows = [row.split(',') for row in excel_output_results[1:]]
     # Create a pandas DataFrame using the rows and columns
@@ -167,11 +168,12 @@ def model_results_to_df(excel_output_results):
 
 def assign_different_yeshuv_names(df_, new_yeshuv_names_path):
     new_yeshuv_names = load_excel(new_yeshuv_names_path)
+    print(len(new_yeshuv_names))
     # Create a mapping from the assignment_of_missing_yeshuv_names DataFrame
     yeshuv_name_mapping = dict(zip(new_yeshuv_names['old_yeshuv_name'], new_yeshuv_names['new_yeshuv_name']))
     # Apply the mapping to the dataset
     df_['YeshuvName'] = df_['YeshuvName'].replace(yeshuv_name_mapping)
-    df_['YeshuvName'].to_excel("yeshuvim in df_dataset after assigning different yeshuv names.xlsx")
+    # df_['YeshuvName'].to_excel("yeshuvim in df_dataset after assigning different yeshuv names.xlsx")
     print("number of yeshuvim after assigning different names to yeshuvim:",df_["YeshuvName"].nunique())
     return df_
 
@@ -195,18 +197,18 @@ def test_model(testing_data_and_parameters_path):
     params = params.to_dict(orient='records')[0]
     return dataset_path, influence_on_crops_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params
 
-def set_decision_variable_type(file_path, model_type):
+def set_decision_variable_type(file_path, decision_variables_type):
     """
-    Modify a .mod file based on the model_type argument.
+    Modify a .mod file based on the decision_variables_type argument.
 
     Args:
         file_path (str): The path to the .mod file.
-        model_type (str): Either "binary decision variables" or "continuous decision variables".
+        decision_variables_type (str): Either "binary decision variables" or "continuous decision variables".
 
     Raises:
-        ValueError: If the model_type is not valid.
+        ValueError: If the decision_variables_type is not valid.
     """
-    # Define the mappings for replacement based on model_type
+    # Define the mappings for replacement based on decision_variables_type
     replacements = {
         "binary decision variables": (
             "dvar float+ x[1..num_locations]; // float decision variables (0 <= x[i] <= 1)",
@@ -218,11 +220,11 @@ def set_decision_variable_type(file_path, model_type):
         ),
     }
 
-    if model_type not in replacements:
-        raise ValueError("Invalid model_type. Use 'binary decision variables' or 'continuous decision variables'.")
+    if decision_variables_type not in replacements:
+        raise ValueError("Invalid decision_variables_type. Use 'binary decision variables' or 'continuous decision variables'.")
 
     # Extract the original and replacement strings
-    original_line, replacement_line = replacements[model_type]
+    original_line, replacement_line = replacements[decision_variables_type]
 
     # Read the file content
     try:
@@ -246,22 +248,108 @@ def set_decision_variable_type(file_path, model_type):
     else:
         print("No matching line found. No changes were made.")
 
+def set_objective_function_type(file_path, objective_function_type):
+    """
+    Modify the objective function in the .mod file based on the value of objective_function_type.
+
+    Args:
+        file_path (str): Path to the .mod file.
+        objective_function_type (str): Either "single objective" or "multi objective".
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+    """
+
+    # Define the mappings for replacement based on objective_function_type
+    replacements = {
+        "single objective": (
+            "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
+            "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
+            "maximize TotalEnergy - G_numerator;",
+            "// Objective Function\nmaximize TotalEnergy;"
+        ),
+        "multi objective": (
+            "// Objective Function\nmaximize TotalEnergy;",
+            "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
+            "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
+            "maximize TotalEnergy - G_numerator;"
+        )
+    }
+
+    # Extract the original and replacement strings
+    original_text, replacement_text = replacements[objective_function_type]
+
+    # Read the file content
+    try:
+        with open(file_path, 'r') as file:
+            content = file.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"The file '{file_path}' does not exist.")
+
+    # Update the file content if the original text exists
+    if original_text in content:
+        content = content.replace(original_text, replacement_text)
+        with open(file_path, 'w') as file:
+            file.write(content)
+    else:
+        print("No matching objective function found. No changes were made.")
+
+
+
+
+def group_by_yeshuv_and_AnafSub(df_):
+    key_columns = ['YeshuvName', 'AnafSub']
+    columns_to_aggregate_by_sum = ["Dunam","Energy production (fix) mln kWh/year",
+        "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
+    columns_to_aggregate_by_first = ["Average influence of PV on crops", "Machoz", "eshkol"]
+    relevant_columns_for_model = key_columns + columns_to_aggregate_by_sum + columns_to_aggregate_by_first
+    agg_dict = {col: 'sum' for col in columns_to_aggregate_by_sum} # create dict with columns to aggregate by "sum"
+    agg_dict.update({col: 'first' for col in columns_to_aggregate_by_first}) #update dict with columns to aggregate by "first"
+    df_for_model = df_[relevant_columns_for_model]
+    # Perform the groupby and aggregation
+    df_for_model = df_for_model.groupby(key_columns).agg(agg_dict).reset_index()
+    # df_for_model = df_for_model.groupby(key_columns)[columns_to_aggregate].sum().reset_index()
+    print(df_for_model)
+    df_for_model.to_excel('grouped_continuous_df.xlsx', index=False)
+    return df_for_model
+
+def create_copy_of_mod_file(original_file_path, new_file_path):
+    # Creates a copy of file that's in original_file_path,
+    # that will be located in new_file_path
+    shutil.copy(original_file_path, new_file_path)
 
 
 @measure_time
 def main():
     USER_INTERFACE = False
     TESTING_MODE = False
-    MODEL_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
-    GINI_IN_OBJECTIVE_FUNCTION = True
-    # File paths
+    OBJECTIVE_FUNCTION_TYPE = "single objective" # can either be "single objective" or "multi objective"
+    DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
+    FULL_CONTINUOUS_MODEL = False
+
+    constraints_to_comment_texts = {
+            "total_area_constraint" : "Constraint for an upper bound of the total area used by installed PV's",
+            "revenue_change_constraint" : "Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
+            "energy_production_per_yeshuv_constraint" : "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
+            "energy_production_per_machoz_constraint" : "Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz",
+            "name_space_gini_constraint1": "Linearized Gini coefficient constraint (only for i < j)",
+            "name_space_gini_constraint2": "Gini constraint (now summing only over i < j)",
+        }
+    
+       # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
-    if GINI_IN_OBJECTIVE_FUNCTION:
-        opl_model_file = 'Agriplots_Gini_in_objective.mod'
-    # opl_model_file = 'Agriplots_Gini_in_objective.mod' #Gini in Objective
+    
+    opl_base_model_file_path = "edit_mod_file/Agriplots_base_model.mod"
+    create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
+
+    removed_constraints = []
+    if OBJECTIVE_FUNCTION_TYPE == "multi objective":
+        removed_constraints.append("name_space_gini_constraint2")
+
+
     dataset_path = 'Agriplots_final - Full data.xlsx'
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
-    # dataset_path = 'Agriplots dataset - 1,000 rows.xlsx'
+    dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     influence_on_crops_synthetic_values_path = 'Average influence of PV on crops - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ["energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", "energy consumption by machoz"]
@@ -269,16 +357,17 @@ def main():
     assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names_mali.xlsx'
     yeshuvim_in_eshkolot_path = 'yeshuvim_in_eshkolot.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values.xlsx'
+    energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values - try 2.xlsx'
     installation_decisions_output_path = 'installation_decisions_results.xlsx'
     final_results_output_path = 'final_results.xlsx'
-    # testing_data_and_parameters_path = 'model_testing_data_and_parameters.xlsx'
-    testing_data_and_parameters_path = 'sanity_check_8-infeasibility_due_to_machoz_constraint.xlsx'
+    testing_data_and_parameters_path = 'sanity_check_1-choosing_based_on_area_constraint.xlsx'
     # parameters of the model
     params = {
-        "allowed_loss_from_influence_on_crops_percentage": 0.9,
-        "total_area_upper_bound": 30000.00,
+        "allowed_loss_from_influence_on_crops_percentage": 0.92,
+        "total_area_upper_bound": 20000.00,
         "G_max" : 0.05
         # "G_max" : 0.075100193
+        # "G_max" : 1.0
     }
 
     if TESTING_MODE:
@@ -309,10 +398,16 @@ def main():
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     df_dataset["YeshuvName"].to_excel("yeshuvim_after_adding_eshkolot.xlsx")
     print("number of yeshuvim after adding eshkolot:",df_dataset["YeshuvName"].nunique())
+    
+    if FULL_CONTINUOUS_MODEL:
+        DECISION_VARIABLES_TYPE = "continuous decision variables" #forces continuous decision variables for full continuous model
+        continuous_model_df = group_by_yeshuv_and_AnafSub(df_dataset)
+        df_dataset = continuous_model_df
+    
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1
-    
+
     if USER_INTERFACE:
         user_input_params = activate_interface()
         trillion = 1e12 # float form of trillion that's also compatible with .mod and .dat files
@@ -342,13 +437,84 @@ def main():
     # write data and params to .dat file
     write_dat_file(dat_file, data, params)
 
-    set_decision_variable_type(opl_model_file, MODEL_TYPE)
+    set_decision_variable_type(opl_model_file, DECISION_VARIABLES_TYPE)
+    set_objective_function_type(opl_model_file, OBJECTIVE_FUNCTION_TYPE)
+    # remove constraints from model if needed
+    if removed_constraints:
+        remove_constraints_from_model(removed_constraints, opl_model_file, constraints_to_comment_texts)
+
     # Solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, txt_output_path)
     # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
     # output the final results to excel file
-    output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, MODEL_TYPE, GINI_IN_OBJECTIVE_FUNCTION)
+    output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, DECISION_VARIABLES_TYPE, OBJECTIVE_FUNCTION_TYPE)
+    
+    resutls_for_GIS = get_results_for_GIS_tool(df_dataset, df_results, "results_for_GIS_temp.xlsx")
+
+    return resutls_for_GIS 
+
+
+def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
+
+    main_results_df, installed_PVs_results, _ = df_results_
+
+    relevant_columns_from_input = ["location_id", "OBJECTID", "YeshuvName", "Machoz", "AnafName", "CoverTypeE", "Energy production (tracking) mln kWh/year"]
+    if "OBJECTID" not in list(df_dataset_.columns):
+        relevant_columns_from_input.remove("OBJECTID")
+    relevant_df_from_input = df_dataset_[relevant_columns_from_input]
+    # convert "OBJECTID" and "Location" column to int, so the merge will be successful
+    if "OBJECTID" in list(df_dataset_.columns):
+        relevant_df_from_input['OBJECTID'] = relevant_df_from_input['OBJECTID'].astype('int')
+    installed_PVs_results['location_id'] = installed_PVs_results['location_id'].astype('int')
+    # convert "area in dunam used" column to numeric
+    installed_PVs_results["area in dunam used"] = pd.to_numeric(installed_PVs_results["area in dunam used"], errors="coerce")
+    # left join installed locations from result of opl model to columns from input dataset
+    merged_data = pd.merge(relevant_df_from_input,installed_PVs_results, on="location_id", how="left")
+
+    merged_data['x[i]'] = merged_data['x[i]'].apply(lambda x: 0 if pd.isna(x) else 1)
+    merged_data['Energy units Produced in mln'] = merged_data['Energy units Produced in mln'].apply(lambda x: 0 if pd.isna(x) else float(x))
+    merged_data['area in dunam used'] = merged_data['area in dunam used'].apply(lambda x: 0 if pd.isna(x) else float(x))
+
+
+    merged_data = merged_data.rename(columns={
+        'OBJECTID': 'plot_id',
+        'YeshuvName': 'yeshuv',
+        'Machoz': 'machoz',
+        'AnafName': 'crop_type',
+        'CoverTypeE': 'covertype',
+        'x[i]': 'pv_installed',
+        'Energy units Produced in mln': 'prodfix',
+        'Energy production (tracking) mln kWh/year': 'prodtrack',
+        'area in dunam used': 'dunam'
+        })
+    
+    merged_data['color'] = merged_data['pv_installed'].apply(lambda x: '#008000' if x == 1 else '#FF0000')
+    merged_data['economic_impact_nis'] = merged_data['pv_installed'].apply(lambda x: 50000 if x == 1 else 0)
+    merged_data['selected'] = 1.00
+    merged_data['longitude'] = 0.00
+    merged_data['latitude'] = 0.00
+
+    merged_data.loc[merged_data['pv_installed'] == 0, 'prodtrack'] = 0
+
+    merged_data = merged_data.drop(columns=['location_id', 'influence on crops'])
+
+
+
+    print(merged_data)
+    # exporting results to excel
+    print("main_results_df:\n", main_results_df)
+    merged_data.to_excel(export_temp_path_)
+    print(f"results for GIS saved to {export_temp_path_}")
+
+    main_results_df = main_results_df[["Total energy produced in mln", "Total area (in dunam) used"]]
+    main_results_df.columns = ["total_energy_mwh", "total_area_used_dunam"]
+
+    return merged_data, main_results_df
+
+
+
 
 if __name__ == "__main__":
-    main()
+    # pass
+    resutls_for_GIS = main()

@@ -45,8 +45,9 @@ execute {
 }
 
 
-// Objective Function
-maximize TotalEnergy;
+// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:
+// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator
+maximize TotalEnergy - G_numerator;
 
 
 // Constraints

@@ -8,7 +8,7 @@ from utils import measure_time
 
 
 @measure_time
-def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, installation_decisions_output_path, final_results_output_path, model_type, GINI_IN_OBJECTIVE_FUNCTION):
+def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, installation_decisions_output_path, final_results_output_path, decision_variables_type, objective_function_type):
     main_results_df, installed_PVs_results, energy_produced_per_eshkol_results = df_opl_results
     installation_decisions = output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_results, installation_decisions_output_path)
     area_used_per_machoz = installation_decisions[["Machoz", "area in dunam used"]].groupby("Machoz", as_index=False)["area in dunam used"].sum()
@@ -17,13 +17,16 @@ def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, insta
         model_params["total_area_upper_bound"] = "No Upper Bound"
     model_params_df = pd.DataFrame([model_params])
     full_results = [main_results_df, model_params_df, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub]
-    output_final_results_to_excel(full_results, final_results_output_path, model_type, GINI_IN_OBJECTIVE_FUNCTION)
+    output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type)
 
 def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_results, installation_decisions_output_path):
     relevant_columns_from_input = ["location_id", "OBJECTID", "AnafSub", "YeshuvName", "Machoz", "eshkol", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
+    if "OBJECTID" not in list(df_dataset_.columns):
+        relevant_columns_from_input.remove("OBJECTID")
     relevant_df_from_input = df_dataset_[relevant_columns_from_input]
     # convert "OBJECTID" and "Location" column to int, so the merge will be successful
-    relevant_df_from_input['OBJECTID'] = relevant_df_from_input['OBJECTID'].astype('int')
+    if "OBJECTID" in list(df_dataset_.columns):
+        relevant_df_from_input['OBJECTID'] = relevant_df_from_input['OBJECTID'].astype('int')
     installed_PVs_results['location_id'] = installed_PVs_results['location_id'].astype('int')
     # convert "area in dunam used" column to numeric
     installed_PVs_results["area in dunam used"] = pd.to_numeric(installed_PVs_results["area in dunam used"], errors="coerce")
@@ -34,16 +37,16 @@ def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_re
     merged_data.to_excel(installation_decisions_output_path)
     return merged_data
 
-def output_final_results_to_excel(full_results, final_results_output_path, model_type, GINI_IN_OBJECTIVE_FUNCTION):
+def output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type):
     main_results, model_params, energy_produced_per_eshkol_results, area_used_per_machoz, area_used_per_anafSub = full_results
-    if model_type == "binary decision variables":
+    if decision_variables_type == "binary decision variables":
         model_type_text = "Binary"
     else:
         model_type_text = "Continuous"
 
-    gini_in_objective_text = ""
-    if GINI_IN_OBJECTIVE_FUNCTION:
-        gini_in_objective_text += "- Gini in objective function"
+    multi_objective_function_text = ""
+    if objective_function_type == "multi objective":
+        multi_objective_function_text += "- Multi objective function"
 
     
     # Create a new workbook
@@ -57,7 +60,7 @@ def output_final_results_to_excel(full_results, final_results_output_path, model
         ws.column_dimensions[get_column_letter(i)].width = width
 
     # Write the "Model Results" table with formatting
-    ws.append([f"{model_type_text} Model Results {gini_in_objective_text}"])
+    ws.append([f"{model_type_text} Model Results {multi_objective_function_text}"])
     style_range(
         ws,
         "A1", "F1",
