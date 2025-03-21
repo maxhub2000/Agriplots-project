@@ -68,13 +68,22 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
-def modify_influence_on_crops(df_, influence_on_crops_synthetic_values_path):
-    influence_on_crops_data = load_excel(influence_on_crops_synthetic_values_path)
+def modify_influence_on_crops(df_, anaf_sub_parameters_synthetic_values_path):
+    anaf_sub_parameters_data = load_excel(anaf_sub_parameters_synthetic_values_path)
     # prepare dictionary that maps for each crop how much it's influenced by installing PV
-    influence_on_crops_dict = influence_on_crops_data.set_index("AnafSub")["Average influence"].to_dict()
+    influence_on_crops_dict = anaf_sub_parameters_data.set_index("AnafSub")["Average influence"].to_dict()
     # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
     modified_influence_on_crops = df_['AnafSub'].map(influence_on_crops_dict).tolist()
     df_["Average influence of PV on crops"] = modified_influence_on_crops
+    return df_
+
+def add_installation_costs(df_, anaf_sub_parameters_synthetic_values_path):
+    anaf_sub_parameters_data = load_excel(anaf_sub_parameters_synthetic_values_path)
+    # prepare dictionary that maps for each crop how much what's it's cost per dunam
+    costs_of_crops_dict = anaf_sub_parameters_data.set_index("AnafSub")["Cost per Dunam"].to_dict()
+    costs_of_crops = df_['AnafSub'].map(costs_of_crops_dict).tolist()
+    df_["Cost of AnafSub per dunam"] = costs_of_crops
+    df_["Installation cost"] = df_["Cost of AnafSub per dunam"] * df_["Dunam"]
     return df_
 
 @track_row_changes
@@ -295,8 +304,6 @@ def set_objective_function_type(file_path, objective_function_type):
         print("No matching objective function found. No changes were made.")
 
 
-
-
 def group_by_yeshuv_and_AnafSub(df_):
     key_columns = ['YeshuvName', 'AnafSub']
     columns_to_aggregate_by_sum = ["Dunam","Energy production (fix) mln kWh/year",
@@ -323,8 +330,8 @@ def create_copy_of_mod_file(original_file_path, new_file_path):
 def main():
     USER_INTERFACE = False
     TESTING_MODE = False
-    OBJECTIVE_FUNCTION_TYPE = "multi objective" # can either be "single objective" or "multi objective"
-    DECISION_VARIABLES_TYPE = "continuous decision variables" # can either be "binary decision variables" or "continuous decision variables"
+    OBJECTIVE_FUNCTION_TYPE = "single objective" # can either be "single objective" or "multi objective"
+    DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
     FULL_CONTINUOUS_MODEL = False
 
     constraints_to_comment_texts = {
@@ -350,17 +357,19 @@ def main():
     dataset_path = 'Agriplots_final - Full data.xlsx'
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
     dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
-    influence_on_crops_synthetic_values_path = 'Average influence of PV on crops - synthetic values.xlsx'
+    anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
-    energy_consumption_by_machoz_path = ["energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx", "energy consumption by machoz"]
+    energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
     assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names.xlsx'
     assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names_mali.xlsx'
     yeshuvim_in_eshkolot_path = 'yeshuvim_in_eshkolot.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values - try 2.xlsx'
+    energy_lower_bounds_for_eshkolot_path = ['energy_lower_and_upper_bounds_for_eshkolot.xlsx', 'lower_bounds']
+    energy_upper_bounds_for_eshkolot_path = ['energy_lower_and_upper_bounds_for_eshkolot.xlsx', 'upper_bounds']
     installation_decisions_output_path = 'installation_decisions_results.xlsx'
     final_results_output_path = 'final_results.xlsx'
-    testing_data_and_parameters_path = 'sanity_check_1-choosing_based_on_area_constraint.xlsx'
+    testing_data_and_parameters_path = 'datasets_for_testing/sanity_checks_datasets/sanity_check_1-choosing_based_on_area_constraint.xlsx'
     # parameters of the model
     params = {
         "allowed_loss_from_influence_on_crops_percentage": 0.92,
@@ -371,7 +380,7 @@ def main():
     }
 
     if TESTING_MODE:
-        dataset_path, influence_on_crops_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params = test_model(testing_data_and_parameters_path)
+        dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params = test_model(testing_data_and_parameters_path)
     load_df_dataset_start_time = time.time()
     df_dataset = load_excel(dataset_path) # Read dataset from Excel
     elapsed_time = time.time() - load_df_dataset_start_time
@@ -383,7 +392,9 @@ def main():
     df_dataset = remove_rows_with_non_feasible_locations(df_dataset)
     print("number of yeshuvim after removing some rows from dataset:",df_dataset["YeshuvName"].nunique())
     # modify influence on crops column based on synthetic values
-    df_dataset = modify_influence_on_crops(df_dataset, influence_on_crops_synthetic_values_path)
+    df_dataset = modify_influence_on_crops(df_dataset, anaf_sub_parameters_synthetic_values_path)
+    # add installation costs of PV column based on costs of crops per dunam and area in dunam
+    df_dataset = add_installation_costs(df_dataset, anaf_sub_parameters_synthetic_values_path)
     # import energy consumptions by yeshuv and by machoz 
     energy_consumption_by_yeshuv = load_excel(energy_consumption_by_yeshuv_path)
     energy_consumption_by_machoz = load_excel(energy_consumption_by_machoz_path)
@@ -393,6 +404,8 @@ def main():
     yeshuvim_in_eshkolot = load_excel(yeshuvim_in_eshkolot_path)
     yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True) # rename column in the df
     energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
+    energy_lower_bounds_for_eshkolot = load_excel(energy_lower_bounds_for_eshkolot_path)
+    energy_upper_bounds_for_eshkolot = load_excel(energy_upper_bounds_for_eshkolot_path)
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
     df_dataset["YeshuvName"].to_excel("yeshuvim_before_adding_eshkolot.xlsx")
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
@@ -420,8 +433,10 @@ def main():
         removed_constraints.extend(user_input_params[2])
         time.sleep(5)
 
+    df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
+
     # get needed relevant data for running the model, in addition to the parameters (params)
-    data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset)
+    data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset)
     # write data and params to .dat file
     write_dat_file(dat_file, data, params)
 

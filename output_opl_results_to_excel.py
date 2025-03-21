@@ -14,6 +14,7 @@ def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, insta
     energy_produced_per_machoz = installation_decisions[["Machoz", "Energy units Produced in mln"]].groupby("Machoz", as_index=False)["Energy units Produced in mln"].sum()
     area_used_per_machoz = installation_decisions[["Machoz", "area in dunam used"]].groupby("Machoz", as_index=False)["area in dunam used"].sum()
     area_used_per_anafSub = installation_decisions[["AnafSub", "area in dunam used"]].groupby("AnafSub", as_index=False)["area in dunam used"].sum()
+    energy_produced_per_eshkol["Energy Produced"] = pd.to_numeric(energy_produced_per_eshkol["Energy Produced"], errors="coerce")
     if model_params["total_area_upper_bound"] == 1e12:
         model_params["total_area_upper_bound"] = "No Upper Bound"
     model_params_df = pd.DataFrame([model_params])

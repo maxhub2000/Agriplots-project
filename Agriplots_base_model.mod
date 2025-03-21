@@ -9,6 +9,7 @@ float G_max = ...;
 float total_potential_revenue_before_PV_of_full_dataset = ...;
 float fix_energy_production[1..num_locations] = ...;
 float influence_on_crops[1..num_locations] = ...;
+float installation_costs[1..num_locations] = ...;
 float potential_revenue_before_PV[1..num_locations] = ...;
 float area_in_dunam[1..num_locations] = ...;
 
@@ -18,7 +19,8 @@ range Machozot = 1..num_machozot;
 float energy_consumption_by_machoz[Machozot] = ...;
 range Eshkolot = 1..num_eshkolot;
 float energy_division_between_eshkolot[Eshkolot] = ...;
-
+float energy_lower_bounds_for_eshkolot[Eshkolot] = ...;
+float energy_upper_bounds_for_eshkolot[Eshkolot] = ...;
 
 // Define sets S_j for each yeshuv j
 {int} S[j in Yeshuvim] = ...; // Load sets from .dat file
@@ -32,9 +34,9 @@ float energy_division_between_eshkolot[Eshkolot] = ...;
 // Decision Variables and expressions
 dvar boolean x[1..num_locations]; // binary (boolean) decision variables
 dexpr float y[k in Eshkolot] = sum(i in E[k]) x[i] * fix_energy_production[i];
-dvar float z[1..num_eshkolot][1..num_eshkolot];
+//dvar float z[1..num_eshkolot][1..num_eshkolot];
 dexpr float TotalEnergy = sum(i in 1..num_locations) fix_energy_production[i] * x[i]; // Total energy produced
-dexpr float G_numerator = sum(i in Eshkolot, j in Eshkolot: i < j) z[i][j]; // numerator of GiniCoefficient value (denominator equals to TotalEnergy)
+//dexpr float G_numerator = sum(i in Eshkolot, j in Eshkolot: i < j) z[i][j]; // numerator of GiniCoefficient value (denominator equals to TotalEnergy)
 
 
 // Solver settings
@@ -45,9 +47,8 @@ execute {
 }
 
 
-// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:
-// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator
-maximize TotalEnergy - G_numerator;
+// Objective Function
+maximize TotalEnergy;
 
 
 // Constraints
@@ -55,7 +56,8 @@ subject to {
 
     // Constraint for an upper bound of the total area used by installed PV's
     sum(i in 1..num_locations) (x[i] * area_in_dunam[i]) <= total_area_upper_bound;
-	    
+    //sum(i in 1..num_locations) (x[i] * installation_costs[i]) <= total_area_upper_bound;
+      
     // Constraint for the revenue change in percentage as a result of installing the PV’s and influencing the crops, lower bounded by an inputed threshold
     total_potential_revenue_before_PV_of_full_dataset + sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i] - x[i] * potential_revenue_before_PV[i]) >= allowed_loss_from_influence_on_crops_percentage * total_potential_revenue_before_PV_of_full_dataset;
 
@@ -69,7 +71,7 @@ subject to {
         sum(i in M[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_machoz[j];
     }
 
-
+    /*
     // Linearized Gini coefficient constraint (only for i < j)
     forall(i in Eshkolot, j in Eshkolot: i < j) {
         z[i][j] >=  energy_division_between_eshkolot[j]*y[j] - energy_division_between_eshkolot[i]*y[i] ;
@@ -78,24 +80,24 @@ subject to {
     
     // Gini constraint (now summing only over i < j)
     G_numerator <= G_max * TotalEnergy;
-
+    */
     
 
     // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
 
-    /*
+    
     forall (k in Eshkolot) {
-      y[k] <= energy_division_between_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
+      y[k] <= energy_upper_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 
     };
-    */
+    
 
-    /*
     forall (k in Eshkolot) {
-      y[k] >= 0.05 * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
+      y[k] >= energy_lower_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 
     };
-    */
+
+
 
 
     // Constraint that limits the value of x[i] to be less or equal than 1, relevant for the continuous model
@@ -137,7 +139,7 @@ execute {
         num_of_non_binary_dec_variables +=1
       }
 
-	 }
+   }
   }
 
   writeln("Total energy produced: ", total_energy_produced);
@@ -214,6 +216,7 @@ execute {
     }
   writeln("Sum of y[i]: ", total_energy_produced_from_y);
 
+  /*
 
   writeln("\nresults of Gini coefficient: ")
   var sum_of_z = 0
@@ -236,11 +239,13 @@ execute {
   writeln("\nSum of z[i][j]: ",sum_of_z)
   writeln("inequality of wealth: Sum of z[i][j] / Sum of y[i] = ",Gini_coefficient_value_from_model)
 
+  */
 
   writeln("\nResults for excel output file:")
   writeln("Total energy produced in mln: ", total_energy_produced);
   writeln("Total area (in dunam) used: ", total_area);
-  writeln("Gini Coefficient value: ", Gini_coefficient_value_from_model);
+  //writeln("Gini Coefficient value: ", Gini_coefficient_value_from_model);
+  writeln("Gini Coefficient value: ", "N/A");
   writeln("Poetntial revenue before installing PV'S: ", total_potential_revenue_before_PV);
   writeln("Poetntial revenue after installing PV'S: ", total_potential_revenue_after_PV);
   writeln("Percentage change in revenue: ", total_potential_revenue_after_PV/total_potential_revenue_before_PV);
