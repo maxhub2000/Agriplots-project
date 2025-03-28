@@ -36,6 +36,10 @@ dvar boolean x[1..num_locations]; // binary (boolean) decision variables
 dexpr float y[k in Eshkolot] = sum(i in E[k]) x[i] * fix_energy_production[i];
 //dvar float z[1..num_eshkolot][1..num_eshkolot];
 dexpr float TotalEnergy = sum(i in 1..num_locations) fix_energy_production[i] * x[i]; // Total energy produced
+dexpr float TotalArea = sum(i in 1..num_locations) (x[i] * area_in_dunam[i]); // Total area used
+dexpr float ChangeInRevenue = (total_potential_revenue_before_PV_of_full_dataset + sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i] - x[i] * potential_revenue_before_PV[i])) / total_potential_revenue_before_PV_of_full_dataset; // Change in revenue from installing PV's
+
+
 //dexpr float G_numerator = sum(i in Eshkolot, j in Eshkolot: i < j) z[i][j]; // numerator of GiniCoefficient value (denominator equals to TotalEnergy)
 
 
@@ -55,11 +59,11 @@ maximize TotalEnergy;
 subject to {
 
     // Constraint for an upper bound of the total area used by installed PV's
-    sum(i in 1..num_locations) (x[i] * area_in_dunam[i]) <= total_area_upper_bound;
+    TotalArea <= total_area_upper_bound;
     //sum(i in 1..num_locations) (x[i] * installation_costs[i]) <= total_area_upper_bound;
       
     // Constraint for the revenue change in percentage as a result of installing the PV’s and influencing the crops, lower bounded by an inputed threshold
-    total_potential_revenue_before_PV_of_full_dataset + sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i] - x[i] * potential_revenue_before_PV[i]) >= allowed_loss_from_influence_on_crops_percentage * total_potential_revenue_before_PV_of_full_dataset;
+    ChangeInRevenue >= allowed_loss_from_influence_on_crops_percentage;
 
     // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
     forall (j in Yeshuvim) {
@@ -108,21 +112,18 @@ subject to {
 
 
 execute {
-
-  var total_energy_produced = 0;
-  for (var i in fix_energy_production) {
-    total_energy_produced += fix_energy_production[i] * x[i];
-  }
-  writeln("Total energy produced: ", total_energy_produced);
+  writeln("Total energy produced: ", TotalEnergy);
+  writeln("Total area (in dunam) used: ", TotalArea);
+  writeln("Change in revenue from installing PV'S ", ChangeInRevenue);
 }
 
 
 // Output results
 execute {
-  var total_energy_produced = 0;
+  //var total_energy_produced = 0;
   var number_of_installed_PV = 0;
   var Overall_total_revenue = 0;
-  var total_area = 0;
+  //var total_area = 0;
   var total_potential_revenue_before_PV_for_included_locations = 0
   var total_potential_revenue_after_PV_for_included_locations = 0
   var num_of_non_binary_dec_variables = 0;
@@ -130,9 +131,9 @@ execute {
   for (var i in fix_energy_production) {
     if (x[i] > 0) {
       writeln("Location ", i, ": ", fix_energy_production[i] * x[i], " mln Energy units Produced, area_in_dunam used: ", area_in_dunam[i], ", potential revenue before PV: ", potential_revenue_before_PV[i], ", potential revenue after PV: ", potential_revenue_before_PV[i] * influence_on_crops[i], " x[",i,"] = ", x[i]);
-      total_energy_produced += fix_energy_production[i] * x[i]
+      //total_energy_produced += fix_energy_production[i] * x[i]
       number_of_installed_PV += 1
-      total_area += area_in_dunam[i]
+      //total_area += area_in_dunam[i]
       total_potential_revenue_before_PV_for_included_locations += potential_revenue_before_PV[i]
       total_potential_revenue_after_PV_for_included_locations += potential_revenue_before_PV[i] * influence_on_crops[i]
       if (x[i] != 1){
@@ -142,12 +143,16 @@ execute {
    }
   }
 
+  var total_energy_produced = TotalEnergy;
+  var total_area = TotalArea;
+
   writeln("Total energy produced: ", total_energy_produced);
   writeln("Number of installed PV's: ", number_of_installed_PV);
   writeln("total area (in dunam) used: ", total_area);
   writeln("total poetntial revenue before installing PV'S for locations included: ", total_potential_revenue_before_PV_for_included_locations);
   writeln("total poetntial revenue after installing PV's for locations included, as a result of influence on crops: ", total_potential_revenue_after_PV_for_included_locations);
   writeln("Number of Non-Binary decision variables: ", num_of_non_binary_dec_variables);
+
 
 
   var total_potential_revenue_before_PV = total_potential_revenue_before_PV_of_full_dataset
