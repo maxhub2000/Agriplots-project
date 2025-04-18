@@ -78,7 +78,7 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
     ws.append([
         "Total energy produced in mln", "Total area (in dunam) used",
         "Gini Coefficient value", "Potential revenue before installing PV's",
-        "Potential revenue after installing PV's", "Percentage change in revenue"
+        "Potential revenue after installing PV's", "Remaining percentage of revenue"
     ])
     style_range(
         ws,
@@ -108,7 +108,7 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
     ws.row_dimensions[ws.max_row].height = 30  # Increase row height
 
     ws.append([
-        "Percentage change in revenue lower bound", "Total area upper bound",
+        "Remaining percentage of revenue lower bound", "Total area upper bound",
         "Total energy produced upper bound", "Gini Coefficient upper bound" 
     ])
     style_range(

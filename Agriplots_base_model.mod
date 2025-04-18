@@ -3,7 +3,7 @@ int num_locations = ...;
 int num_yeshuvim = ...;
 int num_machozot = ...;
 int num_eshkolot = ...;
-float allowed_loss_from_influence_on_crops_percentage = ...;
+float Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound = ...;
 float total_area_upper_bound = ...;
 float total_energy_upper_bound = ...;
 float G_max = ...;
@@ -38,7 +38,7 @@ dexpr float y[k in Eshkolot] = sum(i in E[k]) x[i] * fix_energy_production[i];
 //dvar float z[1..num_eshkolot][1..num_eshkolot];
 dexpr float TotalEnergy = sum(i in 1..num_locations) fix_energy_production[i] * x[i]; // Total energy produced
 dexpr float TotalArea = sum(i in 1..num_locations) (x[i] * area_in_dunam[i]); // Total area used
-dexpr float ChangeInRevenue = (total_potential_revenue_before_PV_of_full_dataset + sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i] - x[i] * potential_revenue_before_PV[i])) / total_potential_revenue_before_PV_of_full_dataset; // Change in revenue from installing PV's
+dexpr float RemainingPercentageOfRevenue = (total_potential_revenue_before_PV_of_full_dataset + sum(i in 1..num_locations) (x[i] * potential_revenue_before_PV[i] * influence_on_crops[i] - x[i] * potential_revenue_before_PV[i])) / total_potential_revenue_before_PV_of_full_dataset; // Remaining percentage of original revenue after installing PV's
 
 
 //dexpr float G_numerator = sum(i in Eshkolot, j in Eshkolot: i < j) z[i][j]; // numerator of GiniCoefficient value (denominator equals to TotalEnergy)
@@ -65,8 +65,8 @@ subject to {
     TotalArea <= total_area_upper_bound;
     //sum(i in 1..num_locations) (x[i] * installation_costs[i]) <= total_area_upper_bound;
       
-    // Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold
-    ChangeInRevenue >= allowed_loss_from_influence_on_crops_percentage;
+    // Constraint for the remaining percentage of original revenue, as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold
+    RemainingPercentageOfRevenue >= Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound;
 
     // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
     forall (j in Yeshuvim) {
@@ -91,20 +91,16 @@ subject to {
     
 
     // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
-    
-    
     forall (k in Eshkolot) {
       y[k] <= energy_upper_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 
     };
     
-
+    // Constraint for the percentage of the total energy production of each eshkol, lower bounded by some fixed percentage
     forall (k in Eshkolot) {
       y[k] >= energy_lower_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
 
     };
-
-    
 
 
     // Constraint that limits the value of x[i] to be less or equal than 1, relevant for the continuous model
@@ -117,7 +113,7 @@ subject to {
 execute {
   writeln("Total energy produced: ", TotalEnergy);
   writeln("Total area (in dunam) used: ", TotalArea);
-  writeln("Change in revenue from installing PV'S ", ChangeInRevenue);
+  writeln("Remaining percentage of revenue after installing PV'S ", RemainingPercentageOfRevenue);
 }
 
 
@@ -146,12 +142,8 @@ execute {
    }
   }
 
-  var total_energy_produced = TotalEnergy;
-  var total_area = TotalArea;
 
-  writeln("Total energy produced: ", total_energy_produced);
   writeln("Number of installed PV's: ", number_of_installed_PV);
-  writeln("total area (in dunam) used: ", total_area);
   writeln("total poetntial revenue before installing PV'S for locations included: ", total_potential_revenue_before_PV_for_included_locations);
   writeln("total poetntial revenue after installing PV's for locations included, as a result of influence on crops: ", total_potential_revenue_after_PV_for_included_locations);
   writeln("Number of Non-Binary decision variables: ", num_of_non_binary_dec_variables);
@@ -159,7 +151,6 @@ execute {
 
 
   var total_potential_revenue_before_PV = total_potential_revenue_before_PV_of_full_dataset
-
   var xi_ci_ri = total_potential_revenue_after_PV_for_included_locations
   var xi_ri = total_potential_revenue_before_PV_for_included_locations
   var r_i = total_potential_revenue_before_PV_of_full_dataset
@@ -217,46 +208,15 @@ execute {
   }
 
 
-  writeln("\n")
-  var total_energy_produced_from_y = 0;
-  for (var i in Eshkolot) {
-    total_energy_produced_from_y += y[i];
-    }
-  writeln("Sum of y[i]: ", total_energy_produced_from_y);
-
-  /*
-
-  writeln("\nresults of Gini coefficient: ")
-  var sum_of_z = 0
-  for (var i in Eshkolot){
-    for (var j in Eshkolot){
-      if (i>=j){
-        continue
-      }
-      else{
-        writeln("i: ",i,", j: ",j,", e[i]: ",energy_division_between_eshkolot[i],", e[j]: ",energy_division_between_eshkolot[j], ", e[j]*y[j] - e[i]*y[i]: ",energy_division_between_eshkolot[j]*y[j] - energy_division_between_eshkolot[i]*y[i], ", e[i]*y[i] - e[j]*y[j]: ",energy_division_between_eshkolot[i]*y[i] - energy_division_between_eshkolot[j]*y[j], ", z[i][j]: ",z[i][j])
-        sum_of_z += z[i][j]
-        writeln("sum_of_z: ", sum_of_z)
-      }
-
-    }
-  }
-
-  Gini_coefficient_value_from_model = sum_of_z/total_energy_produced_from_y
-
-  writeln("\nSum of z[i][j]: ",sum_of_z)
-  writeln("inequality of wealth: Sum of z[i][j] / Sum of y[i] = ",Gini_coefficient_value_from_model)
-
-  */
 
   writeln("\nResults for excel output file:")
-  writeln("Total energy produced in mln: ", total_energy_produced);
-  writeln("Total area (in dunam) used: ", total_area);
+  writeln("Total energy produced in mln: ", TotalEnergy);
+  writeln("Total area (in dunam) used: ", TotalArea);
   //writeln("Gini Coefficient value: ", Gini_coefficient_value_from_model);
   writeln("Gini Coefficient value: ", "N/A");
   writeln("Poetntial revenue before installing PV'S: ", total_potential_revenue_before_PV);
   writeln("Poetntial revenue after installing PV'S: ", total_potential_revenue_after_PV);
-  writeln("Percentage change in revenue: ", total_potential_revenue_after_PV/total_potential_revenue_before_PV);
+  writeln("Remaining percentage of revenue: ", RemainingPercentageOfRevenue);
 
 
   writeln("Locations with installed PV's:")

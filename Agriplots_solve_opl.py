@@ -201,7 +201,7 @@ def test_model(testing_data_and_parameters_path):
     energy_consumption_by_yeshuv_path = [testing_data_and_parameters_path, "energy consumption by yeshuv"]
     energy_consumption_by_machoz_path = [testing_data_and_parameters_path, "energy consumption by machoz"]
     params = load_excel([testing_data_and_parameters_path, "parameters"])
-    params.columns = ['allowed_loss_from_influence_on_crops_percentage', 'total_area_upper_bound', 'G_max']
+    params.columns = ['Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound', 'total_area_upper_bound', 'G_max']
     # convert params to dict so it will be the same type as the params in the main() function
     params = params.to_dict(orient='records')[0]
     return dataset_path, influence_on_crops_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params
@@ -270,26 +270,11 @@ def set_objective_function_type(file_path, objective_function_type):
     """
 
     # Define the mappings for replacement based on objective_function_type
-    # replacements = {
-    #     "single objective": (
-    #         "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
-    #         "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
-    #         "maximize TotalEnergy - G_numerator;",
-    #         "// Objective Function\nmaximize TotalEnergy;"
-    #     ),
-    #     "multi objective": (
-    #         "// Objective Function\nmaximize TotalEnergy;",
-    #         "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
-    #         "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
-    #         "maximize TotalEnergy - G_numerator;"
-    #     )
-    # }
-
     replacements = {
         "maximum energy with area constraint" : "// Objective Function\nmaximize TotalEnergy;",
-        "maximum energy with revenue change constraint" : "// Objective Function\nmaximize TotalEnergy;",
+        "maximum energy with remaining percentage of revenue constraint" : "// Objective Function\nmaximize TotalEnergy;",
         "minimum area" : "// Objective Function\nminimize TotalArea;",
-        "minimum loss in revenue" : "// Objective Function\nmaximize ChangeInRevenue;",
+        "maximum remaining percentage of revenue" : "// Objective Function\nmaximize RemainingPercentageOfRevenue;",
         "maximum energy & maximum equity with gini" : 
             "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
             "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
@@ -333,10 +318,10 @@ def set_constraints(file_path, objective_function_type, constraints_to_comment_t
     removed_constraints = []
     # create mapping (dict) between objective function type and constraints that needs to be removed
     obj_func_type_to_removed_constraints = {
-        "maximum energy with area constraint" : ["total_energy_constraint", "revenue_change_constraint"],
-        "maximum energy with revenue change constraint" : ["total_energy_constraint", "total_area_constraint"],
-        "minimum area" : ["total_area_constraint", "revenue_change_constraint"],
-        "minimum loss in revenue" : ["total_area_constraint", "revenue_change_constraint"],
+        "maximum energy with area constraint" : ["total_energy_constraint", "remaining_percentage_of_revenue_constraint"],
+        "maximum energy with remaining percentage of revenue constraint" : ["total_energy_constraint", "total_area_constraint"],
+        "minimum area" : ["total_area_constraint", "remaining_percentage_of_revenue_constraint"],
+        "maximum remaining percentage of revenue" : ["total_area_constraint", "remaining_percentage_of_revenue_constraint"],
         "maximum energy & maximum equity with gini" : ["name_space_gini_constraint2"]
     }
     # add removed constraints based on objective_function_type and the mapping
@@ -401,19 +386,32 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 def main():
     USER_INTERFACE = False
     TESTING_MODE = False
-    OBJECTIVE_FUNCTION_TYPE = "maximum energy with area constraint" # can either be "maximum energy with area constraint", "maximum energy with revenue change constraint", "minimum area" or "minimum loss in revenue"
+    OBJECTIVE_FUNCTION_TYPE = "maximum energy with remaining percentage of revenue constraint" # can either be "maximum energy with area constraint", "maximum energy with remaining percentage of revenue constraint", "minimum area" or "maximum remaining percentage of revenue"
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
     FULL_CONTINUOUS_MODEL = False
 
     constraints_to_comment_texts = {
             "total_energy_constraint" : "Constraint for a lower bound of the total energy produced by installed PV's",
             "total_area_constraint" : "Constraint for an upper bound of the total area used by installed PV's",
-            "revenue_change_constraint" : "Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
+            "remaining_percentage_of_revenue_constraint" : "Constraint for the remaining percentage of original revenue, as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
             "energy_production_per_yeshuv_constraint" : "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
             "energy_production_per_machoz_constraint" : "Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz",
             "name_space_gini_constraint1": "Linearized Gini coefficient constraint (only for i < j)",
             "name_space_gini_constraint2": "Gini constraint (now summing only over i < j)",
         }
+    
+    params = {
+        "Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound" : 0.92,
+        "total_area_upper_bound" : 20000.00,
+        "total_energy_upper_bound" : 800.00,
+        "G_max" : 0.05
+    }
+    
+    filters = {
+        'YeshuvName': (['אשדוד', 'תרום'], "exclude"),  # Include 'אשדוד' and 'אשקלון'
+        'Machoz': (['South'], "exclude"),   # Exclude 'North' and 'Center'
+        "AnafSub": (['peelables'], "exclude")
+    }
     
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
@@ -421,15 +419,10 @@ def main():
     opl_base_model_file_path = "edit_mod_file/Agriplots_base_model.mod"
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
-    # removed_constraints = []
-    # if OBJECTIVE_FUNCTION_TYPE == "multi objective":
-    #     removed_constraints.append("name_space_gini_constraint2")
-
-
     dataset_path = 'Agriplots_final - Full data.xlsx'
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
     # dataset_path = 'df_dataset before data preparation - test as input.xlsx'
-    # dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+    dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
@@ -444,14 +437,7 @@ def main():
     final_results_output_path = 'final_results.xlsx'
     testing_data_and_parameters_path = 'datasets_for_testing/sanity_checks_datasets/sanity_check_1-choosing_based_on_area_constraint.xlsx'
     # parameters of the model
-    params = {
-        "allowed_loss_from_influence_on_crops_percentage" : 0.92,
-        "total_area_upper_bound" : 20000.00,
-        "total_energy_upper_bound" : 800.00,
-        "G_max" : 0.05
-        # "G_max" : 0.075100193
-        # "G_max" : 1.0
-    }
+
 
     if TESTING_MODE:
         dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params = test_model(testing_data_and_parameters_path)
@@ -461,13 +447,9 @@ def main():
     print(f"loading df_dataset took {elapsed_time:.2f} seconds")
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
-    filters = {
-        'YeshuvName': (['אשדוד', 'תרום'], "include"),  # Include 'אשדוד' and 'אשקלון'
-        'Machoz': (['South'], "include"),   # Exclude 'North' and 'Center'
-        "AnafSub": (['peelables'], "include")
-    }
+
     # filter dataset based on different columns
-    df_dataset = filter_dataset(df_dataset, filters)
+    # df_dataset = filter_dataset(df_dataset, filters)
 
 
     total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
@@ -490,9 +472,7 @@ def main():
     energy_lower_bounds_for_eshkolot = load_excel(energy_lower_bounds_for_eshkolot_path)
     energy_upper_bounds_for_eshkolot = load_excel(energy_upper_bounds_for_eshkolot_path)
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
-    df_dataset["YeshuvName"].to_excel("yeshuvim_before_adding_eshkolot.xlsx")
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
-    df_dataset["YeshuvName"].to_excel("yeshuvim_after_adding_eshkolot.xlsx")
     print("number of yeshuvim after adding eshkolot:",df_dataset["YeshuvName"].nunique())
     
     if FULL_CONTINUOUS_MODEL:
@@ -517,7 +497,7 @@ def main():
     #     time.sleep(5)
 
     df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
-
+    
     # get needed relevant data for running the model, in addition to the parameters (params)
     data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset)
     # write data and params to .dat file
