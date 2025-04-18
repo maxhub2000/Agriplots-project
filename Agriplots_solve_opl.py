@@ -2,7 +2,7 @@ import subprocess
 import shutil
 import pandas as pd
 import time
-from typing import List, Dict, Optional, Callable, Union
+from typing import List, Dict, Optional, Callable, Union, Tuple
 
 from choosing_parameters_interface import activate_interface
 from remove_constraints_from_model import remove_constraints_from_model
@@ -263,31 +263,43 @@ def set_objective_function_type(file_path, objective_function_type):
 
     Args:
         file_path (str): Path to the .mod file.
-        objective_function_type (str): Either "single objective" or "multi objective".
+        objective_function_type (str): name of the objective function type.
 
     Raises:
         FileNotFoundError: If the file does not exist.
     """
 
     # Define the mappings for replacement based on objective_function_type
+    # replacements = {
+    #     "single objective": (
+    #         "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
+    #         "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
+    #         "maximize TotalEnergy - G_numerator;",
+    #         "// Objective Function\nmaximize TotalEnergy;"
+    #     ),
+    #     "multi objective": (
+    #         "// Objective Function\nmaximize TotalEnergy;",
+    #         "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
+    #         "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
+    #         "maximize TotalEnergy - G_numerator;"
+    #     )
+    # }
+
     replacements = {
-        "single objective": (
-            "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
-            "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
-            "maximize TotalEnergy - G_numerator;",
-            "// Objective Function\nmaximize TotalEnergy;"
-        ),
-        "multi objective": (
-            "// Objective Function\nmaximize TotalEnergy;",
+        "maximum energy with area constraint" : "// Objective Function\nmaximize TotalEnergy;",
+        "maximum energy with revenue change constraint" : "// Objective Function\nmaximize TotalEnergy;",
+        "minimum area" : "// Objective Function\nminimize TotalArea;",
+        "minimum loss in revenue" : "// Objective Function\nmaximize ChangeInRevenue;",
+        "maximum energy & maximum equity with gini" : 
             "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
             "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
             "maximize TotalEnergy - G_numerator;"
-        )
     }
 
-    # Extract the original and replacement strings
-    original_text, replacement_text = replacements[objective_function_type]
-
+    # Set original string text
+    original_text = "// Objective Function\nmaximize TotalEnergy;"
+    # Extract the replacement string
+    replacement_text = replacements[objective_function_type]
     # Read the file content
     try:
         with open(file_path, 'r') as file:
@@ -302,6 +314,37 @@ def set_objective_function_type(file_path, objective_function_type):
             file.write(content)
     else:
         print("No matching objective function found. No changes were made.")
+
+
+
+def set_constraints(file_path, objective_function_type, constraints_to_comment_texts):
+    """
+    remove constrains from .mod file based on the value of objective_function_type
+
+    Args:
+        file_path (str): Path to the .mod file.
+        objective_function_type (str): name of the objective function type.
+        constraints_to_comment_texts (dict): texts of comments in the .mod file mapped to constraint names
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+    """
+    # initialize list of removed_constraints
+    removed_constraints = []
+    # create mapping (dict) between objective function type and constraints that needs to be removed
+    obj_func_type_to_removed_constraints = {
+        "maximum energy with area constraint" : ["total_energy_constraint", "revenue_change_constraint"],
+        "maximum energy with revenue change constraint" : ["total_energy_constraint", "total_area_constraint"],
+        "minimum area" : ["total_area_constraint", "revenue_change_constraint"],
+        "minimum loss in revenue" : ["total_area_constraint", "revenue_change_constraint"],
+        "maximum energy & maximum equity with gini" : ["name_space_gini_constraint2"]
+    }
+    # add removed constraints based on objective_function_type and the mapping
+    removed_constraints.extend(obj_func_type_to_removed_constraints[objective_function_type])
+    # remove needed constraints from the .mod file
+    remove_constraints_from_model(removed_constraints, file_path, constraints_to_comment_texts)
+
+
 
 
 def group_by_yeshuv_and_AnafSub(df_):
@@ -325,16 +368,45 @@ def create_copy_of_mod_file(original_file_path, new_file_path):
     # that will be located in new_file_path
     shutil.copy(original_file_path, new_file_path)
 
+# Custom filter function with "include"/"exclude" option for each column
+def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) -> pd.DataFrame:
+    """
+    Filters the dataframe based on multiple column conditions.
+
+    Parameters:
+    df (pd.DataFrame): The dataframe to filter.
+    filters (Dict[str, Tuple[List[str], str]]): A dictionary where the keys are column names and the values are tuples.
+        Each tuple contains a list of values to filter by and a string ("include" or "exclude") indicating the action.
+
+    Returns:
+    pd.DataFrame: The filtered dataframe.
+    """
+    # Initialize the condition to True for all rows
+    condition = pd.Series([True] * len(df))
+    # Iterate over each column and its filter values
+    for column, (values, action) in filters.items():
+        if action == "include":
+            # Include rows where the column value is in the specified values
+            condition &= df[column].isin(values)
+        elif action == "exclude":
+            # Exclude rows where the column value is in the specified values
+            condition &= ~df[column].isin(values)
+    # Return the filtered dataframe
+    print("condition: ", condition)
+    return df[condition]
+
+
 
 @measure_time
 def main():
     USER_INTERFACE = False
     TESTING_MODE = False
-    OBJECTIVE_FUNCTION_TYPE = "single objective" # can either be "single objective" or "multi objective"
+    OBJECTIVE_FUNCTION_TYPE = "maximum energy with area constraint" # can either be "maximum energy with area constraint", "maximum energy with revenue change constraint", "minimum area" or "minimum loss in revenue"
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
     FULL_CONTINUOUS_MODEL = False
 
     constraints_to_comment_texts = {
+            "total_energy_constraint" : "Constraint for a lower bound of the total energy produced by installed PV's",
             "total_area_constraint" : "Constraint for an upper bound of the total area used by installed PV's",
             "revenue_change_constraint" : "Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
             "energy_production_per_yeshuv_constraint" : "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
@@ -349,14 +421,15 @@ def main():
     opl_base_model_file_path = "edit_mod_file/Agriplots_base_model.mod"
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
-    removed_constraints = []
-    if OBJECTIVE_FUNCTION_TYPE == "multi objective":
-        removed_constraints.append("name_space_gini_constraint2")
+    # removed_constraints = []
+    # if OBJECTIVE_FUNCTION_TYPE == "multi objective":
+    #     removed_constraints.append("name_space_gini_constraint2")
 
 
     dataset_path = 'Agriplots_final - Full data.xlsx'
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
-    dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+    # dataset_path = 'df_dataset before data preparation - test as input.xlsx'
+    # dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
@@ -372,8 +445,9 @@ def main():
     testing_data_and_parameters_path = 'datasets_for_testing/sanity_checks_datasets/sanity_check_1-choosing_based_on_area_constraint.xlsx'
     # parameters of the model
     params = {
-        "allowed_loss_from_influence_on_crops_percentage": 0.92,
-        "total_area_upper_bound": 20000.00,
+        "allowed_loss_from_influence_on_crops_percentage" : 0.92,
+        "total_area_upper_bound" : 20000.00,
+        "total_energy_upper_bound" : 800.00,
         "G_max" : 0.05
         # "G_max" : 0.075100193
         # "G_max" : 1.0
@@ -387,6 +461,15 @@ def main():
     print(f"loading df_dataset took {elapsed_time:.2f} seconds")
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
+    filters = {
+        'YeshuvName': (['אשדוד', 'תרום'], "include"),  # Include 'אשדוד' and 'אשקלון'
+        'Machoz': (['South'], "include"),   # Exclude 'North' and 'Center'
+        "AnafSub": (['peelables'], "include")
+    }
+    # filter dataset based on different columns
+    df_dataset = filter_dataset(df_dataset, filters)
+
+
     total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
     df_dataset = remove_rows_with_missing_values(df_dataset)
     df_dataset = remove_rows_with_non_feasible_locations(df_dataset)
@@ -421,17 +504,17 @@ def main():
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1
 
-    if USER_INTERFACE:
-        user_input_params = activate_interface()
-        trillion = 1e12 # float form of trillion that's also compatible with .mod and .dat files
-        if user_input_params[0]:
-            params["total_area_upper_bound"] = user_input_params[0]
-        else:
-            params["total_area_upper_bound"] = trillion # simulating infinity to show it won't be used in the model
-        params["allowed_loss_from_influence_on_crops_percentage"] = user_input_params[1]/100
+    # if USER_INTERFACE:
+    #     user_input_params = activate_interface()
+    #     trillion = 1e12 # float form of trillion that's also compatible with .mod and .dat files
+    #     if user_input_params[0]:
+    #         params["total_area_upper_bound"] = user_input_params[0]
+    #     else:
+    #         params["total_area_upper_bound"] = trillion # simulating infinity to show it won't be used in the model
+    #     params["allowed_loss_from_influence_on_crops_percentage"] = user_input_params[1]/100
         
-        removed_constraints.extend(user_input_params[2])
-        time.sleep(5)
+    #     removed_constraints.extend(user_input_params[2])
+    #     time.sleep(5)
 
     df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
 
@@ -442,9 +525,7 @@ def main():
 
     set_decision_variable_type(opl_model_file, DECISION_VARIABLES_TYPE)
     set_objective_function_type(opl_model_file, OBJECTIVE_FUNCTION_TYPE)
-    # remove constraints from model if needed
-    if removed_constraints:
-        remove_constraints_from_model(removed_constraints, opl_model_file, constraints_to_comment_texts)
+    set_constraints(opl_model_file, OBJECTIVE_FUNCTION_TYPE, constraints_to_comment_texts)
 
     # Solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, txt_output_path)

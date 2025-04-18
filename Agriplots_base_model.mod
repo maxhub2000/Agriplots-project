@@ -5,6 +5,7 @@ int num_machozot = ...;
 int num_eshkolot = ...;
 float allowed_loss_from_influence_on_crops_percentage = ...;
 float total_area_upper_bound = ...;
+float total_energy_upper_bound = ...;
 float G_max = ...;
 float total_potential_revenue_before_PV_of_full_dataset = ...;
 float fix_energy_production[1..num_locations] = ...;
@@ -54,15 +55,17 @@ execute {
 // Objective Function
 maximize TotalEnergy;
 
-
 // Constraints
 subject to {
+
+    // Constraint for a lower bound of the total energy produced by installed PV's
+    TotalEnergy >= total_energy_upper_bound;
 
     // Constraint for an upper bound of the total area used by installed PV's
     TotalArea <= total_area_upper_bound;
     //sum(i in 1..num_locations) (x[i] * installation_costs[i]) <= total_area_upper_bound;
       
-    // Constraint for the revenue change in percentage as a result of installing the PV’s and influencing the crops, lower bounded by an inputed threshold
+    // Constraint for the revenue change in percentage as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold
     ChangeInRevenue >= allowed_loss_from_influence_on_crops_percentage;
 
     // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
@@ -88,7 +91,7 @@ subject to {
     
 
     // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
-
+    
     
     forall (k in Eshkolot) {
       y[k] <= energy_upper_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
@@ -101,7 +104,7 @@ subject to {
 
     };
 
-
+    
 
 
     // Constraint that limits the value of x[i] to be less or equal than 1, relevant for the continuous model

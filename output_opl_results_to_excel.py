@@ -15,6 +15,7 @@ def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, insta
     area_used_per_machoz = installation_decisions[["Machoz", "area in dunam used"]].groupby("Machoz", as_index=False)["area in dunam used"].sum()
     area_used_per_anafSub = installation_decisions[["AnafSub", "area in dunam used"]].groupby("AnafSub", as_index=False)["area in dunam used"].sum()
     energy_produced_per_eshkol["Energy Produced"] = pd.to_numeric(energy_produced_per_eshkol["Energy Produced"], errors="coerce")
+    main_results_df = main_results_df.apply(pd.to_numeric, errors='coerce')
     if model_params["total_area_upper_bound"] == 1e12:
         model_params["total_area_upper_bound"] = "No Upper Bound"
     model_params_df = pd.DataFrame([model_params])
@@ -103,12 +104,12 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
         fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),
         font=Font(bold=True, size=16)
     )
-    ws.merge_cells(f"A{ws.max_row}:C{ws.max_row}")
+    ws.merge_cells(f"A{ws.max_row}:E{ws.max_row}") # Merges cells A:E
     ws.row_dimensions[ws.max_row].height = 30  # Increase row height
 
     ws.append([
         "Percentage change in revenue lower bound", "Total area upper bound",
-        "Gini Coefficient upper bound"
+        "Total energy produced upper bound", "Gini Coefficient upper bound" 
     ])
     style_range(
         ws,
