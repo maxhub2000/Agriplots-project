@@ -74,12 +74,17 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
     )
     ws.merge_cells("A1:F1")
     ws.row_dimensions[1].height = 30  # Increase row height for better visibility
-
-    ws.append([
+    results_column_titles = [
         "Total energy produced in mln", "Total area (in dunam) used",
-        "Gini Coefficient value", "Potential revenue before installing PV's",
-        "Potential revenue after installing PV's", "Remaining percentage of revenue"
-    ])
+        "Potential revenue before installing PV's", "Potential revenue after installing PV's",
+        "Remaining percentage of revenue" 
+    ]
+    # Gini Coefficient value to results if used in the model
+    # if not pd.isna(main_results.loc[0, "Gini Coefficient value"]):
+    #     results_column_titles.append("Gini Coefficient value")
+    if "Gini Coefficient value" in main_results.columns:
+        results_column_titles.append("Gini Coefficient value")
+    ws.append(results_column_titles)
     style_range(
         ws,
         "A2", "F2",
@@ -107,10 +112,15 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
     ws.merge_cells(f"A{ws.max_row}:E{ws.max_row}") # Merges cells A:E
     ws.row_dimensions[ws.max_row].height = 30  # Increase row height
 
-    ws.append([
-        "Remaining percentage of revenue lower bound", "Total area upper bound",
-        "Total energy produced upper bound", "Gini Coefficient upper bound" 
-    ])
+    parameters_column_titles = [
+        "Total energy produced lower bound", "Total area upper bound",
+        "Remaining percentage of revenue lower bound", "Total installation cost upper bound"
+    ]
+
+    if "G_max" in model_params.columns:
+        parameters_column_titles.append("Gini Coefficient upper bound")
+
+    ws.append(parameters_column_titles)
     style_range(
         ws,
         f"A{ws.max_row}", f"F{ws.max_row}",

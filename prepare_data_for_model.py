@@ -6,11 +6,11 @@ from utils import measure_time
 def prepare_data_for_model(
     df_: pd.DataFrame,
     energy_consumption_by_yeshuv: pd.DataFrame,
-    energy_division_between_eshkolot: pd.DataFrame,
     energy_lower_bounds_for_eshkolot: pd.DataFrame,
     energy_upper_bounds_for_eshkolot: pd.DataFrame,
     energy_consumption_by_machoz: pd.DataFrame,
-    total_potential_revenue_before_PV_of_full_dataset: float
+    total_potential_revenue_before_PV_of_full_dataset: float,
+    energy_division_between_eshkolot: pd.DataFrame = None
 ) -> Dict[str, Union[List[float], int, float, Dict[str, set[int]]]]:
     """
     Prepare data for the optimization model.
@@ -54,19 +54,13 @@ def prepare_data_for_model(
     # takes only eshkolot that appear in the current dataset; values are unique since eshkolot_with_locations is a dictionary
     relevant_eshkolot = list(eshkolot_with_locations.keys())
     num_eshkolot = len(relevant_eshkolot)
-    # adjust energy_division_between_eshkolot so that it will only include eshkolot from the dataset, and then convert it to a list
-    energy_division_between_eshkolot = adjust_energy_division_between_eshkolot(energy_division_between_eshkolot, relevant_eshkolot)
-    energy_division_between_eshkolot = energy_division_between_eshkolot['percentage_of_energy_output'].tolist()
-
+    # adjust upper and lower bounds for energy division between eshkolot so that it will only include eshkolot from the dataset, and then convert it to a list
     energy_lower_bounds_for_eshkolot = adjust_energy_division_between_eshkolot(energy_lower_bounds_for_eshkolot, relevant_eshkolot)
     energy_lower_bounds_for_eshkolot = energy_lower_bounds_for_eshkolot['percentage_of_energy_output'].tolist()
-
     energy_upper_bounds_for_eshkolot = adjust_energy_division_between_eshkolot(energy_upper_bounds_for_eshkolot, relevant_eshkolot)
     energy_upper_bounds_for_eshkolot = energy_upper_bounds_for_eshkolot['percentage_of_energy_output'].tolist()
 
-    
-
-    return {
+    data_for_model = {
         "num_locations" : num_locations, #need to be first here, otherwise there will be bug in the mod file
         "fix_energy_production" : fix_energy_production,
         "influence_on_crops" : influence_on_crops,
@@ -82,11 +76,19 @@ def prepare_data_for_model(
         "energy_consumption_by_machoz" : energy_consumption_by_machoz,
         "eshkolot_with_locations" : eshkolot_with_locations,
         "num_eshkolot" : num_eshkolot,
-        "energy_division_between_eshkolot" : energy_division_between_eshkolot,
         "energy_lower_bounds_for_eshkolot" : energy_lower_bounds_for_eshkolot,
-        "energy_upper_bounds_for_eshkolot" : energy_upper_bounds_for_eshkolot
-
+        "energy_upper_bounds_for_eshkolot" : energy_upper_bounds_for_eshkolot,
     }
+    
+    # if provided, adjust energy_division_between_eshkolot so that it will only include eshkolot from the dataset, and then convert it to a list
+    if energy_division_between_eshkolot is not None:
+        energy_division_between_eshkolot = adjust_energy_division_between_eshkolot(energy_division_between_eshkolot, relevant_eshkolot)
+        energy_division_between_eshkolot = energy_division_between_eshkolot['percentage_of_energy_output'].tolist()
+        # add energy_division_between_eshkolot to the data that's gonna be used in the model
+        data_for_model["energy_division_between_eshkolot"] = energy_division_between_eshkolot
+    
+    return data_for_model
+
 
 def create_yeshuvim_with_locations(df_: pd.DataFrame) -> Dict[str, set]:
     """

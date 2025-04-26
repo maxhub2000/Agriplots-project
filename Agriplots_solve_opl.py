@@ -257,85 +257,64 @@ def set_decision_variable_type(file_path, decision_variables_type):
     else:
         print("No matching line found. No changes were made.")
 
-def set_objective_function_type(file_path, objective_function_type):
+def insert_named_blocks_after_marker(file_path, block_names, block_mapping,  marker_text):
     """
-    Modify the objective function in the .mod file based on the value of objective_function_type.
+    Inserts named content blocks (e.g., constraints or objective functions) after a marker line in a file.
 
     Args:
         file_path (str): Path to the .mod file.
-        objective_function_type (str): name of the objective function type.
+        block_names (List[str]): A list of keys to insert from the block_mapping.
+        block_mapping (dict): A dictionary mapping block names to their code strings.
+        marker_text (str): The exact line of text in the file after which the blocks will be inserted.
 
     Raises:
         FileNotFoundError: If the file does not exist.
+        ValueError: If the marker_text is not found or block_names contains invalid keys.
     """
+    unknown_names = [name for name in block_names if name not in block_mapping]
+    if unknown_names:
+        raise ValueError(f"Unknown block name(s): {', '.join(unknown_names)}")
 
-    # Define the mappings for replacement based on objective_function_type
-    replacements = {
-        "maximum energy with area constraint" : "// Objective Function\nmaximize TotalEnergy;",
-        "maximum energy with remaining percentage of revenue constraint" : "// Objective Function\nmaximize TotalEnergy;",
-        "minimum area" : "// Objective Function\nminimize TotalArea;",
-        "maximum remaining percentage of revenue" : "// Objective Function\nmaximize RemainingPercentageOfRevenue;",
-        "maximum energy & maximum equity with gini" : 
-            "// Multi-Objective Function - Maximizing both total energy produced and equity between eshkolot, using the formula:\n"
-            "// TotalEnergy*(1-G) = TotalEnergy*[1-(G_numerator/TotalEnergy)] = TotalEnergy - G_numerator\n"
-            "maximize TotalEnergy - G_numerator;"
-    }
-
-    # Set original string text
-    original_text = "// Objective Function\nmaximize TotalEnergy;"
-    # Extract the replacement string
-    replacement_text = replacements[objective_function_type]
-    # Read the file content
     try:
         with open(file_path, 'r') as file:
-            content = file.read()
+            lines = file.readlines()
     except FileNotFoundError:
         raise FileNotFoundError(f"The file '{file_path}' does not exist.")
 
-    # Update the file content if the original text exists
-    if original_text in content:
-        content = content.replace(original_text, replacement_text)
-        with open(file_path, 'w') as file:
-            file.write(content)
-    else:
-        print("No matching objective function found. No changes were made.")
+    insertion_index = None
+    for i, line in enumerate(lines):
+        if marker_text in line:
+            insertion_index = i + 1
+            break
 
+    if insertion_index is None:
+        raise ValueError(f"The marker text '{marker_text}' was not found in the file.")
 
+    # Prepare blocks (with blank lines between)
+    inserted_blocks = []
+    for name in block_names:
+        inserted_blocks.append(block_mapping[name].strip())
+        inserted_blocks.append("")
 
-def set_constraints(file_path, objective_function_type, constraints_to_comment_texts):
-    """
-    remove constrains from .mod file based on the value of objective_function_type
+    # Insert blocks into original content
+    new_lines = lines[:insertion_index] + [block + "\n" for block in inserted_blocks] + lines[insertion_index:]
 
-    Args:
-        file_path (str): Path to the .mod file.
-        objective_function_type (str): name of the objective function type.
-        constraints_to_comment_texts (dict): texts of comments in the .mod file mapped to constraint names
+    with open(file_path, 'w') as file:
+        file.writelines(new_lines)
 
-    Raises:
-        FileNotFoundError: If the file does not exist.
-    """
-    # initialize list of removed_constraints
-    removed_constraints = []
-    # create mapping (dict) between objective function type and constraints that needs to be removed
-    obj_func_type_to_removed_constraints = {
-        "maximum energy with area constraint" : ["total_energy_constraint", "remaining_percentage_of_revenue_constraint"],
-        "maximum energy with remaining percentage of revenue constraint" : ["total_energy_constraint", "total_area_constraint"],
-        "minimum area" : ["total_area_constraint", "remaining_percentage_of_revenue_constraint"],
-        "maximum remaining percentage of revenue" : ["total_area_constraint", "remaining_percentage_of_revenue_constraint"],
-        "maximum energy & maximum equity with gini" : ["name_space_gini_constraint2"]
-    }
-    # add removed constraints based on objective_function_type and the mapping
-    removed_constraints.extend(obj_func_type_to_removed_constraints[objective_function_type])
-    # remove needed constraints from the .mod file
-    remove_constraints_from_model(removed_constraints, file_path, constraints_to_comment_texts)
+def set_objective_function(file_path, objective_function, objective_function_mapping):
+    marker_text = "// Objective Function"
+    insert_named_blocks_after_marker(file_path, objective_function, objective_function_mapping, marker_text)
 
-
+def set_constraints(file_path, constraints_to_add, constraints_mapping):
+    marker_text = "subject to {"
+    insert_named_blocks_after_marker(file_path, constraints_to_add, constraints_mapping, marker_text)
 
 
 def group_by_yeshuv_and_AnafSub(df_):
     key_columns = ['YeshuvName', 'AnafSub']
     columns_to_aggregate_by_sum = ["Dunam","Energy production (fix) mln kWh/year",
-        "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
+        "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS", "Installation cost"]
     columns_to_aggregate_by_first = ["Average influence of PV on crops", "Machoz", "eshkol"]
     relevant_columns_for_model = key_columns + columns_to_aggregate_by_sum + columns_to_aggregate_by_first
     agg_dict = {col: 'sum' for col in columns_to_aggregate_by_sum} # create dict with columns to aggregate by "sum"
@@ -386,9 +365,95 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 def main():
     USER_INTERFACE = False
     TESTING_MODE = False
-    OBJECTIVE_FUNCTION_TYPE = "maximum energy with remaining percentage of revenue constraint" # can either be "maximum energy with area constraint", "maximum energy with remaining percentage of revenue constraint", "minimum area" or "maximum remaining percentage of revenue"
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
+    OBJECTIVE_FUNCTION_TYPE = "maximum energy" # can either be "maximum energy with area constraint", "maximum energy with remaining percentage of revenue constraint", "minimum area" or "maximum remaining percentage of revenue"
+    MAIN_CONSTRAINTS = ["total_installation_cost_constraint"]
     FULL_CONTINUOUS_MODEL = False
+    GINI_IN_OBJECTIVE = False
+    GINI_IN_CONSTRAINT = False
+
+    commmon_constraints = ["energy_production_per_yeshuv_constraint",
+                          "energy_production_per_machoz_constraint",
+                          "energy_production_per_eshkol_upper_bounding_constraint",
+                          "energy_production_per_eshkol_lower_bounding_constraint",
+                          "decision_variables_constraint"]
+    
+    model_constraints = MAIN_CONSTRAINTS + commmon_constraints  
+
+    objective_function_mapping = {
+        "maximum energy": "maximize TotalEnergy;",
+        "minimum area": "minimize TotalArea;",
+        "maximum remaining percentage of revenue": "maximize RemainingPercentageOfRevenue;",
+        "minimum installation cost": "minimize TotalInstallationCost;",
+        "maximum energy & maximum equity with gini": (
+            "// Multi-Objective: Maximize energy & equity\n"
+            "maximize TotalEnergy - G_numerator;"
+        )
+    }
+
+    constraints_mapping = {
+        "total_energy_constraint": (
+            "    //Constraint for a lower bound of the total energy produced by installed PV's\n"
+            "    TotalEnergy >= total_energy_lower_bound;"
+        ),
+        "total_area_constraint": (
+            "    // Constraint for an upper bound of the total area used by installed PV's\n"
+            "    TotalArea <= total_area_upper_bound;"
+        ),
+        "remaining_percentage_of_revenue_constraint": (
+            "    // Constraint for the remaining percentage of original revenue, as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold \n"
+            "    RemainingPercentageOfRevenue >= Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound;"
+        ),
+        "total_installation_cost_constraint": (
+            "    // Constraint for an upper bound of the total installation cost of PV's\n"
+            "    TotalInstallationCost <= total_installation_cost_upper_bound;"
+        ),
+        "energy_production_per_yeshuv_constraint": (
+            "    // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv \n"
+            "    forall (j in Yeshuvim) {\n"
+            "        sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];\n"
+            "    };"
+        ),
+        "energy_production_per_machoz_constraint": (
+            "    // Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz \n"
+            "    forall (j in Machozot) {\n"
+            "        sum(i in M[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_machoz[j];\n"
+            "    };"
+        ),
+        "energy_production_per_eshkol_upper_bounding_constraint": (
+            "    // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage \n"
+            "    forall (k in Eshkolot) {\n"
+            "        y[k] <= energy_upper_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);\n"
+            "    };"
+        ),
+        "energy_production_per_eshkol_lower_bounding_constraint": (
+            "    // Constraint for the percentage of the total energy production of each eshkol, lower bounded by some fixed percentage \n"
+            "    forall (k in Eshkolot) {\n"
+            "        y[k] >= energy_lower_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);\n"
+            "    };"
+        ),
+        "decision_variables_constraint": (
+            "    // Constraint that limits the value of x[i] to be less or equal than 1, relevant for the continuous model \n"
+            "    forall(i in 1..num_locations)\n"
+            "        x[i] <= 1;\n"
+        ),
+        "linearized_constraint_for_gini": (
+            "    // Linearized Gini coefficient constraint (only for i < j)\n"
+            "    forall(i in Eshkolot, j in Eshkolot: i < j) {\n"
+            "        z[i][j] >=  energy_division_between_eshkolot[j]*y[j] - energy_division_between_eshkolot[i]*y[i];\n"
+            "        z[i][j] >=  energy_division_between_eshkolot[i]*y[i] - energy_division_between_eshkolot[j]*y[j];\n"
+            "    };"
+        ),
+        "gini_constraint": (
+            "    // Gini constraint (now summing only over i < j)\n"
+            "    G_numerator <= G_max * TotalEnergy;\n"
+        ),
+
+    }
+
+
+
+
 
     constraints_to_comment_texts = {
             "total_energy_constraint" : "Constraint for a lower bound of the total energy produced by installed PV's",
@@ -396,15 +461,15 @@ def main():
             "remaining_percentage_of_revenue_constraint" : "Constraint for the remaining percentage of original revenue, as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
             "energy_production_per_yeshuv_constraint" : "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
             "energy_production_per_machoz_constraint" : "Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz",
-            "name_space_gini_constraint1": "Linearized Gini coefficient constraint (only for i < j)",
-            "name_space_gini_constraint2": "Gini constraint (now summing only over i < j)",
-        }
+            "linearized_constraint_for_gini" : "Linearized Gini coefficient constraint (only for i < j)",
+            "gini_constraint" : "Gini constraint (now summing only over i < j)",
+    }
     
     params = {
-        "Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound" : 0.92,
+        "total_energy_lower_bound" : 80.00,
         "total_area_upper_bound" : 20000.00,
-        "total_energy_upper_bound" : 800.00,
-        "G_max" : 0.05
+        "Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound" : 0.92,
+        "total_installation_cost_upper_bound" : 120000.00
     }
     
     filters = {
@@ -412,17 +477,20 @@ def main():
         'Machoz': (['South'], "exclude"),   # Exclude 'North' and 'Center'
         "AnafSub": (['peelables'], "exclude")
     }
-    
+
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     
     opl_base_model_file_path = "edit_mod_file/Agriplots_base_model.mod"
+    # opl_base_model_file_path = "edit_mod_file/Agriplots_base_model - 2.mod"
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
     dataset_path = 'Agriplots_final - Full data.xlsx'
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
     # dataset_path = 'df_dataset before data preparation - test as input.xlsx'
     dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+    # dataset_path = 'ssssdddd.xlsx'
+    # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
@@ -447,9 +515,24 @@ def main():
     print(f"loading df_dataset took {elapsed_time:.2f} seconds")
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
+    
+    
+    # col_names_replacements =  {
+    #     "GeoDistrictName":"Machoz",
+    #     "AnafSubENG":"AnafSub",
+    #     "Feasability_to_install_PVs":"Feasability to install PVs?",
+    #     "EPFix_MkWh":"Energy production (fix) mln kWh/year",
+    #     "Average_influence_of_PV_on_crops": "Average influence of PV on crops",
+    #     "Potential_revenue_from_crops_before_PV_MNIS":"Potential revenue from crops before PV, mln NIS",
+    #     "Potential_revenue_from_crops_after_PV_MNIS":"Potential revenue from crops after PV, mln NIS",
+    # }
+
+    # df_dataset.drop(["AnafSub"], axis=1)
+    # df_dataset.rename(columns = col_names_replacements, inplace = True)
+
 
     # filter dataset based on different columns
-    # df_dataset = filter_dataset(df_dataset, filters)
+    df_dataset = filter_dataset(df_dataset, filters)
 
 
     total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
@@ -468,7 +551,7 @@ def main():
     # import datasets relevant for using eshkolot in the model
     yeshuvim_in_eshkolot = load_excel(yeshuvim_in_eshkolot_path)
     yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True) # rename column in the df
-    energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
+    energy_division_between_eshkolot = None # value will be given if Gini is used
     energy_lower_bounds_for_eshkolot = load_excel(energy_lower_bounds_for_eshkolot_path)
     energy_upper_bounds_for_eshkolot = load_excel(energy_upper_bounds_for_eshkolot_path)
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
@@ -479,33 +562,32 @@ def main():
         DECISION_VARIABLES_TYPE = "continuous decision variables" #forces continuous decision variables for full continuous model
         continuous_model_df = group_by_yeshuv_and_AnafSub(df_dataset)
         df_dataset = continuous_model_df
+
+    if GINI_IN_OBJECTIVE:
+        params["G_max"] = 1.00 # meaning there is no constraint, since Gini can't be more than 1
+        OBJECTIVE_FUNCTION_TYPE = "maximum energy & maximum equity with gini"
+        energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
+
+    if GINI_IN_CONSTRAINT:
+        params["G_max"] = 0.05 # constraint Gini coefficient to be no more than 0.05
+        model_constraints.extend(["linearized_constraint_for_gini", "gini_constraint"])
+        energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
+
     
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1
 
-    # if USER_INTERFACE:
-    #     user_input_params = activate_interface()
-    #     trillion = 1e12 # float form of trillion that's also compatible with .mod and .dat files
-    #     if user_input_params[0]:
-    #         params["total_area_upper_bound"] = user_input_params[0]
-    #     else:
-    #         params["total_area_upper_bound"] = trillion # simulating infinity to show it won't be used in the model
-    #     params["allowed_loss_from_influence_on_crops_percentage"] = user_input_params[1]/100
-        
-    #     removed_constraints.extend(user_input_params[2])
-    #     time.sleep(5)
-
     df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
     
     # get needed relevant data for running the model, in addition to the parameters (params)
-    data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_division_between_eshkolot, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset)
+    data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset, energy_division_between_eshkolot)
     # write data and params to .dat file
     write_dat_file(dat_file, data, params)
-
+    # set decision variables, objective function and constraints based chosen model
     set_decision_variable_type(opl_model_file, DECISION_VARIABLES_TYPE)
-    set_objective_function_type(opl_model_file, OBJECTIVE_FUNCTION_TYPE)
-    set_constraints(opl_model_file, OBJECTIVE_FUNCTION_TYPE, constraints_to_comment_texts)
+    set_objective_function(opl_model_file, [OBJECTIVE_FUNCTION_TYPE], objective_function_mapping)
+    set_constraints(opl_model_file, model_constraints, constraints_mapping)
 
     # Solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, txt_output_path)
@@ -514,9 +596,8 @@ def main():
     # output the final results to excel file
     output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, DECISION_VARIABLES_TYPE, OBJECTIVE_FUNCTION_TYPE)
     
-    resutls_for_GIS = get_results_for_GIS_tool(df_dataset, df_results, "results_for_GIS_temp.xlsx")
-
-    return resutls_for_GIS
+    # resutls_for_GIS = get_results_for_GIS_tool(df_dataset, df_results, "results_for_GIS_temp.xlsx")
+    # return resutls_for_GIS
 
 
 def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
@@ -580,5 +661,6 @@ def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
 
 
 if __name__ == "__main__":
+    main()
     # pass
-    resutls_for_GIS = main()
+    # resutls_for_GIS = main()

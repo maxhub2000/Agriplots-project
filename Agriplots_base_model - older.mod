@@ -54,9 +54,62 @@ execute {
 
 
 // Objective Function
+maximize TotalEnergy;
 
 // Constraints
 subject to {
+
+    // Constraint for a lower bound of the total energy produced by installed PV's
+    TotalEnergy >= total_energy_lower_bound;
+
+    // Constraint for an upper bound of the total area used by installed PV's
+    TotalArea <= total_area_upper_bound;
+    //sum(i in 1..num_locations) (x[i] * installation_costs[i]) <= total_area_upper_bound;
+      
+    // Constraint for the remaining percentage of original revenue, as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold
+    RemainingPercentageOfRevenue >= Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound;
+
+    // Constraint for an upper bound of the total installation cost of PV's
+    TotalInstallationCost <= total_installation_cost_upper_bound;
+
+    // Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv
+    forall (j in Yeshuvim) {
+        sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
+    };
+    
+    // Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz
+    forall (j in Machozot) {
+        sum(i in M[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_machoz[j];
+    };
+
+    /*
+    // Linearized Gini coefficient constraint (only for i < j)
+    forall(i in Eshkolot, j in Eshkolot: i < j) {
+        z[i][j] >=  energy_division_between_eshkolot[j]*y[j] - energy_division_between_eshkolot[i]*y[i] ;
+        z[i][j] >=  energy_division_between_eshkolot[i]*y[i] - energy_division_between_eshkolot[j]*y[j] ;
+    }
+    
+    // Gini constraint (now summing only over i < j)
+    G_numerator <= G_max * TotalEnergy;
+    */
+    
+
+    // Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage
+    forall (k in Eshkolot) {
+      y[k] <= energy_upper_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
+
+    };
+    
+    // Constraint for the percentage of the total energy production of each eshkol, lower bounded by some fixed percentage
+    forall (k in Eshkolot) {
+      y[k] >= energy_lower_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
+
+    };
+
+
+    // Constraint that limits the value of x[i] to be less or equal than 1, relevant for the continuous model
+    forall(i in 1..num_locations)
+        x[i] <= 1;               
 }
 
 
@@ -173,6 +226,7 @@ execute {
   }
   writeln("Gini Coefficient value: ", Gini_coefficient_value);
   */
+
 
   writeln("Locations with installed PV's:")
   writeln("location_id,", "x[i],", "Energy units Produced in mln,", "influence on crops,", "area in dunam used");
