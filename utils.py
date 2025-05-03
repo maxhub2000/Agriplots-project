@@ -1,6 +1,22 @@
 import pandas as pd
 import time
+import shutil
 from functools import wraps
+
+
+def load_excel(dataset_path_):
+    # if dataset_path_ is a list that includes sheet_name, read excel using sheet name
+    if isinstance(dataset_path_, list):
+        loaded_dataset = pd.read_excel(dataset_path_[0], sheet_name = dataset_path_[1])
+    # otherwise, just use the file path to read the excel
+    else:
+        loaded_dataset = pd.read_excel(dataset_path_)
+    return loaded_dataset
+
+def create_copy_of_mod_file(original_file_path, new_file_path):
+    # Creates a copy of file that's in original_file_path,
+    # that will be located in new_file_path
+    shutil.copy(original_file_path, new_file_path)
 
 def measure_time(func):
     """

@@ -8,7 +8,9 @@ from choosing_parameters_interface import activate_interface
 from remove_constraints_from_model import remove_constraints_from_model
 from output_opl_results_to_excel import output_opl_results_to_excel
 from generate_model_inputs import generate_model_inputs
-from utils import measure_time, track_row_changes, load_excel
+from utils import measure_time, track_row_changes, load_excel, create_copy_of_mod_file
+from data_preprocessing import remove_rows_with_missing_values, remove_rows_with_non_feasible_locations, modify_influence_on_crops, add_installation_costs, assign_different_yeshuv_names, add_eshkolot_to_dataset
+from opl_results_parser import raw_output_to_df
 
 def write_dat_file(dat_file, data, params):
     yeshuvim_with_locations = data.pop("yeshuvim_with_locations")
@@ -67,124 +69,6 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
         return result.stdout
     except Exception as e:
         print(f"Error running oplrun: {e}")
-
-def modify_influence_on_crops(df_, anaf_sub_parameters_synthetic_values_path):
-    anaf_sub_parameters_data = load_excel(anaf_sub_parameters_synthetic_values_path)
-    # prepare dictionary that maps for each crop how much it's influenced by installing PV
-    influence_on_crops_dict = anaf_sub_parameters_data.set_index("AnafSub")["Average influence"].to_dict()
-    # maps average influence on crops to each AnafSub according to the influence_on_crops_dict (like Vlookp)
-    modified_influence_on_crops = df_['AnafSub'].map(influence_on_crops_dict).tolist()
-    df_["Average influence of PV on crops"] = modified_influence_on_crops
-    return df_
-
-def add_installation_costs(df_, anaf_sub_parameters_synthetic_values_path):
-    anaf_sub_parameters_data = load_excel(anaf_sub_parameters_synthetic_values_path)
-    # prepare dictionary that maps for each crop how much what's it's cost per dunam
-    costs_of_crops_dict = anaf_sub_parameters_data.set_index("AnafSub")["Cost per Dunam"].to_dict()
-    costs_of_crops = df_['AnafSub'].map(costs_of_crops_dict).tolist()
-    df_["Cost of AnafSub per dunam"] = costs_of_crops
-    df_["Installation cost"] = df_["Cost of AnafSub per dunam"] * df_["Dunam"]
-    return df_
-
-@track_row_changes
-def remove_rows_with_missing_values(df_):
-    # remove rows with nan values (Ideally should find a better way to handle those nan values later on)
-    df_ = df_.dropna(subset=['Energy production (fix) mln kWh/year',
-                           'Dunam'])
-    return df_
-
-@track_row_changes
-def remove_rows_with_non_feasible_locations(df_):
-    # remove rows with non feasible locations for installing PV's
-    df_ = df_[df_['Feasability to install PVs?'] != 0]
-    return df_
-
-@measure_time
-@track_row_changes
-def add_eshkolot_to_dataset(df_, yeshuvim_in_eshkolot_):
-    # Perform a left join to add the 'eshkol' column from yeshuvim_in_eshkolot_ to df_
-    df_ = pd.merge(df_, yeshuvim_in_eshkolot_, on='YeshuvName', how='left')
-    # Fill missing values (if a YeshuvName is not found in yeshuvim_in_eshkolot_, set 'eshkol' to -1)
-    df_['eshkol'].fillna(-1, inplace=True)
-    # Optionally, convert 'eshkol' to integer if needed
-    df_['eshkol'] = df_['eshkol'].astype(int)
-    df_[df_['eshkol'] == -1].to_excel("removed rows from df_dataset after adding eshkolot.xlsx")
-    #remove rows that has eshkol -1, meaning rows that their yeshuv doesn't have an eshkol
-    df_ = df_[df_['eshkol'] != -1]
-    return df_
-
-def raw_output_to_df(opl_raw_output_):
-    # parsing the result output to extract the required values
-    main_results = pd.DataFrame()
-    locations_with_installed_PVs = ""  # Variable to store multiple lines of output
-    energy_produced_per_eshkol = ""  # Variable to store multiple lines of output
-    capture_main_results = False
-    capture_locations_with_installed_PVs_results = False  # Flag to start capturing excel output
-    capture_energy_produced_per_eshkol_results = False  # Flag to start capturing excel output
-    for line in opl_raw_output_.splitlines():
-        # Detect the start of the excel output block
-        if "Results for excel output file:" in line:
-            capture_main_results = True  # Start capturing from the next line
-            continue  # Skip the current line
-        if "Locations with installed PV's:" in line:
-            capture_main_results = False
-            capture_locations_with_installed_PVs_results = True
-            continue
-        if capture_main_results:
-            if line.strip() == "Locations with installed PV's:":  # Stop capturing when we hit an empty line (or define another end condition)
-                capture_locations_with_installed_PVs_results = False
-                capture_energy_produced_per_eshkol_results = True
-                continue
-            splitted_line = line.strip().split(": ")
-            metric, value = splitted_line 
-            main_results[metric] = [value]
-        
-        if capture_locations_with_installed_PVs_results:
-            if line.strip() == "Energy produced per Eshkol:":  # Stop capturing when we hit an empty line (or define another end condition)
-                capture_locations_with_installed_PVs_results = False
-                capture_energy_produced_per_eshkol_results = True
-                continue
-            locations_with_installed_PVs += line + "\n"  # Append the line to the result string
-
-        # Capture subsequent lines after the keyword is detected
-        if capture_energy_produced_per_eshkol_results:
-            # print("in fourth condition")
-            if line.strip() == "End of Results for excel output file":  # Stop capturing when we hit an empty line (or define another end condition)
-                break
-            energy_produced_per_eshkol += line + "\n"  # Append the line to the result string
-
-    locations_with_installed_PVs = locations_with_installed_PVs.strip()
-    locations_with_installed_PVs = locations_with_installed_PVs.split("\n")  # Splitting at the \n delimiter
-
-    energy_produced_per_eshkol = energy_produced_per_eshkol.strip()
-    energy_produced_per_eshkol = energy_produced_per_eshkol.split("\n")  # Splitting at the \n delimiter
-
-    locations_with_installed_PVs_results = model_results_to_df(locations_with_installed_PVs)
-    energy_produced_per_eshkol_results = model_results_to_df(energy_produced_per_eshkol)
-    df_results = [main_results, locations_with_installed_PVs_results, energy_produced_per_eshkol_results]
-    # Return the captured results, including the excel output block
-    return df_results
-
-def model_results_to_df(excel_output_results):
-    # Split the first element to get the column names
-    column_names = excel_output_results[0].split(',')
-    print("column_names: ", column_names)
-    # Split each remaining element in the list to get the data rows
-    rows = [row.split(',') for row in excel_output_results[1:]]
-    # Create a pandas DataFrame using the rows and columns
-    df_results = pd.DataFrame(rows, columns = column_names)
-    return df_results
-
-def assign_different_yeshuv_names(df_, new_yeshuv_names_path):
-    new_yeshuv_names = load_excel(new_yeshuv_names_path)
-    print(len(new_yeshuv_names))
-    # Create a mapping from the assignment_of_missing_yeshuv_names DataFrame
-    yeshuv_name_mapping = dict(zip(new_yeshuv_names['old_yeshuv_name'], new_yeshuv_names['new_yeshuv_name']))
-    # Apply the mapping to the dataset
-    df_['YeshuvName'] = df_['YeshuvName'].replace(yeshuv_name_mapping)
-    # df_['YeshuvName'].to_excel("yeshuvim in df_dataset after assigning different yeshuv names.xlsx")
-    print("number of yeshuvim after assigning different names to yeshuvim:",df_["YeshuvName"].nunique())
-    return df_
 
 
 def test_model(testing_data_and_parameters_path):
@@ -302,7 +186,6 @@ def set_constraints(file_path, constraints_to_add, constraints_mapping):
     marker_text = "subject to {"
     insert_named_blocks_after_marker(file_path, constraints_to_add, constraints_mapping, marker_text)
 
-
 def group_by_yeshuv_and_AnafSub(df_):
     key_columns = ['YeshuvName', 'AnafSub']
     columns_to_aggregate_by_sum = ["Dunam","Energy production (fix) mln kWh/year",
@@ -318,11 +201,6 @@ def group_by_yeshuv_and_AnafSub(df_):
     print(df_for_model)
     df_for_model.to_excel('grouped_continuous_df.xlsx', index=False)
     return df_for_model
-
-def create_copy_of_mod_file(original_file_path, new_file_path):
-    # Creates a copy of file that's in original_file_path,
-    # that will be located in new_file_path
-    shutil.copy(original_file_path, new_file_path)
 
 # Custom filter function with "include"/"exclude" option for each column
 def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) -> pd.DataFrame:
@@ -359,7 +237,7 @@ def main():
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
     OBJECTIVE_FUNCTION_TYPE = "minimum area" # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
     MAIN_CONSTRAINTS = ["total_energy_constraint"]
-    FULL_CONTINUOUS_MODEL = True
+    FULL_CONTINUOUS_MODEL = False
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
 
