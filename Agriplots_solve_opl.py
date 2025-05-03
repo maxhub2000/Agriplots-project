@@ -7,8 +7,8 @@ from typing import List, Dict, Optional, Callable, Union, Tuple
 from choosing_parameters_interface import activate_interface
 from remove_constraints_from_model import remove_constraints_from_model
 from output_opl_results_to_excel import output_opl_results_to_excel
-from prepare_data_for_model import prepare_data_for_model
-from utils import measure_time, track_row_changes
+from generate_model_inputs import generate_model_inputs
+from utils import measure_time, track_row_changes, load_excel
 
 def write_dat_file(dat_file, data, params):
     yeshuvim_with_locations = data.pop("yeshuvim_with_locations")
@@ -186,14 +186,6 @@ def assign_different_yeshuv_names(df_, new_yeshuv_names_path):
     print("number of yeshuvim after assigning different names to yeshuvim:",df_["YeshuvName"].nunique())
     return df_
 
-def load_excel(dataset_path_):
-    # if dataset_path_ is a list that includes sheet_name, read excel using sheet name
-    if isinstance(dataset_path_, list):
-        loaded_dataset = pd.read_excel(dataset_path_[0], sheet_name = dataset_path_[1])
-    # otherwise, just use the file path to read the excel
-    else:
-        loaded_dataset = pd.read_excel(dataset_path_)
-    return loaded_dataset
 
 def test_model(testing_data_and_parameters_path):
     dataset_path = [testing_data_and_parameters_path, "data"]
@@ -363,12 +355,11 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 
 @measure_time
 def main():
-    USER_INTERFACE = False
     TESTING_MODE = False
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
-    OBJECTIVE_FUNCTION_TYPE = "maximum energy" # can either be "maximum energy with area constraint", "maximum energy with remaining percentage of revenue constraint", "minimum area" or "maximum remaining percentage of revenue"
-    MAIN_CONSTRAINTS = ["total_installation_cost_constraint"]
-    FULL_CONTINUOUS_MODEL = False
+    OBJECTIVE_FUNCTION_TYPE = "minimum area" # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
+    MAIN_CONSTRAINTS = ["total_energy_constraint"]
+    FULL_CONTINUOUS_MODEL = True
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
 
@@ -450,21 +441,8 @@ def main():
         ),
 
     }
-
-
-
-
-
-    constraints_to_comment_texts = {
-            "total_energy_constraint" : "Constraint for a lower bound of the total energy produced by installed PV's",
-            "total_area_constraint" : "Constraint for an upper bound of the total area used by installed PV's",
-            "remaining_percentage_of_revenue_constraint" : "Constraint for the remaining percentage of original revenue, as a result of installing the PV's and influencing the crops, lower bounded by an inputed threshold",
-            "energy_production_per_yeshuv_constraint" : "Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv",
-            "energy_production_per_machoz_constraint" : "Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz",
-            "linearized_constraint_for_gini" : "Linearized Gini coefficient constraint (only for i < j)",
-            "gini_constraint" : "Gini constraint (now summing only over i < j)",
-    }
     
+    # parameters of the model
     params = {
         "total_energy_lower_bound" : 80.00,
         "total_area_upper_bound" : 20000.00,
@@ -482,7 +460,6 @@ def main():
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     
     opl_base_model_file_path = "edit_mod_file/Agriplots_base_model.mod"
-    # opl_base_model_file_path = "edit_mod_file/Agriplots_base_model - 2.mod"
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
     dataset_path = 'Agriplots_final - Full data.xlsx'
@@ -504,9 +481,7 @@ def main():
     installation_decisions_output_path = 'installation_decisions_results.xlsx'
     final_results_output_path = 'final_results.xlsx'
     testing_data_and_parameters_path = 'datasets_for_testing/sanity_checks_datasets/sanity_check_1-choosing_based_on_area_constraint.xlsx'
-    # parameters of the model
-
-
+    
     if TESTING_MODE:
         dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params = test_model(testing_data_and_parameters_path)
     load_df_dataset_start_time = time.time()
@@ -573,7 +548,6 @@ def main():
         model_constraints.extend(["linearized_constraint_for_gini", "gini_constraint"])
         energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
 
-    
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1
@@ -581,15 +555,14 @@ def main():
     df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
     
     # get needed relevant data for running the model, in addition to the parameters (params)
-    data = prepare_data_for_model(df_dataset, energy_consumption_by_yeshuv, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset, energy_division_between_eshkolot)
+    data = generate_model_inputs(df_dataset, energy_consumption_by_yeshuv, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset, energy_division_between_eshkolot)
     # write data and params to .dat file
     write_dat_file(dat_file, data, params)
     # set decision variables, objective function and constraints based chosen model
     set_decision_variable_type(opl_model_file, DECISION_VARIABLES_TYPE)
     set_objective_function(opl_model_file, [OBJECTIVE_FUNCTION_TYPE], objective_function_mapping)
     set_constraints(opl_model_file, model_constraints, constraints_mapping)
-
-    # Solve the OPL model and put the opl output in the opl_raw_output variable
+    # solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, txt_output_path)
     # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
@@ -601,9 +574,7 @@ def main():
 
 
 def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
-
     main_results_df, installed_PVs_results, _ = df_results_
-
     relevant_columns_from_input = ["location_id", "OBJECTID", "YeshuvName", "Machoz", "AnafName", "CoverTypeE", "Energy production (tracking) mln kWh/year"]
     if "OBJECTID" not in list(df_dataset_.columns):
         relevant_columns_from_input.remove("OBJECTID")
@@ -616,12 +587,9 @@ def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
     installed_PVs_results["area in dunam used"] = pd.to_numeric(installed_PVs_results["area in dunam used"], errors="coerce")
     # left join installed locations from result of opl model to columns from input dataset
     merged_data = pd.merge(relevant_df_from_input,installed_PVs_results, on="location_id", how="left")
-
     merged_data['x[i]'] = merged_data['x[i]'].apply(lambda x: 0 if pd.isna(x) else 1)
     merged_data['Energy units Produced in mln'] = merged_data['Energy units Produced in mln'].apply(lambda x: 0 if pd.isna(x) else float(x))
     merged_data['area in dunam used'] = merged_data['area in dunam used'].apply(lambda x: 0 if pd.isna(x) else float(x))
-
-
     merged_data = merged_data.rename(columns={
         'OBJECTID': 'plot_id',
         'YeshuvName': 'yeshuv',
@@ -656,9 +624,6 @@ def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
     main_results_df.columns = ["total_energy_mwh", "total_area_used_dunam"]
 
     return merged_data, main_results_df
-
-
-
 
 if __name__ == "__main__":
     main()
