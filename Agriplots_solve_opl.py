@@ -445,7 +445,7 @@ def main():
     # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
     # output the final results to excel file
-    output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, DECISION_VARIABLES_TYPE, OBJECTIVE_FUNCTION_TYPE)
+    output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, DECISION_VARIABLES_TYPE, OBJECTIVE_FUNCTION_TYPE, MAIN_CONSTRAINTS[0])
     
     # resutls_for_GIS = get_results_for_GIS_tool(df_dataset, df_results, "results_for_GIS_temp.xlsx")
     # return resutls_for_GIS

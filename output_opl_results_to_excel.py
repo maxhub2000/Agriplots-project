@@ -3,12 +3,11 @@ import os
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, PatternFill, Font
 from openpyxl.utils import get_column_letter
-
 from utils import measure_time
 
 
 @measure_time
-def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, installation_decisions_output_path, final_results_output_path, decision_variables_type, objective_function_type):
+def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, installation_decisions_output_path, final_results_output_path, decision_variables_type, objective_function_type, main_constraint):
     main_results_df, installed_PVs_results, energy_produced_per_eshkol = df_opl_results
     installation_decisions = output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_results, installation_decisions_output_path)
     energy_produced_per_machoz = installation_decisions[["Machoz", "Energy units Produced in mln"]].groupby("Machoz", as_index=False)["Energy units Produced in mln"].sum()
@@ -20,7 +19,7 @@ def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, insta
         model_params["total_area_upper_bound"] = "No Upper Bound"
     model_params_df = pd.DataFrame([model_params])
     full_results = [main_results_df, model_params_df, energy_produced_per_eshkol, energy_produced_per_machoz, area_used_per_machoz, area_used_per_anafSub]
-    output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type)
+    output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type, main_constraint)
 
 def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_results, installation_decisions_output_path):
     relevant_columns_from_input = ["location_id", "OBJECTID", "AnafSub", "YeshuvName", "Machoz", "eshkol", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
@@ -41,212 +40,6 @@ def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_re
     merged_data.to_excel(installation_decisions_output_path)
     return merged_data
 
-def output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type):
-    main_results, model_params, energy_produced_per_eshkol, energy_produced_per_machoz, area_used_per_machoz, area_used_per_anafSub = full_results
-    if decision_variables_type == "binary decision variables":
-        model_type_text = "Binary"
-    else:
-        model_type_text = "Continuous"
-
-    multi_objective_function_text = ""
-    if objective_function_type == "multi objective":
-        multi_objective_function_text += "- Multi objective function"
-
-    
-    # Create a new workbook
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Results"
-
-    # Apply column widths
-    column_widths = [30, 30, 30, 30, 30, 30]
-    for i, width in enumerate(column_widths, 1):
-        ws.column_dimensions[get_column_letter(i)].width = width
-
-    # Write the "Model Results" table with formatting
-    ws.append([f"{model_type_text} Model Results {multi_objective_function_text}"])
-    style_range(
-        ws,
-        "A1", "F1",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),
-        font=Font(bold=True, size=16)
-    )
-    ws.merge_cells("A1:F1")
-    ws.row_dimensions[1].height = 30  # Increase row height for better visibility
-    results_column_titles = [
-        "Total energy produced in mln", "Total area (in dunam) used",
-        "Potential revenue before installing PV's", "Potential revenue after installing PV's",
-        "Remaining percentage of revenue" 
-    ]
-    # Gini Coefficient value to results if used in the model
-    # if not pd.isna(main_results.loc[0, "Gini Coefficient value"]):
-    #     results_column_titles.append("Gini Coefficient value")
-    if "Gini Coefficient value" in main_results.columns:
-        results_column_titles.append("Gini Coefficient value")
-    ws.append(results_column_titles)
-    style_range(
-        ws,
-        "A2", "F2",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=14)
-    )
-    ws.row_dimensions[2].height = 40  # Adjust height for header row
-
-    for row in main_results.itertuples(index=False):
-        ws.append(row)
-
-    # Add spacing
-    ws.append([])
-
-    # Write the "Model Parameters (input)" tables
-    ws.append(["Model Parameters (input)"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"F{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid"),
-        font=Font(bold=True, size=16)
-    )
-    ws.merge_cells(f"A{ws.max_row}:E{ws.max_row}") # Merges cells A:E
-    ws.row_dimensions[ws.max_row].height = 30  # Increase row height
-
-    parameters_column_titles = [
-        "Total energy produced lower bound", "Total area upper bound",
-        "Remaining percentage of revenue lower bound", "Total installation cost upper bound"
-    ]
-
-    if "G_max" in model_params.columns:
-        parameters_column_titles.append("Gini Coefficient upper bound")
-
-    ws.append(parameters_column_titles)
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"F{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=14)
-    )
-    ws.row_dimensions[ws.max_row].height = 40  # Adjust height for parameter row
-
-    for row in model_params.itertuples(index=False):
-        ws.append(row)
-
-    # Add similar logic for other parameter DataFrames
-    ws.append([])
-    ws.append(["Energy produced per Eshkol"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=16)
-    )
-    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
-    ws.row_dimensions[ws.max_row].height = 25
-
-    ws.append(["Eshkol num", "Energy Produced"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=14)
-    )
-
-    for row in energy_produced_per_eshkol.itertuples(index=False):
-        ws.append(row)
-
-
-
-    ws.append([])
-    ws.append(["Energy produced per Machoz"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=16)
-    )
-    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
-    ws.row_dimensions[ws.max_row].height = 25
-
-    ws.append(["Machoz", "Energy Produced"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=14)
-    )
-
-    for row in energy_produced_per_machoz.itertuples(index=False):
-        ws.append(row)
-
-
-    ws.append([])
-    ws.append(["Area used per Machoz"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=16)
-    )
-    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
-    ws.row_dimensions[ws.max_row].height = 25
-
-    
-
-    ws.append(["Machoz", "Area in dunam Used"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=14)
-    )
-
-    for row in area_used_per_machoz.itertuples(index=False):
-        ws.append(row)
-
-    ws.append([])
-    ws.append(["Area used per AnafSub"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=16)
-    )
-    ws.merge_cells(f"A{ws.max_row}:B{ws.max_row}")
-    ws.row_dimensions[ws.max_row].height = 25
-
-    ws.append(["AnafSub", "Area in dunam Used"])
-    style_range(
-        ws,
-        f"A{ws.max_row}", f"B{ws.max_row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=14)
-    )
-
-    for row in area_used_per_anafSub.itertuples(index=False):
-        ws.append(row)
-
-    # Adjust alignment for all cells
-    for row in ws.iter_rows():
-        for cell in row:
-            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-
-    # Save the file
-
-    wb.save(final_results_output_path)
-    print(f"final results saved to {final_results_output_path}")
-    os.startfile(final_results_output_path)
-
-# Helper function to apply styling in output excel results
 def style_range(ws, start_cell, end_cell, alignment=None, fill=None, font=None):
     for row in ws[start_cell:end_cell]:
         for cell in row:
@@ -257,3 +50,111 @@ def style_range(ws, start_cell, end_cell, alignment=None, fill=None, font=None):
             if font:
                 cell.font = font
 
+
+def set_column_widths(ws, widths):
+    for i, width in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+
+def write_section_title(ws, title, start_col="A", end_col="F", font_size=16, fill_color="FFFF00"):
+    ws.append([title])
+    row = ws.max_row
+    style_range(
+        ws, f"{start_col}{row}", f"{end_col}{row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid"),
+        font=Font(bold=True, size=font_size)
+    )
+    ws.merge_cells(f"{start_col}{row}:{end_col}{row}")
+    ws.row_dimensions[row].height = 30
+
+
+def write_dataframe_table(ws, column_titles, dataframe, merge_cols=2, header_font_size=14):
+    ws.append(column_titles)
+    row = ws.max_row
+    style_range(
+        ws, f"A{row}", f"{chr(64 + merge_cols)}{row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=header_font_size)
+    )
+    ws.row_dimensions[row].height = 40
+    for row_data in dataframe.itertuples(index=False):
+        ws.append(row_data)
+
+def write_section(ws, title, column_titles, dataframe):
+    """Writes a full section: title + header row + data rows (center-aligned)."""
+    # Write section title using existing helper
+    write_section_title(ws, title, end_col=chr(64 + len(column_titles)))
+
+    # Write header row
+    ws.append(column_titles)
+    row = ws.max_row
+    style_range(
+        ws,
+        f"A{row}", f"{chr(64 + len(column_titles))}{row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+    ws.row_dimensions[row].height = 40
+
+    # Append data rows
+    for row_data in dataframe.itertuples(index=False):
+        ws.append(row_data)
+
+    ws.append([])  # spacing row
+
+
+def construct_model_results_title(decision_variables_type, objective_function_type, main_constraint):
+    sheet_title = ""
+    model_type_text = "Binary" if decision_variables_type == "binary decision variables" else "Continuous"
+    objective_function_text = objective_function_type.capitalize()
+    constraint_text = main_constraint.replace('_', ' ').capitalize()
+    sheet_title += f"{model_type_text} Model Results - {objective_function_text} with {constraint_text}"
+    return sheet_title
+    
+def output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type, main_constraint):
+    main_results, model_params, energy_produced_per_eshkol, energy_produced_per_machoz, area_used_per_machoz, area_used_per_anafSub = full_results
+    # Create excel workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Results"
+    set_column_widths(ws, [30]*6)
+    # construct model results title
+    model_results_title = construct_model_results_title(decision_variables_type, objective_function_type, main_constraint)
+    # Main results Column titles assigned to variables
+    results_column_titles = [
+        "Total energy produced in mln", "Total area (in dunam) used",
+        "Remaining percentage of revenue", "Total installation cost",
+        "Potential revenue before installing PV's", "Potential revenue after installing PV's"
+    ]
+    if "Gini Coefficient value" in main_results.columns:
+        results_column_titles.append("Gini Coefficient value")
+    # Parameters column titles assigned to variables
+    parameters_column_titles = [
+        "Total energy produced lower bound", "Total area upper bound",
+        "Remaining percentage of revenue lower bound", "Total installation cost upper bound"
+    ]
+    if "G_max" in model_params.columns:
+        parameters_column_titles.append("Gini Coefficient upper bound")
+    # Additional results Column titles assigned to variables
+    energy_per_eshkol_column_titles = ["Eshkol num", "Energy Produced"]
+    energy_per_machoz_column_titles = ["Machoz", "Energy Produced"]
+    area_per_machoz_column_titles = ["Machoz", "Area in dunam Used"]
+    area_per_anafsub_column_titles = ["AnafSub", "Area in dunam Used"]
+    # Section calls
+    write_section(ws, model_results_title, results_column_titles, main_results)
+    write_section(ws, "Model Parameters (input)", parameters_column_titles, model_params)
+    write_section(ws, "Energy produced per Eshkol", energy_per_eshkol_column_titles, energy_produced_per_eshkol)
+    write_section(ws, "Energy produced per Machoz", energy_per_machoz_column_titles, energy_produced_per_machoz)
+    write_section(ws, "Area used per Machoz", area_per_machoz_column_titles, area_used_per_machoz)
+    write_section(ws, "Area used per AnafSub", area_per_anafsub_column_titles, area_used_per_anafSub)
+    # Align all cells
+    for row in ws.iter_rows():
+        for cell in row:
+            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    # Save workbook and open newly created excel file
+    wb.save(final_results_output_path)
+    print(f"final results saved to {final_results_output_path}")
+    os.startfile(final_results_output_path)
