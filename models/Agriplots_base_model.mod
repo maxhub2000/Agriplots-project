@@ -54,38 +54,9 @@ execute {
 
 
 // Objective Function
-minimize TotalArea;
-
 
 // Constraints
 subject to {
-//Constraint for a lower bound of the total energy produced by installed PV's
-    TotalEnergy >= total_energy_lower_bound;
-
-// Constraint for the total energy production of each yeshuv, upper bounded by the energy consumption of each yeshuv 
-    forall (j in Yeshuvim) {
-        sum(i in S[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_yeshuv[j];
-    };
-
-// Constraint for the total energy production of each machoz, upper bounded by the energy consumption of each machoz 
-    forall (j in Machozot) {
-        sum(i in M[j]) x[i] * fix_energy_production[i] <= energy_consumption_by_machoz[j];
-    };
-
-// Constraint for the percentage of the total energy production of each eshkol, upper bounded by some fixed percentage 
-    forall (k in Eshkolot) {
-        y[k] <= energy_upper_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
-    };
-
-// Constraint for the percentage of the total energy production of each eshkol, lower bounded by some fixed percentage 
-    forall (k in Eshkolot) {
-        y[k] >= energy_lower_bounds_for_eshkolot[k] * sum(i in 1..num_locations) (fix_energy_production[i] * x[i]);
-    };
-
-// Constraint that limits the value of x[i] to be less or equal than 1, relevant for the continuous model 
-    forall(i in 1..num_locations)
-        x[i] <= 1;
-
 }
 
 

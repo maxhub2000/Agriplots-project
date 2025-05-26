@@ -70,7 +70,6 @@ def solve_opl_model(mod_file, dat_file, output_file=None):
     except Exception as e:
         print(f"Error running oplrun: {e}")
 
-
 def test_model(testing_data_and_parameters_path):
     dataset_path = [testing_data_and_parameters_path, "data"]
     influence_on_crops_synthetic_values_path = [testing_data_and_parameters_path, "Influence on crops"]
@@ -230,7 +229,6 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
     return df[condition]
 
 
-
 @measure_time
 def main():
     TESTING_MODE = False
@@ -337,12 +335,10 @@ def main():
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
     
-    opl_base_model_file_path = "edit_mod_file/Agriplots_base_model.mod"
+    opl_base_model_file_path = "models/Agriplots_base_model.mod"
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
-    dataset_path = 'Agriplots_final - Full data.xlsx'
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
-    # dataset_path = 'df_dataset before data preparation - test as input.xlsx'
     dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     # dataset_path = 'ssssdddd.xlsx'
     # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
@@ -369,7 +365,6 @@ def main():
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
     
-    
     # col_names_replacements =  {
     #     "GeoDistrictName":"Machoz",
     #     "AnafSubENG":"AnafSub",
@@ -379,16 +374,13 @@ def main():
     #     "Potential_revenue_from_crops_before_PV_MNIS":"Potential revenue from crops before PV, mln NIS",
     #     "Potential_revenue_from_crops_after_PV_MNIS":"Potential revenue from crops after PV, mln NIS",
     # }
-
     # df_dataset.drop(["AnafSub"], axis=1)
     # df_dataset.rename(columns = col_names_replacements, inplace = True)
 
-
     # filter dataset based on different columns
     df_dataset = filter_dataset(df_dataset, filters)
-
-
-    total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() #parameter to pass later on
+    # save potential revenue of full dataset before installations to be used in the model later on
+    total_potential_revenue_before_PV_of_full_dataset = df_dataset["Potential revenue from crops before PV, mln NIS"].sum() 
     df_dataset = remove_rows_with_missing_values(df_dataset)
     df_dataset = remove_rows_with_non_feasible_locations(df_dataset)
     print("number of yeshuvim after removing some rows from dataset:",df_dataset["YeshuvName"].nunique())
@@ -415,12 +407,12 @@ def main():
         DECISION_VARIABLES_TYPE = "continuous decision variables" #forces continuous decision variables for full continuous model
         continuous_model_df = group_by_yeshuv_and_AnafSub(df_dataset)
         df_dataset = continuous_model_df
-
+    
     if GINI_IN_OBJECTIVE:
         params["G_max"] = 1.00 # meaning there is no constraint, since Gini can't be more than 1
         OBJECTIVE_FUNCTION_TYPE = "maximum energy & maximum equity with gini"
         energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
-
+    
     if GINI_IN_CONSTRAINT:
         params["G_max"] = 0.05 # constraint Gini coefficient to be no more than 0.05
         model_constraints.extend(["linearized_constraint_for_gini", "gini_constraint"])
@@ -429,9 +421,7 @@ def main():
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1
-
     df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
-    
     # get needed relevant data for running the model, in addition to the parameters (params)
     data = generate_model_inputs(df_dataset, energy_consumption_by_yeshuv, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset, energy_division_between_eshkolot)
     # write data and params to .dat file
@@ -446,7 +436,6 @@ def main():
     df_results = raw_output_to_df(opl_raw_output)
     # output the final results to excel file
     output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, DECISION_VARIABLES_TYPE, OBJECTIVE_FUNCTION_TYPE, MAIN_CONSTRAINTS[0])
-    
     # resutls_for_GIS = get_results_for_GIS_tool(df_dataset, df_results, "results_for_GIS_temp.xlsx")
     # return resutls_for_GIS
 

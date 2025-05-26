@@ -40,80 +40,6 @@ def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_re
     merged_data.to_excel(installation_decisions_output_path)
     return merged_data
 
-def style_range(ws, start_cell, end_cell, alignment=None, fill=None, font=None):
-    for row in ws[start_cell:end_cell]:
-        for cell in row:
-            if alignment:
-                cell.alignment = alignment
-            if fill:
-                cell.fill = fill
-            if font:
-                cell.font = font
-
-
-def set_column_widths(ws, widths):
-    for i, width in enumerate(widths, 1):
-        ws.column_dimensions[get_column_letter(i)].width = width
-
-
-def write_section_title(ws, title, start_col="A", end_col="F", font_size=16, fill_color="FFFF00"):
-    ws.append([title])
-    row = ws.max_row
-    style_range(
-        ws, f"{start_col}{row}", f"{end_col}{row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid"),
-        font=Font(bold=True, size=font_size)
-    )
-    ws.merge_cells(f"{start_col}{row}:{end_col}{row}")
-    ws.row_dimensions[row].height = 30
-
-
-def write_dataframe_table(ws, column_titles, dataframe, merge_cols=2, header_font_size=14):
-    ws.append(column_titles)
-    row = ws.max_row
-    style_range(
-        ws, f"A{row}", f"{chr(64 + merge_cols)}{row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=header_font_size)
-    )
-    ws.row_dimensions[row].height = 40
-    for row_data in dataframe.itertuples(index=False):
-        ws.append(row_data)
-
-def write_section(ws, title, column_titles, dataframe):
-    """Writes a full section: title + header row + data rows (center-aligned)."""
-    # Write section title using existing helper
-    write_section_title(ws, title, end_col=chr(64 + len(column_titles)))
-
-    # Write header row
-    ws.append(column_titles)
-    row = ws.max_row
-    style_range(
-        ws,
-        f"A{row}", f"{chr(64 + len(column_titles))}{row}",
-        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
-        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
-        font=Font(bold=True, size=14)
-    )
-    ws.row_dimensions[row].height = 40
-
-    # Append data rows
-    for row_data in dataframe.itertuples(index=False):
-        ws.append(row_data)
-
-    ws.append([])  # spacing row
-
-
-def construct_model_results_title(decision_variables_type, objective_function_type, main_constraint):
-    sheet_title = ""
-    model_type_text = "Binary" if decision_variables_type == "binary decision variables" else "Continuous"
-    objective_function_text = objective_function_type.capitalize()
-    constraint_text = main_constraint.replace('_', ' ').capitalize()
-    sheet_title += f"{model_type_text} Model Results - {objective_function_text} with {constraint_text}"
-    return sheet_title
-    
 def output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type, main_constraint):
     main_results, model_params, energy_produced_per_eshkol, energy_produced_per_machoz, area_used_per_machoz, area_used_per_anafSub = full_results
     # Create excel workbook and worksheet
@@ -158,3 +84,73 @@ def output_final_results_to_excel(full_results, final_results_output_path, decis
     wb.save(final_results_output_path)
     print(f"final results saved to {final_results_output_path}")
     os.startfile(final_results_output_path)
+
+def style_range(ws, start_cell, end_cell, alignment=None, fill=None, font=None):
+    for row in ws[start_cell:end_cell]:
+        for cell in row:
+            if alignment:
+                cell.alignment = alignment
+            if fill:
+                cell.fill = fill
+            if font:
+                cell.font = font
+
+def set_column_widths(ws, widths):
+    for i, width in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+def write_section_title(ws, title, start_col="A", end_col="F", font_size=16, fill_color="FFFF00"):
+    ws.append([title])
+    row = ws.max_row
+    style_range(
+        ws, f"{start_col}{row}", f"{end_col}{row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid"),
+        font=Font(bold=True, size=font_size)
+    )
+    ws.merge_cells(f"{start_col}{row}:{end_col}{row}")
+    ws.row_dimensions[row].height = 30
+
+def write_dataframe_table(ws, column_titles, dataframe, merge_cols=2, header_font_size=14):
+    ws.append(column_titles)
+    row = ws.max_row
+    style_range(
+        ws, f"A{row}", f"{chr(64 + merge_cols)}{row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=header_font_size)
+    )
+    ws.row_dimensions[row].height = 40
+    for row_data in dataframe.itertuples(index=False):
+        ws.append(row_data)
+
+def write_section(ws, title, column_titles, dataframe):
+    """Writes a full section: title + header row + data rows (center-aligned)."""
+    # Write section title using existing helper
+    write_section_title(ws, title, end_col=chr(64 + len(column_titles)))
+
+    # Write header row
+    ws.append(column_titles)
+    row = ws.max_row
+    style_range(
+        ws,
+        f"A{row}", f"{chr(64 + len(column_titles))}{row}",
+        alignment=Alignment(horizontal="center", vertical="center", wrap_text=True),
+        fill=PatternFill(start_color="D9D9D9", end_color="D9D9D9", fill_type="solid"),
+        font=Font(bold=True, size=14)
+    )
+    ws.row_dimensions[row].height = 40
+
+    # Append data rows
+    for row_data in dataframe.itertuples(index=False):
+        ws.append(row_data)
+
+    ws.append([])  # spacing row
+
+def construct_model_results_title(decision_variables_type, objective_function_type, main_constraint):
+    sheet_title = ""
+    model_type_text = "Binary" if decision_variables_type == "binary decision variables" else "Continuous"
+    objective_function_text = objective_function_type.capitalize()
+    constraint_text = main_constraint.replace('_', ' ').capitalize()
+    sheet_title += f"{model_type_text} Model Results - {objective_function_text} with {constraint_text}"
+    return sheet_title

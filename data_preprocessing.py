@@ -1,8 +1,6 @@
 import pandas as pd
 from utils import measure_time, track_row_changes, load_excel
 
-
-
 @track_row_changes
 def remove_rows_with_missing_values(df_):
     # remove rows with nan values (Ideally should find a better way to handle those nan values later on)
@@ -15,8 +13,6 @@ def remove_rows_with_non_feasible_locations(df_):
     # remove rows with non feasible locations for installing PV's
     df_ = df_[df_['Feasability to install PVs?'] != 0]
     return df_
-
-
 
 def modify_influence_on_crops(df_, anaf_sub_parameters_synthetic_values_path):
     anaf_sub_parameters_data = load_excel(anaf_sub_parameters_synthetic_values_path)

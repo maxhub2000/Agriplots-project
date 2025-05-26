@@ -89,7 +89,6 @@ def generate_model_inputs(
     
     return data_for_model
 
-
 def create_yeshuvim_with_locations(df_: pd.DataFrame) -> Dict[str, set]:
     """
     Create a mapping of Yeshuv names to their associated location IDs.
