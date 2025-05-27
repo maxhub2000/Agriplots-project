@@ -4,8 +4,6 @@ import pandas as pd
 import time
 from typing import List, Dict, Optional, Callable, Union, Tuple
 
-from choosing_parameters_interface import activate_interface
-from remove_constraints_from_model import remove_constraints_from_model
 from output_opl_results_to_excel import output_opl_results_to_excel
 from generate_model_inputs import generate_model_inputs
 from utils import measure_time, track_row_changes, load_excel, create_copy_of_mod_file
@@ -346,7 +344,6 @@ def main():
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
     assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names.xlsx'
-    assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names_mali.xlsx'
     yeshuvim_in_eshkolot_path = 'yeshuvim_in_eshkolot.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values - try 2.xlsx'
