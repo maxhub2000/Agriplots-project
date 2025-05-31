@@ -340,8 +340,6 @@ def main():
 
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
     # dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
-    # dataset_path = 'ssssdddd.xlsx'
-    # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']

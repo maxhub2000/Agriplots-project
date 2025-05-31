@@ -5,7 +5,6 @@ from functools import wraps
 
 
 def load_excel(dataset_path_, rows_to_import = None):
-    print("rows_to_import:", rows_to_import)
     # if dataset_path_ is a list that includes sheet_name, read excel using sheet name
     if isinstance(dataset_path_, list):
         loaded_dataset = pd.read_excel(dataset_path_[0], sheet_name = dataset_path_[1], nrows=rows_to_import)
