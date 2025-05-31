@@ -229,7 +229,9 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 
 @measure_time
 def main():
-    TESTING_MODE = False
+    DEBUG = True # If true, take a slice out of the dataset for testing pueposes
+    ROWS_FOR_DEBUG = 1000
+    SANITY_CHECKS = False
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
     OBJECTIVE_FUNCTION_TYPE = "minimum area" # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
     MAIN_CONSTRAINTS = ["total_energy_constraint"]
@@ -337,7 +339,7 @@ def main():
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
-    dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+    # dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     # dataset_path = 'ssssdddd.xlsx'
     # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
@@ -353,10 +355,13 @@ def main():
     final_results_output_path = 'final_results.xlsx'
     testing_data_and_parameters_path = 'datasets_for_testing/sanity_checks_datasets/sanity_check_1-choosing_based_on_area_constraint.xlsx'
     
-    if TESTING_MODE:
+    if SANITY_CHECKS:
         dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params = test_model(testing_data_and_parameters_path)
     load_df_dataset_start_time = time.time()
-    df_dataset = load_excel(dataset_path) # Read dataset from Excel
+    if DEBUG:
+        df_dataset = load_excel(dataset_path, ROWS_FOR_DEBUG) # Read a fraction of dataset from Excel
+    else:
+        df_dataset = load_excel(dataset_path, ROWS_FOR_DEBUG) # Read full dataset from Excel
     elapsed_time = time.time() - load_df_dataset_start_time
     print(f"loading df_dataset took {elapsed_time:.2f} seconds")
     print("number of rows in full dataset :", len(df_dataset))

@@ -4,13 +4,14 @@ import shutil
 from functools import wraps
 
 
-def load_excel(dataset_path_):
+def load_excel(dataset_path_, rows_to_import = None):
+    print("rows_to_import:", rows_to_import)
     # if dataset_path_ is a list that includes sheet_name, read excel using sheet name
     if isinstance(dataset_path_, list):
-        loaded_dataset = pd.read_excel(dataset_path_[0], sheet_name = dataset_path_[1])
+        loaded_dataset = pd.read_excel(dataset_path_[0], sheet_name = dataset_path_[1], nrows=rows_to_import)
     # otherwise, just use the file path to read the excel
     else:
-        loaded_dataset = pd.read_excel(dataset_path_)
+        loaded_dataset = pd.read_excel(dataset_path_, nrows=rows_to_import)
     return loaded_dataset
 
 def create_copy_of_mod_file(original_file_path, new_file_path):
