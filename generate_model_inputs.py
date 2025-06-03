@@ -127,16 +127,32 @@ def adjust_energy_consumption_by_yeshuv(
     """
     if 'yeshuv_symbol' in energy_consumption_by_yeshuv_.columns:
         energy_consumption_by_yeshuv_ = energy_consumption_by_yeshuv_.drop(['yeshuv_symbol'], axis=1) # remove yeshuv_symbol column
-    adjusted_df = pd.DataFrame(columns=['yeshuv_name', 'yearly energy consumption'])
+    
+    rows = []
     for yeshuv in relevant_yeshuvim_:
         if yeshuv in energy_consumption_by_yeshuv_["yeshuv_name"].tolist():
-            # if yeshuv in input df, get it's yeshuv name and yearly energy consumption in the "row" var, then append the row to the adjusted_df
             row = energy_consumption_by_yeshuv_.loc[energy_consumption_by_yeshuv_['yeshuv_name'] == yeshuv]
-            adjusted_df = adjusted_df.append(row, ignore_index = True)
+            rows.append(row)
         else:
-            # otherwise, add the yeshuv name with yearly energy consumption of 0, so that the model wouldn't choose locations from that yeshuv
-            row = {'yeshuv_name': yeshuv, 'yearly energy consumption': 0.00}
-            adjusted_df = adjusted_df.append(row, ignore_index = True)
+            row = pd.DataFrame([{'yeshuv_name': yeshuv, 'yearly energy consumption': 0.00}])
+            rows.append(row)
+    adjusted_df = pd.concat(rows, ignore_index=True)
+
+
+
+
+    # adjusted_df = pd.DataFrame(columns=['yeshuv_name', 'yearly energy consumption'])
+    # for yeshuv in relevant_yeshuvim_:
+    #     if yeshuv in energy_consumption_by_yeshuv_["yeshuv_name"].tolist():
+    #         # if yeshuv in input df, get it's yeshuv name and yearly energy consumption in the "row" var, then append the row to the adjusted_df
+    #         row = energy_consumption_by_yeshuv_.loc[energy_consumption_by_yeshuv_['yeshuv_name'] == yeshuv]
+    #         print("adjusted_df:\n", adjusted_df)
+    #         adjusted_df = adjusted_df.append(row, ignore_index = True)
+    #     else:
+    #         # otherwise, add the yeshuv name with yearly energy consumption of 0, so that the model wouldn't choose locations from that yeshuv
+    #         row = {'yeshuv_name': yeshuv, 'yearly energy consumption': 0.00}
+    #         adjusted_df = adjusted_df.append(row, ignore_index = True)
+
     return adjusted_df
 
 def create_machozot_with_locations(df_: pd.DataFrame) -> Dict[str, set[int]]:
@@ -175,16 +191,31 @@ def adjust_energy_consumption_by_machoz(
     Returns:
         pd.DataFrame: Adjusted energy consumption DataFrame.
     """
-    adjusted_df = pd.DataFrame(columns=['machoz', 'yearly energy consumption'])
+
+    rows = []
     for machoz in relevant_machozot_:
         if machoz in energy_consumption_by_machoz_["machoz"].tolist():
-            # if machoz in input df, get it's machoz name and yearly energy consumption in the "row" var, then append the row to the adjusted_df
             row = energy_consumption_by_machoz_.loc[energy_consumption_by_machoz_['machoz'] == machoz]
-            adjusted_df = adjusted_df.append(row, ignore_index = True)
+            rows.append(row)
         else:
-            # otherwise, add the machoz name with yearly energy consumption of 0, so that the model wouldn't choose locations from that machoz
-            row = {'machoz': machoz, 'yearly energy consumption': 0.00}
-            adjusted_df = adjusted_df.append(row, ignore_index = True)
+            row = pd.DataFrame([{'machoz': machoz, 'yearly energy consumption': 0.00}])
+            rows.append(row)
+    adjusted_df = pd.concat(rows, ignore_index=True)
+
+
+
+
+    # adjusted_df = pd.DataFrame(columns=['machoz', 'yearly energy consumption'])
+    # for machoz in relevant_machozot_:
+    #     if machoz in energy_consumption_by_machoz_["machoz"].tolist():
+    #         # if machoz in input df, get it's machoz name and yearly energy consumption in the "row" var, then append the row to the adjusted_df
+    #         row = energy_consumption_by_machoz_.loc[energy_consumption_by_machoz_['machoz'] == machoz]
+    #         adjusted_df = adjusted_df.append(row, ignore_index = True)
+    #     else:
+    #         # otherwise, add the machoz name with yearly energy consumption of 0, so that the model wouldn't choose locations from that machoz
+    #         row = {'machoz': machoz, 'yearly energy consumption': 0.00}
+    #         adjusted_df = adjusted_df.append(row, ignore_index = True)
+    
     return adjusted_df
 
 def create_eshkolot_with_locations(df_: pd.DataFrame) -> Dict[str, set[int]]:
@@ -226,16 +257,32 @@ def adjust_energy_division_between_eshkolot(
     Returns:
         pd.DataFrame: Adjusted energy division DataFrame.
     """
-    adjusted_df = pd.DataFrame(columns=['eshkol', 'percentage_of_energy_output'])
+    
+    rows = []
     for eshkol in relevant_eshkolot_:
         if eshkol in energy_division_between_eshkolot_["eshkol"].tolist():
-            # if eshkol in input df, get it's eshkol number and percentage of energy output in the "row" var, then append the row to the adjusted_df
             row = energy_division_between_eshkolot_.loc[energy_division_between_eshkolot_['eshkol'] == eshkol]
-            adjusted_df = adjusted_df.append(row, ignore_index = True)
+            rows.append(row)
         else:
-            # otherwise, add the eshkol num with percentage of energy output of 0, so that the model wouldn't choose locations from that eshkol
-            row = {'eshkol': eshkol, 'percentage_of_energy_output': 0.00}
-            adjusted_df = adjusted_df.append(row, ignore_index = True)
+            row = pd.DataFrame([{'eshkol': eshkol, 'percentage_of_energy_output': 0.00}])
+            rows.append(row)
+    adjusted_df = pd.concat(rows, ignore_index=True)
+    
+    
+    
+    
+    # adjusted_df = pd.DataFrame(columns=['eshkol', 'percentage_of_energy_output'])
+    # for eshkol in relevant_eshkolot_:
+    #     if eshkol in energy_division_between_eshkolot_["eshkol"].tolist():
+    #         # if eshkol in input df, get it's eshkol number and percentage of energy output in the "row" var, then append the row to the adjusted_df
+    #         row = energy_division_between_eshkolot_.loc[energy_division_between_eshkolot_['eshkol'] == eshkol]
+    #         adjusted_df = adjusted_df.append(row, ignore_index = True)
+    #     else:
+    #         # otherwise, add the eshkol num with percentage of energy output of 0, so that the model wouldn't choose locations from that eshkol
+    #         row = {'eshkol': eshkol, 'percentage_of_energy_output': 0.00}
+    #         adjusted_df = adjusted_df.append(row, ignore_index = True)
+
+    
     return adjusted_df
 
 

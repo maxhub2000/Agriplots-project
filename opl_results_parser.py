@@ -2,6 +2,8 @@ import pandas as pd
 
 
 def raw_output_to_df(opl_raw_output_):
+    # if not isinstance(opl_raw_output_, str):
+    #     return [pd.DataFrame(), pd.DataFrame(), pd.DataFrame()]
     # parsing the result output to extract the required values
     main_results = pd.DataFrame()
     locations_with_installed_PVs = ""  # Variable to store multiple lines of output

@@ -36,7 +36,8 @@ def write_dat_file(dat_file, data, params):
 
 @measure_time
 def solve_opl_model(mod_file, dat_file, output_file=None):
-    oplrun_path = "oplrun"
+    # oplrun_path = "oplrun"
+    oplrun_path = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
     if not shutil.which(oplrun_path):
         print(f"{oplrun_path} not found in PATH. Make sure CPLEX Optimization Studio is installed and oplrun is in the PATH.")
         return
@@ -229,12 +230,12 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 
 @measure_time
 def main():
-    DEBUG = True # If true, take a slice out of the dataset for testing pueposes
+    DEBUG = False # If true, take a slice out of the dataset for testing pueposes
     ROWS_FOR_DEBUG = 1000
     SANITY_CHECKS = False
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
-    OBJECTIVE_FUNCTION_TYPE = "minimum area" # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
-    MAIN_CONSTRAINTS = ["total_energy_constraint"]
+    OBJECTIVE_FUNCTION_TYPE = "maximum energy" # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
+    MAIN_CONSTRAINTS = ["total_area_constraint"]
     FULL_CONTINUOUS_MODEL = False
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
@@ -340,6 +341,8 @@ def main():
 
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
     # dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+    # dataset_path = 'ssssdddd.xlsx'
+    # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
@@ -359,7 +362,7 @@ def main():
     if DEBUG:
         df_dataset = load_excel(dataset_path, ROWS_FOR_DEBUG) # Read a fraction of dataset from Excel
     else:
-        df_dataset = load_excel(dataset_path, ROWS_FOR_DEBUG) # Read full dataset from Excel
+        df_dataset = load_excel(dataset_path) # Read full dataset from Excel
     elapsed_time = time.time() - load_df_dataset_start_time
     print(f"loading df_dataset took {elapsed_time:.2f} seconds")
     print("number of rows in full dataset :", len(df_dataset))
@@ -432,6 +435,7 @@ def main():
     set_constraints(opl_model_file, model_constraints, constraints_mapping)
     # solve the OPL model and put the opl output in the opl_raw_output variable
     opl_raw_output = solve_opl_model(opl_model_file, dat_file, txt_output_path)
+    print("opl_raw_output:\n", opl_raw_output)
     # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
     # output the final results to excel file
