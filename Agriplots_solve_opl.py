@@ -35,9 +35,9 @@ def write_dat_file(dat_file, data, params):
         f.write("];")
 
 @measure_time
-def solve_opl_model(mod_file, dat_file, output_file=None):
+def solve_opl_model(mod_file, dat_file, oplrun_path, output_file=None):
     # oplrun_path = "oplrun"
-    oplrun_path = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
+    
     if not shutil.which(oplrun_path):
         print(f"{oplrun_path} not found in PATH. Make sure CPLEX Optimization Studio is installed and oplrun is in the PATH.")
         return
@@ -239,6 +239,7 @@ def main():
     FULL_CONTINUOUS_MODEL = False
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
+    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
 
     commmon_constraints = ["energy_production_per_yeshuv_constraint",
                           "energy_production_per_machoz_constraint",
@@ -434,7 +435,7 @@ def main():
     set_objective_function(opl_model_file, [OBJECTIVE_FUNCTION_TYPE], objective_function_mapping)
     set_constraints(opl_model_file, model_constraints, constraints_mapping)
     # solve the OPL model and put the opl output in the opl_raw_output variable
-    opl_raw_output = solve_opl_model(opl_model_file, dat_file, txt_output_path)
+    opl_raw_output = solve_opl_model(opl_model_file, dat_file, OPLRUN_PATH, txt_output_path)
     print("opl_raw_output:\n", opl_raw_output)
     # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
