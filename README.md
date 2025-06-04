@@ -8,7 +8,7 @@ This project optimizes photovoltaic (PV) installations on agricultural land usin
 
 - Python 3.8+
 - IBM ILOG CPLEX Optimization Studio  
-  (Ensure `oplrun` is available in your system `PATH`)
+  (You **must use the full version**, not the Community Edition — see below)
 
 ### Install Python packages
 
@@ -70,11 +70,105 @@ The model generates:
 
 ---
 
-## 🛠 Notes
+## ⚙️ IBM CPLEX Setup and `oplrun` Configuration
 
-- The `.mod` file defines the mathematical optimization model and constraints.
-- The `.dat` file is automatically generated from the dataset and model parameters.
-- This version is **command-line only** — no PyQt GUI is used.
+This project relies on **IBM ILOG CPLEX Optimization Studio** to solve the optimization model via the `oplrun` command-line tool.
+
+> ⚠️ **Important:** The free **Community Edition of CPLEX will NOT work** — the model exceeds its problem size limits. You must use the **full version**, which is freely available via IBM’s Academic Initiative.
+
+### ✅ Step 1: Install CPLEX
+
+#### Option A: Academic Use (Free License)
+1. Visit [https://www.ibm.com/academic/home](https://www.ibm.com/academic/home)
+2. Sign in using your university email
+3. Search for **CPLEX Optimization Studio** and download the full version
+4. Install it with default options
+
+#### Option B: Trial or Commercial
+Get it from [https://www.ibm.com/products/ilog-cplex-optimization-studio](https://www.ibm.com/products/ilog-cplex-optimization-studio) via a free trial or commercial license.
+
+---
+
+### ✅ Step 2: Add `oplrun` to System PATH
+
+After installation, locate the `oplrun` executable:
+
+- Windows:  
+  `C:\Program Files\IBM\ILOG\CPLEX_Studio<version>\opl\bin\x64_win64`
+
+- macOS:  
+  `/Applications/CPLEX_Studio<version>/opl/bin/x86-64_osx`
+
+- Linux:  
+  `/opt/ibm/ILOG/CPLEX_Studio<version>/opl/bin/x86-64_linux`
+
+Then:
+
+#### Windows
+1. Open Start → search **Environment Variables**
+2. Click "Edit the system environment variables"
+3. Click **Environment Variables**
+4. Edit the `Path` variable under "System Variables"
+5. Add a **new entry**:
+   ```
+   C:\Program Files\IBM\ILOG\CPLEX_Studio<version>\opl\bin\x64_win64
+   ```
+6. Click OK and restart your terminal
+
+#### macOS/Linux
+Edit your shell config:
+```bash
+nano ~/.zshrc   # or ~/.bashrc
+```
+Add:
+```bash
+export PATH="/path/to/opl/bin/x86-64_osx:$PATH"
+```
+Apply changes:
+```bash
+source ~/.zshrc
+```
+
+### ✅ Step 3: Confirm it Works
+
+Run:
+```bash
+oplrun -h
+```
+If you see usage instructions, the setup is complete.
+
+---
+
+### ❗ Community Edition Limitation
+
+If you see this error:
+```
+CPLEX Error 1016: Community Edition. Problem size limits exceeded.
+```
+It means you are using the **Community Edition**, which only supports models with ≤ 1000 variables or constraints. This project exceeds those limits — please install the **full academic version** as described above.
+
+---
+
+## 🧩 How to Use `oplrun` in the Code
+
+This project does not rely on system-wide PATH only — the full path to `oplrun` is set explicitly in the code for reliability.
+
+In `Agriplots_solve_opl.py`, near the top of the file, define:
+
+```python
+# Windows example:
+OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio<version>\opl\bin\x64_win64\oplrun.exe"
+```
+
+Then in the `solve_opl_model()` function, the script uses this path directly:
+
+```python
+def solve_opl_model(mod_file, dat_file, output_file=None):
+    oplrun_path = OPLRUN_PATH
+    ...
+```
+
+Replace `<version>` with the actual installed version, such as `CPLEX_Studio2211`.
 
 ---
 
