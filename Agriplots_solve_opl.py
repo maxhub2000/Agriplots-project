@@ -36,8 +36,6 @@ def write_dat_file(dat_file, data, params):
 
 @measure_time
 def solve_opl_model(mod_file, dat_file, oplrun_path, output_file=None):
-    # oplrun_path = "oplrun"
-    
     if not shutil.which(oplrun_path):
         print(f"{oplrun_path} not found in PATH. Make sure CPLEX Optimization Studio is installed and oplrun is in the PATH.")
         return
@@ -239,8 +237,9 @@ def main():
     FULL_CONTINUOUS_MODEL = False
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
-    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
-
+    # OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
+    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio201\opl\bin\x64_win64\oplrun.exe"
+                    
     commmon_constraints = ["energy_production_per_yeshuv_constraint",
                           "energy_production_per_machoz_constraint",
                           "energy_production_per_eshkol_upper_bounding_constraint",
