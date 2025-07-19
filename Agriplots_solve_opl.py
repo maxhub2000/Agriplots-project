@@ -220,6 +220,12 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
             condition &= df[column].isin(values)
         elif action == "exclude":
             # Exclude rows where the column value is in the specified values
+            # print("AnafSub head:")
+            # print(df["AnafSub"].head())
+            # print("AnafSub type:", type(df["AnafSub"]))
+            # print("AnafSub dtype:", df["AnafSub"].dtype)
+            # print("AnafSub unique values:", df["AnafSub"].unique())
+            # print(f"About to run: ~df['{column}'].isin({values})")
             condition &= ~df[column].isin(values)
     # Return the filtered dataframe
     print("condition: ", condition)
@@ -340,9 +346,9 @@ def main():
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
-    # dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+    dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     # dataset_path = 'ssssdddd.xlsx'
-    # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
+    dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
@@ -368,17 +374,28 @@ def main():
     print("number of rows in full dataset :", len(df_dataset))
     print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
     
-    # col_names_replacements =  {
-    #     "GeoDistrictName":"Machoz",
-    #     "AnafSubENG":"AnafSub",
-    #     "Feasability_to_install_PVs":"Feasability to install PVs?",
-    #     "EPFix_MkWh":"Energy production (fix) mln kWh/year",
-    #     "Average_influence_of_PV_on_crops": "Average influence of PV on crops",
-    #     "Potential_revenue_from_crops_before_PV_MNIS":"Potential revenue from crops before PV, mln NIS",
-    #     "Potential_revenue_from_crops_after_PV_MNIS":"Potential revenue from crops after PV, mln NIS",
-    # }
-    # df_dataset.drop(["AnafSub"], axis=1)
-    # df_dataset.rename(columns = col_names_replacements, inplace = True)
+
+
+    if dataset_path == "agrivoltaics_fix_4.7.25- main data.xlsx":
+        col_names_replacements =  {
+            "GeoDistrictName":"Machoz",
+            "AnafSubENG":"AnafSub",
+            "Feasability_to_install_PVs":"Feasability to install PVs?",
+            "EPFix_MkWh":"Energy production (fix) mln kWh/year",
+            "Average_influence_of_PV_on_crops": "Average influence of PV on crops",
+            "Potential_revenue_from_crops_before_PV_MNIS":"Potential revenue from crops before PV, mln NIS",
+            "Potential_revenue_from_crops_after_PV_MNIS":"Potential revenue from crops after PV, mln NIS",
+        }
+        df_dataset = df_dataset.drop(["AnafSub"], axis=1)
+        df_dataset.rename(columns = col_names_replacements, inplace = True)
+
+        import random
+        machozot_list = ["Center", "Haifa", "Jerusalem", "North", "South", "Tel Aviv"]
+        # Create random mahcozot column
+        random_machozot = random.choices(machozot_list, k=df_dataset.shape[0])
+        df_dataset["Machoz"] = random_machozot
+
+    
 
     # filter dataset based on different columns
     df_dataset = filter_dataset(df_dataset, filters)
