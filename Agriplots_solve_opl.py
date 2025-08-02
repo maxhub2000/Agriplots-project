@@ -233,26 +233,81 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 
 
 @measure_time
-def main():
+def main(
+    settlement_filter=None,
+    district_filter=None,
+    cluster_filter=None,
+    crop_filter=None,
+    objective_function_type="maximum energy",
+    main_constraint="total_area_constraint",
+    full_continuous_model=False,
+    common_constraints=None,
+    parameters=None,
+    run_from_ui=False
+):
+    
+    if not run_from_ui:
+        # Set default test/debug values
+        # settlement_filter = ['אשדוד', 'תרום']
+        # district_filter = ['South']
+        # crop_filter = ['peelables']
+        settlement_filter = []
+        district_filter = []
+        crop_filter = []
+        cluster_filter = []
+        objective_function_type = "maximum energy"
+        main_constraint = "total_area_constraint"
+        full_continuous_model = False
+        common_constraints = ["energy_production_per_yeshuv_constraint",
+                          "energy_production_per_machoz_constraint",
+                          "energy_production_per_eshkol_upper_bounding_constraint",
+                          "energy_production_per_eshkol_lower_bounding_constraint"]
+        
+        parameters = {
+            "total_energy_lower_bound": 80.00,
+            "total_area_upper_bound": 20000.00,
+            "Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound": 0.92,
+            "total_installation_cost_upper_bound": 120000.00
+        }
+
+    # OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
+    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio201\opl\bin\x64_win64\oplrun.exe"
     DEBUG = False # If true, take a slice out of the dataset for testing pueposes
     ROWS_FOR_DEBUG = 1000
     SANITY_CHECKS = False
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
-    OBJECTIVE_FUNCTION_TYPE = "maximum energy" # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
-    MAIN_CONSTRAINTS = ["total_area_constraint"]
-    FULL_CONTINUOUS_MODEL = False
+    
+    
+    OBJECTIVE_FUNCTION_TYPE = objective_function_type # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
+    MAIN_CONSTRAINTS = [main_constraint]
+    FULL_CONTINUOUS_MODEL = full_continuous_model
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
-    # OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
-    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio201\opl\bin\x64_win64\oplrun.exe"
-                    
-    commmon_constraints = ["energy_production_per_yeshuv_constraint",
-                          "energy_production_per_machoz_constraint",
-                          "energy_production_per_eshkol_upper_bounding_constraint",
-                          "energy_production_per_eshkol_lower_bounding_constraint",
-                          "decision_variables_constraint"]
     
-    model_constraints = MAIN_CONSTRAINTS + commmon_constraints  
+             
+    COMMON_CONSTRAINTS = common_constraints + ["decision_variables_constraint"]
+    
+    model_constraints = MAIN_CONSTRAINTS + COMMON_CONSTRAINTS  
+
+    # parameters of the model
+    params = parameters
+    
+    # filters = {
+    #     'YeshuvName': (['אשדוד', 'תרום'], "exclude"),  # Include 'אשדוד' and 'אשקלון'
+    #     'Machoz': (['South'], "exclude"),   # Exclude 'North' and 'Center'
+    #     "AnafSub": (['peelables'], "exclude")
+    # }
+
+    filters = {}
+    if settlement_filter:
+        filters["YeshuvName"] = (settlement_filter, "include")
+    if district_filter:
+        filters["Machoz"] = (district_filter, "include")
+    if crop_filter:
+        filters["AnafSub"] = (crop_filter, "include")
+    # Add cluster filter if relevant to your dataset
+
+
 
     objective_function_mapping = {
         "maximum energy": "maximize TotalEnergy;",
@@ -325,19 +380,7 @@ def main():
 
     }
     
-    # parameters of the model
-    params = {
-        "total_energy_lower_bound" : 80.00,
-        "total_area_upper_bound" : 20000.00,
-        "Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound" : 0.92,
-        "total_installation_cost_upper_bound" : 120000.00
-    }
-    
-    filters = {
-        'YeshuvName': (['אשדוד', 'תרום'], "exclude"),  # Include 'אשדוד' and 'אשקלון'
-        'Machoz': (['South'], "exclude"),   # Exclude 'North' and 'Center'
-        "AnafSub": (['peelables'], "exclude")
-    }
+
 
     # File paths
     opl_model_file, dat_file, txt_output_path = 'Agriplots.mod', 'Agriplots.dat', 'output.txt'
@@ -348,7 +391,7 @@ def main():
     dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
     dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     # dataset_path = 'ssssdddd.xlsx'
-    dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
+    # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
     energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
@@ -396,7 +439,6 @@ def main():
         df_dataset["Machoz"] = random_machozot
 
     
-
     # filter dataset based on different columns
     df_dataset = filter_dataset(df_dataset, filters)
     # save potential revenue of full dataset before installations to be used in the model later on
@@ -513,7 +555,11 @@ def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
 
     return merged_data, main_results_df
 
-if __name__ == "__main__":
-    main()
+
+# if __name__ == "__main__":
+#     main()
     # pass
     # resutls_for_GIS = main()
+
+if __name__ == "__main__":
+    main(run_from_ui=False)
