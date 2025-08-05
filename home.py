@@ -33,8 +33,8 @@ def safe_get_options(excel_path: str, column_name: str):
         return []
 
 excel_path = "data-Agri_OPTI_UI/Agriplots dataset - 1,000 rows.xlsx"
-settlement_options = safe_get_options(excel_path, "YeshuvName")
-district_options   = safe_get_options(excel_path, "Machoz")
+yeshuv_options = safe_get_options(excel_path, "YeshuvName")
+machoz_options   = safe_get_options(excel_path, "Machoz")
 crop_type_options  = safe_get_options(excel_path, "AnafSub")
 cluster_options    = [{"label": str(i), "value": str(i)} for i in range(1, 11)]
 
@@ -47,11 +47,11 @@ layout = dbc.Container([
                 # Filters Tab
                 dbc.Tab(label="Filters", children=[
                     html.Div([
-                        dbc.Label("Settlement"),
-                        dcc.Dropdown(id="settlement-dropdown", options=settlement_options, multi=True),
+                        dbc.Label("Yeshuv"),
+                        dcc.Dropdown(id="yeshuv-dropdown", options=yeshuv_options, multi=True),
                         html.Br(),
-                        dbc.Label("District"),
-                        dcc.Dropdown(id="district-dropdown", options=district_options, multi=True),
+                        dbc.Label("machoz"),
+                        dcc.Dropdown(id="machoz-dropdown", options=machoz_options, multi=True),
                         html.Br(),
                         dbc.Label("Cluster"),
                         dcc.Dropdown(id="cluster-dropdown", options=cluster_options, multi=True),
@@ -142,8 +142,8 @@ layout = dbc.Container([
 @dash.callback(
     Output("run-button", "n_clicks"),
     Input("run-button", "n_clicks"),
-    State("settlement-dropdown", "value"),
-    State("district-dropdown", "value"),
+    State("yeshuv-dropdown", "value"),
+    State("machoz-dropdown", "value"),
     State("cluster-dropdown", "value"),
     State("crop-dropdown", "value"),
     State("objective-type", "value"),
@@ -156,12 +156,12 @@ layout = dbc.Container([
     State("energy-input", "value"),
     prevent_initial_call=True
 )
-def print_selected_inputs(n_clicks, settlement, district, cluster, crop,
+def print_selected_inputs(n_clicks, yeshuv, machoz, cluster, crop,
                           objective, constraint, continuous, common,
                           revenue, area, cost, energy):
     print("=== User Selections ===")
-    print(f"Settlement: {settlement}")
-    print(f"District: {district}")
+    print(f"Yeshuv: {yeshuv}")
+    print(f"Machoz: {machoz}")
     print(f"Cluster: {cluster}")
     print(f"Crop Type: {crop}")
     print(f"Objective Function Type: {objective}")
@@ -174,8 +174,8 @@ def print_selected_inputs(n_clicks, settlement, district, cluster, crop,
     print(f"Total Energy Lower Bound: {energy}")
     print("========================")
     run_optimization_tool(
-        settlement_filter=settlement,
-        district_filter=district,
+        yeshuv_filter=yeshuv,
+        machoz_filter=machoz,
         cluster_filter=cluster,
         crop_filter=crop,
         objective_function_type=objective,

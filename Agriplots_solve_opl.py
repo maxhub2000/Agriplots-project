@@ -74,7 +74,7 @@ def test_model(testing_data_and_parameters_path):
     energy_consumption_by_machoz_path = [testing_data_and_parameters_path, "energy consumption by machoz"]
     params = load_excel([testing_data_and_parameters_path, "parameters"])
     params.columns = ['Remaining_percentage_of_revenue_after_influence_on_crops_lower_bound', 'total_area_upper_bound', 'G_max']
-    # convert params to dict so it will be the same type as the params in the main() function
+    # convert params to dict so it will be the same type as the PARAMETERS in the main() function
     params = params.to_dict(orient='records')[0]
     return dataset_path, influence_on_crops_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params
 
@@ -220,12 +220,6 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
             condition &= df[column].isin(values)
         elif action == "exclude":
             # Exclude rows where the column value is in the specified values
-            # print("AnafSub head:")
-            # print(df["AnafSub"].head())
-            # print("AnafSub type:", type(df["AnafSub"]))
-            # print("AnafSub dtype:", df["AnafSub"].dtype)
-            # print("AnafSub unique values:", df["AnafSub"].unique())
-            # print(f"About to run: ~df['{column}'].isin({values})")
             condition &= ~df[column].isin(values)
     # Return the filtered dataframe
     print("condition: ", condition)
@@ -234,8 +228,8 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 
 @measure_time
 def main(
-    settlement_filter=None,
-    district_filter=None,
+    yeshuv_filter=None,
+    machoz_filter=None,
     cluster_filter=None,
     crop_filter=None,
     objective_function_type="maximum energy",
@@ -245,14 +239,13 @@ def main(
     parameters=None,
     run_from_ui=False
 ):
-    
     if not run_from_ui:
         # Set default test/debug values
-        # settlement_filter = ['אשדוד', 'תרום']
-        # district_filter = ['South']
+        # yeshuv_filter = ['אשדוד', 'תרום']
+        # machoz_filter = ['South']
         # crop_filter = ['peelables']
-        settlement_filter = []
-        district_filter = []
+        yeshuv_filter = []
+        machoz_filter = []
         crop_filter = []
         cluster_filter = []
         objective_function_type = "maximum energy"
@@ -262,7 +255,6 @@ def main(
                           "energy_production_per_machoz_constraint",
                           "energy_production_per_eshkol_upper_bounding_constraint",
                           "energy_production_per_eshkol_lower_bounding_constraint"]
-        
         parameters = {
             "total_energy_lower_bound": 80.00,
             "total_area_upper_bound": 20000.00,
@@ -270,27 +262,26 @@ def main(
             "total_installation_cost_upper_bound": 120000.00
         }
 
-    # OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
-    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio201\opl\bin\x64_win64\oplrun.exe"
+    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
+    # OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio201\opl\bin\x64_win64\oplrun.exe"
     DEBUG = False # If true, take a slice out of the dataset for testing pueposes
     ROWS_FOR_DEBUG = 1000
     SANITY_CHECKS = False
     DECISION_VARIABLES_TYPE = "binary decision variables" # can either be "binary decision variables" or "continuous decision variables"
-    
-    
     OBJECTIVE_FUNCTION_TYPE = objective_function_type # can either be "maximum energy", "minimum area", "maximum remaining percentage of revenue" or "minimum installation cost"
     MAIN_CONSTRAINTS = [main_constraint]
     FULL_CONTINUOUS_MODEL = full_continuous_model
+    
+    
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
     
              
     COMMON_CONSTRAINTS = common_constraints + ["decision_variables_constraint"]
-    
     model_constraints = MAIN_CONSTRAINTS + COMMON_CONSTRAINTS  
 
     # parameters of the model
-    params = parameters
+    PARAMETERS = parameters
     
     # filters = {
     #     'YeshuvName': (['אשדוד', 'תרום'], "exclude"),  # Include 'אשדוד' and 'אשקלון'
@@ -299,10 +290,10 @@ def main(
     # }
 
     filters = {}
-    if settlement_filter:
-        filters["YeshuvName"] = (settlement_filter, "include")
-    if district_filter:
-        filters["Machoz"] = (district_filter, "include")
+    if yeshuv_filter:
+        filters["YeshuvName"] = (yeshuv_filter, "include")
+    if machoz_filter:
+        filters["Machoz"] = (machoz_filter, "include")
     if crop_filter:
         filters["AnafSub"] = (crop_filter, "include")
     # Add cluster filter if relevant to your dataset
@@ -406,7 +397,7 @@ def main(
     testing_data_and_parameters_path = 'datasets_for_testing/sanity_checks_datasets/sanity_check_1-choosing_based_on_area_constraint.xlsx'
     
     if SANITY_CHECKS:
-        dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, params = test_model(testing_data_and_parameters_path)
+        dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, PARAMETERS = test_model(testing_data_and_parameters_path)
     load_df_dataset_start_time = time.time()
     if DEBUG:
         df_dataset = load_excel(dataset_path, ROWS_FOR_DEBUG) # Read a fraction of dataset from Excel
@@ -421,7 +412,7 @@ def main(
 
     if dataset_path == "agrivoltaics_fix_4.7.25- main data.xlsx":
         col_names_replacements =  {
-            "GeoDistrictName":"Machoz",
+            "GeomachozName":"Machoz",
             "AnafSubENG":"AnafSub",
             "Feasability_to_install_PVs":"Feasability to install PVs?",
             "EPFix_MkWh":"Energy production (fix) mln kWh/year",
@@ -471,12 +462,12 @@ def main(
         df_dataset = continuous_model_df
     
     if GINI_IN_OBJECTIVE:
-        params["G_max"] = 1.00 # meaning there is no constraint, since Gini can't be more than 1
+        PARAMETERS["G_max"] = 1.00 # meaning there is no constraint, since Gini can't be more than 1
         OBJECTIVE_FUNCTION_TYPE = "maximum energy & maximum equity with gini"
         energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
     
     if GINI_IN_CONSTRAINT:
-        params["G_max"] = 0.05 # constraint Gini coefficient to be no more than 0.05
+        PARAMETERS["G_max"] = 0.05 # constraint Gini coefficient to be no more than 0.05
         model_constraints.extend(["linearized_constraint_for_gini", "gini_constraint"])
         energy_division_between_eshkolot = load_excel(energy_division_between_eshkolot_path)
 
@@ -484,10 +475,10 @@ def main(
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1
     df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
-    # get needed relevant data for running the model, in addition to the parameters (params)
+    # get needed relevant data for running the model, in addition to the parameters (PARAMETERS)
     data = generate_model_inputs(df_dataset, energy_consumption_by_yeshuv, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset, energy_division_between_eshkolot)
-    # write data and params to .dat file
-    write_dat_file(dat_file, data, params)
+    # write data and PARAMETERS to .dat file
+    write_dat_file(dat_file, data, PARAMETERS)
     # set decision variables, objective function and constraints based chosen model
     set_decision_variable_type(opl_model_file, DECISION_VARIABLES_TYPE)
     set_objective_function(opl_model_file, [OBJECTIVE_FUNCTION_TYPE], objective_function_mapping)
@@ -498,7 +489,7 @@ def main(
     # converting the raw output of the model to a dataframe with the needed results
     df_results = raw_output_to_df(opl_raw_output)
     # output the final results to excel file
-    output_opl_results_to_excel(df_dataset, df_results, params, installation_decisions_output_path, final_results_output_path, DECISION_VARIABLES_TYPE, OBJECTIVE_FUNCTION_TYPE, MAIN_CONSTRAINTS[0])
+    output_opl_results_to_excel(df_dataset, df_results, PARAMETERS, installation_decisions_output_path, final_results_output_path, DECISION_VARIABLES_TYPE, OBJECTIVE_FUNCTION_TYPE, MAIN_CONSTRAINTS[0])
     # resutls_for_GIS = get_results_for_GIS_tool(df_dataset, df_results, "results_for_GIS_temp.xlsx")
     # return resutls_for_GIS
 
