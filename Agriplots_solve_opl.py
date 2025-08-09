@@ -236,6 +236,8 @@ def main(
     main_constraint="total_area_constraint",
     full_continuous_model=False,
     common_constraints=None,
+    eshkol_lower_bounds=None,
+    eshkol_upper_bounds=None,
     parameters=None,
     run_from_ui=False
 ):
@@ -255,6 +257,10 @@ def main(
                           "energy_production_per_machoz_constraint",
                           "energy_production_per_eshkol_upper_bounding_constraint",
                           "energy_production_per_eshkol_lower_bounding_constraint"]
+        eshkol_lower_bounds = {1: 0.07, 2: 0.07, 3: 0.07, 4: 0.07, 5: 0.07,
+                               6: 0.07, 7: 0.07, 8: 0.07, 9: 0.07, 10: 0.07}
+        eshkol_upper_bounds = {1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0, 5: 1.0,
+                               6: 1.0, 7: 1.0, 8: 1.0, 9: 1.0, 10: 1.0}
         parameters = {
             "total_energy_lower_bound": 80.00,
             "total_area_upper_bound": 20000.00,
@@ -262,8 +268,8 @@ def main(
             "total_installation_cost_upper_bound": 120000.00
         }
 
-    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
-    # OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio201\opl\bin\x64_win64\oplrun.exe"
+    # OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio1210\opl\bin\x64_win64\oplrun.exe"
+    OPLRUN_PATH = r"C:\Program Files\IBM\ILOG\CPLEX_Studio201\opl\bin\x64_win64\oplrun.exe"
     DEBUG = False # If true, take a slice out of the dataset for testing pueposes
     ROWS_FOR_DEBUG = 1000
     SANITY_CHECKS = False
@@ -282,7 +288,10 @@ def main(
 
     # parameters of the model
     PARAMETERS = parameters
-    
+    energy_lower_bounds_for_eshkolot = pd.DataFrame({'eshkol': eshkol_lower_bounds.keys(), 'percentage_of_energy_output': eshkol_lower_bounds.values()})
+    energy_upper_bounds_for_eshkolot = pd.DataFrame({'eshkol': eshkol_upper_bounds.keys(), 'percentage_of_energy_output': eshkol_upper_bounds.values()})
+    # print("energy_lower_bounds_for_eshkolot_not_excel:\n", energy_lower_bounds_for_eshkolot_not_excel)
+    # print("energy_upper_bounds_for_eshkolot_not_excel:\n", energy_upper_bounds_for_eshkolot_not_excel)
     # filters = {
     #     'YeshuvName': (['אשדוד', 'תרום'], "exclude"),  # Include 'אשדוד' and 'אשקלון'
     #     'Machoz': (['South'], "exclude"),   # Exclude 'North' and 'Center'
@@ -429,7 +438,7 @@ def main(
         random_machozot = random.choices(machozot_list, k=df_dataset.shape[0])
         df_dataset["Machoz"] = random_machozot
 
-    
+    1
     # filter dataset based on different columns
     df_dataset = filter_dataset(df_dataset, filters)
     # save potential revenue of full dataset before installations to be used in the model later on
@@ -450,8 +459,14 @@ def main(
     yeshuvim_in_eshkolot = load_excel(yeshuvim_in_eshkolot_path)
     yeshuvim_in_eshkolot.rename(columns = {'eshkol_2021':'eshkol'}, inplace = True) # rename column in the df
     energy_division_between_eshkolot = None # value will be given if Gini is used
-    energy_lower_bounds_for_eshkolot = load_excel(energy_lower_bounds_for_eshkolot_path)
-    energy_upper_bounds_for_eshkolot = load_excel(energy_upper_bounds_for_eshkolot_path)
+    # energy_lower_bounds_for_eshkolot = load_excel(energy_lower_bounds_for_eshkolot_path)
+    # energy_upper_bounds_for_eshkolot = load_excel(energy_upper_bounds_for_eshkolot_path)
+    # print("energy_lower_bounds_for_eshkolot from loaded excel:\n", energy_lower_bounds_for_eshkolot)
+    # print("energy_upper_bounds_for_eshkolot from loaded excel:\n", energy_upper_bounds_for_eshkolot)
+    
+    # print(energy_lower_bounds_for_eshkolot == energy_lower_bounds_for_eshkolot_not_excel)
+    # print(energy_upper_bounds_for_eshkolot == energy_upper_bounds_for_eshkolot_not_excel)
+
     # add eshkolot to dataset based on yeshuvim_in_eshkolot, and also remove rows that their yeshuv doesn't have an eshkol
     df_dataset = add_eshkolot_to_dataset(df_dataset, yeshuvim_in_eshkolot)
     print("number of yeshuvim after adding eshkolot:",df_dataset["YeshuvName"].nunique())
