@@ -5,34 +5,59 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import os
 import sys
+import time
 
 # Add optimisation_tool to sys.path for importing main (keep if your files aren't in same dir)
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'optimisation_tool')))
 from Agriplots_solve_opl import main as run_optimization_tool
 
-# === Load Filter Options ===
-def get_unique_values(excel_path: str, column_name: str):
-    df = pd.read_excel(excel_path)
-    if column_name not in df.columns:
-        raise KeyError(f"Column '{column_name}' not found in {excel_path}")
-    col = df[column_name].dropna()
-    if col.dtype == object:
-        col = col.astype(str).str.strip()
-        col = col[col != ""]
-    unique_sorted = sorted(set(col.tolist()))
-    return [{"label": v, "value": v} for v in unique_sorted]
+# === Load Filter Options (bulk) ===
+def get_unique_values_bulk(excel_path: str, columns: list[str]) -> dict[str, list[dict]]:
+    """
+    Read the Excel once and return a dict mapping each requested column name
+    to a list of Dash dropdown options: [{"label": v, "value": v}, ...].
 
-def safe_get_options(excel_path: str, column_name: str):
+    - Trims strings, drops NaNs and empty strings
+    - Sorts values
+    - If a column is missing, returns an empty list for that column
+    """
     try:
-        return get_unique_values(excel_path, column_name)
+        df = pd.read_excel(excel_path)
     except Exception as e:
-        print(f"Warning: Could not load options for '{column_name}' from '{excel_path}'. Error: {e}")
-        return []
+        print(f"Error reading '{excel_path}': {e}")
+        # return empty options for all requested columns on failure
+        return {col: [] for col in columns}
+
+    options_by_col: dict[str, list[dict]] = {}
+    for colname in columns:
+        if colname not in df.columns:
+            print(f"Warning: Column '{colname}' not found in {excel_path}")
+            options_by_col[colname] = []
+            continue
+
+        col = df[colname].dropna()
+        if col.dtype == object:
+            col = col.astype(str).str.strip()
+            col = col[col != ""]
+
+        unique_sorted = sorted(set(col.tolist()))
+        options_by_col[colname] = [{"label": v, "value": v} for v in unique_sorted]
+
+    return options_by_col
 
 excel_path = "data-Agri_OPTI_UI/Agriplots dataset - 1,000 rows.xlsx"
-yeshuv_options = safe_get_options(excel_path, "YeshuvName")
-machoz_options  = safe_get_options(excel_path, "Machoz")
-crop_type_options = safe_get_options(excel_path, "AnafSub")
+excel_path = "data-Agri_OPTI_UI/Agriplots_final - Full data - including missing rows.xlsx"
+cols_needed = ["YeshuvName", "Machoz", "AnafSub"]
+
+start_time_ = time.time()
+unique_opts = get_unique_values_bulk(excel_path, cols_needed)
+elapsed_time = time.time() - start_time_
+print(f"loading of UI took {elapsed_time:.2f} seconds")
+
+yeshuv_options   = unique_opts.get("YeshuvName", [])
+machoz_options   = unique_opts.get("Machoz", [])
+crop_type_options = unique_opts.get("AnafSub", [])
+
 
 # --- Small control styles ---
 DD_STYLE = {"width": "260px"}        # dropdowns smaller
