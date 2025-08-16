@@ -549,7 +549,6 @@ def get_results_for_GIS_tool(df_dataset_, df_results_, export_temp_path_):
     merged_data = merged_data.drop(columns=['location_id', 'influence on crops'])
 
 
-
     print(merged_data)
     # exporting results to excel
     print("main_results_df:\n", main_results_df)
