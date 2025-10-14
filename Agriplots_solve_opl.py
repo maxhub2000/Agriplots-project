@@ -185,7 +185,7 @@ def set_constraints(file_path, constraints_to_add, constraints_mapping):
 def group_by_yeshuv_and_AnafSub(df_):
     key_columns = ['YeshuvName', 'AnafSub']
     columns_to_aggregate_by_sum = ["Dunam","Energy production (fix) mln kWh/year",
-        "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS", "Installation cost"]
+        "Potential revenue from crops before PV, mln NIS", "Installation cost"]
     columns_to_aggregate_by_first = ["Average influence of PV on crops", "Machoz", "eshkol"]
     relevant_columns_for_model = key_columns + columns_to_aggregate_by_sum + columns_to_aggregate_by_first
     agg_dict = {col: 'sum' for col in columns_to_aggregate_by_sum} # create dict with columns to aggregate by "sum"
@@ -228,6 +228,7 @@ def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) 
 
 @measure_time
 def main(
+    data = None,
     yeshuv_filter=None,
     machoz_filter=None,
     cluster_filter=None,
@@ -278,6 +279,40 @@ def main(
     MAIN_CONSTRAINTS = [main_constraint]
     FULL_CONTINUOUS_MODEL = full_continuous_model
     
+    if data is not None:
+        df_dataset = data
+    else:
+        #dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+        dataset_path = 'data-Agri_OPTI_UI/Agriplots_final - Full data - including missing rows.xlsx'
+        if SANITY_CHECKS:
+            dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, PARAMETERS = test_model(testing_data_and_parameters_path)
+        load_df_dataset_start_time = time.time()
+        if DEBUG:
+            df_dataset = load_excel(dataset_path, ROWS_FOR_DEBUG) # Read a fraction of dataset from Excel
+        else:
+            df_dataset = load_excel(dataset_path) # Read full dataset from Excel
+        elapsed_time = time.time() - load_df_dataset_start_time
+        print(f"loading df_dataset took {elapsed_time:.2f} seconds")
+        print("number of rows in full dataset :", len(df_dataset))
+        print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
+    
+        if dataset_path == "agrivoltaics_fix_4.7.25- main data.xlsx":
+            col_names_replacements =  {
+                "GeomachozName":"Machoz",
+                "AnafSubENG":"AnafSub",
+                "Feasability_to_install_PVs":"Feasability to install PVs?",
+                "EPFix_MkWh":"Energy production (fix) mln kWh/year",
+                "Average_influence_of_PV_on_crops": "Average influence of PV on crops",
+                "Potential_revenue_from_crops_before_PV_MNIS":"Potential revenue from crops before PV, mln NIS"
+            }
+            df_dataset = df_dataset.drop(["AnafSub"], axis=1)
+            df_dataset.rename(columns = col_names_replacements, inplace = True)
+
+            import random
+            machozot_list = ["Center", "Haifa", "Jerusalem", "North", "South", "Tel Aviv"]
+            # Create random mahcozot column
+            random_machozot = random.choices(machozot_list, k=df_dataset.shape[0])
+            df_dataset["Machoz"] = random_machozot
     
     GINI_IN_OBJECTIVE = False
     GINI_IN_CONSTRAINT = False
@@ -388,13 +423,13 @@ def main(
     opl_base_model_file_path = "models/Agriplots_base_model.mod"
     create_copy_of_mod_file(opl_base_model_file_path, opl_model_file)
 
-    dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
-    dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
+    # dataset_path = 'Agriplots_final - Full data - including missing rows.xlsx'
+    # dataset_path = 'datasets_for_testing/Agriplots dataset - 1,000 rows.xlsx'
     # dataset_path = 'ssssdddd.xlsx'
     # dataset_path = "agrivoltaics_fix_4.7.25- main data.xlsx"
     anaf_sub_parameters_synthetic_values_path = 'Anaf sub parameters - synthetic values.xlsx'
     energy_consumption_by_yeshuv_path = 'energy_consumption_by_yeshuv.xlsx'
-    energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim.xlsx', 'energy consumption by machoz']
+    energy_consumption_by_machoz_path = ['energy_consumption_by_machoz_aggregated_from_yeshuvim_in_new_dataset.xlsx', 'energy consumption by machoz']
     assignment_of_missing_yeshuv_names_path = 'assignment_of_missing_yeshuv_names.xlsx'
     yeshuvim_in_eshkolot_path = 'yeshuvim_in_eshkolot.xlsx'
     energy_division_between_eshkolot_path = 'energy_division_between_eshkolot-synthetic_values.xlsx'
@@ -405,40 +440,11 @@ def main(
     final_results_output_path = 'final_results.xlsx'
     testing_data_and_parameters_path = 'datasets_for_testing/sanity_checks_datasets/sanity_check_1-choosing_based_on_area_constraint.xlsx'
     
-    if SANITY_CHECKS:
-        dataset_path, anaf_sub_parameters_synthetic_values_path, energy_consumption_by_yeshuv_path, energy_consumption_by_machoz_path, PARAMETERS = test_model(testing_data_and_parameters_path)
-    load_df_dataset_start_time = time.time()
-    if DEBUG:
-        df_dataset = load_excel(dataset_path, ROWS_FOR_DEBUG) # Read a fraction of dataset from Excel
-    else:
-        df_dataset = load_excel(dataset_path) # Read full dataset from Excel
-    elapsed_time = time.time() - load_df_dataset_start_time
-    print(f"loading df_dataset took {elapsed_time:.2f} seconds")
-    print("number of rows in full dataset :", len(df_dataset))
-    print("number of yeshuvim before removing rows from dataset:",df_dataset["YeshuvName"].nunique())
     
 
 
-    if dataset_path == "agrivoltaics_fix_4.7.25- main data.xlsx":
-        col_names_replacements =  {
-            "GeomachozName":"Machoz",
-            "AnafSubENG":"AnafSub",
-            "Feasability_to_install_PVs":"Feasability to install PVs?",
-            "EPFix_MkWh":"Energy production (fix) mln kWh/year",
-            "Average_influence_of_PV_on_crops": "Average influence of PV on crops",
-            "Potential_revenue_from_crops_before_PV_MNIS":"Potential revenue from crops before PV, mln NIS",
-            "Potential_revenue_from_crops_after_PV_MNIS":"Potential revenue from crops after PV, mln NIS",
-        }
-        df_dataset = df_dataset.drop(["AnafSub"], axis=1)
-        df_dataset.rename(columns = col_names_replacements, inplace = True)
 
-        import random
-        machozot_list = ["Center", "Haifa", "Jerusalem", "North", "South", "Tel Aviv"]
-        # Create random mahcozot column
-        random_machozot = random.choices(machozot_list, k=df_dataset.shape[0])
-        df_dataset["Machoz"] = random_machozot
-
-    1
+    
     # filter dataset based on different columns
     df_dataset = filter_dataset(df_dataset, filters)
     # save potential revenue of full dataset before installations to be used in the model later on
@@ -489,7 +495,7 @@ def main(
     # create location_id column in df_dataset that's based on index of the df
     df_dataset = df_dataset.reset_index() # reset index of the df before creating the new column, since rows were removed earlier
     df_dataset["location_id"] = df_dataset.index + 1
-    df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
+    #df_dataset.to_excel('df_dataset before data preparation.xlsx', index=False)
     # get needed relevant data for running the model, in addition to the parameters (PARAMETERS)
     data = generate_model_inputs(df_dataset, energy_consumption_by_yeshuv, energy_lower_bounds_for_eshkolot, energy_upper_bounds_for_eshkolot, energy_consumption_by_machoz, total_potential_revenue_before_PV_of_full_dataset, energy_division_between_eshkolot)
     # write data and PARAMETERS to .dat file

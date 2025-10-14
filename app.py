@@ -44,7 +44,6 @@ app = dash.Dash(
 #     dash.page_container
 # ], fluid=True)
 
-
 from home import layout
 app.layout = layout
 

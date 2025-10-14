@@ -22,7 +22,7 @@ def output_opl_results_to_excel(df_dataset_, df_opl_results, model_params, insta
     output_final_results_to_excel(full_results, final_results_output_path, decision_variables_type, objective_function_type, main_constraint)
 
 def output_installation_decisions_results_to_excel(df_dataset_, installed_PVs_results, installation_decisions_output_path):
-    relevant_columns_from_input = ["location_id", "OBJECTID", "AnafSub", "YeshuvName", "Machoz", "eshkol", "Potential revenue from crops before PV, mln NIS", "Potential revenue from crops after PV, mln NIS"]
+    relevant_columns_from_input = ["location_id", "OBJECTID", "AnafSub", "YeshuvName", "Machoz", "eshkol", "Potential revenue from crops before PV, mln NIS"]
     if "OBJECTID" not in list(df_dataset_.columns):
         relevant_columns_from_input.remove("OBJECTID")
     relevant_df_from_input = df_dataset_[relevant_columns_from_input]

@@ -4,8 +4,8 @@ from utils import measure_time, track_row_changes, load_excel
 @track_row_changes
 def remove_rows_with_missing_values(df_):
     # remove rows with nan values (Ideally should find a better way to handle those nan values later on)
-    df_ = df_.dropna(subset=['Energy production (fix) mln kWh/year',
-                           'Dunam'])
+    df_ = df_.dropna(subset=['Dunam', 'YeshuvName', 'Machoz', 'Energy production (fix) mln kWh/year',
+                             'Average influence of PV on crops', 'Potential revenue from crops before PV, mln NIS'])
     return df_
 
 @track_row_changes

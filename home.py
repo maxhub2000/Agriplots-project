@@ -12,21 +12,19 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'o
 from Agriplots_solve_opl import main as run_optimization_tool
 
 # === Load Filter Options (bulk) ===
-def get_unique_values_bulk(excel_path: str, columns: list[str]) -> dict[str, list[dict]]:
+def get_unique_values_bulk(df: pd.DataFrame, columns: list[str]) -> dict[str, list[dict]]:
     """
-    Read the Excel once and return a dict mapping each requested column name
-    to a list of Dash dropdown options: [{"label": v, "value": v}, ...].
-
+    Return a dict mapping each requested column name to a list
+    of Dash dropdown options: [{"label": v, "value": v}, ...].
     - Trims strings, drops NaNs and empty strings
     - Sorts values
-    - If a column is missing, returns an empty list for that column
     """
-    try:
-        df = pd.read_excel(excel_path)
-    except Exception as e:
-        print(f"Error reading '{excel_path}': {e}")
-        # return empty options for all requested columns on failure
-        return {col: [] for col in columns}
+    # try:
+    #     df = pd.read_excel(excel_path)
+    # except Exception as e:
+    #     print(f"Error reading '{excel_path}': {e}")
+    #     # return empty options for all requested columns on failure
+    #     return {col: [] for col in columns}
 
     options_by_col: dict[str, list[dict]] = {}
     for colname in columns:
@@ -45,12 +43,23 @@ def get_unique_values_bulk(excel_path: str, columns: list[str]) -> dict[str, lis
 
     return options_by_col
 
-excel_path = "data-Agri_OPTI_UI/Agriplots dataset - 1,000 rows.xlsx"
+# excel_path = "data-Agri_OPTI_UI/Agriplots dataset - 1,000 rows.xlsx"
 excel_path = "data-Agri_OPTI_UI/Agriplots_final - Full data - including missing rows.xlsx"
+csv_path = "data-Agri_OPTI_UI/Agriplots_final - Full data - including missing rows.csv"
+csv_path = "data-Agri_OPTI_UI/agrivoltaics_fix_13.8.25- main data.csv"
+
+
 cols_needed = ["YeshuvName", "Machoz", "AnafSub"]
 
 start_time_ = time.time()
-unique_opts = get_unique_values_bulk(excel_path, cols_needed)
+try:
+    #df = pd.read_excel(excel_path)
+    df = pd.read_csv(csv_path)
+    
+except Exception as e:
+    print(f"Error reading '{excel_path}': {e}")
+
+unique_opts = get_unique_values_bulk(df, cols_needed)
 elapsed_time = time.time() - start_time_
 print(f"loading of UI took {elapsed_time:.2f} seconds")
 
@@ -347,6 +356,7 @@ def run_model(n_clicks, yeshuv, machoz, crop,
 
     # Run the tool
     run_optimization_tool(
+        data = df,
         yeshuv_filter=yeshuv,
         machoz_filter=machoz,
         cluster_filter=None,  # cluster filter removed from UI
