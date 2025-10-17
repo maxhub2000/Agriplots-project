@@ -199,30 +199,38 @@ def group_by_yeshuv_and_AnafSub(df_):
     return df_for_model
 
 # Custom filter function with "include"/"exclude" option for each column
-def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[List[str], str]]) -> pd.DataFrame:
+def filter_dataset(df: pd.DataFrame, filters: Dict[str, Tuple[Union[List[str], Tuple[str, float]], str]]) -> pd.DataFrame:
     """
-    Filters the dataframe based on multiple column conditions.
-
-    Parameters:
-    df (pd.DataFrame): The dataframe to filter.
-    filters (Dict[str, Tuple[List[str], str]]): A dictionary where the keys are column names and the values are tuples.
-        Each tuple contains a list of values to filter by and a string ("include" or "exclude") indicating the action.
+    Filters the dataframe using 'include', 'exclude', or string-based query conditions.
 
     Returns:
-    pd.DataFrame: The filtered dataframe.
+        pd.DataFrame: Filtered dataframe
     """
-    # Initialize the condition to True for all rows
     condition = pd.Series([True] * len(df))
-    # Iterate over each column and its filter values
-    for column, (values, action) in filters.items():
-        if action == "include":
-            # Include rows where the column value is in the specified values
-            condition &= df[column].isin(values)
-        elif action == "exclude":
-            # Exclude rows where the column value is in the specified values
-            condition &= ~df[column].isin(values)
-    # Return the filtered dataframe
-    print("condition: ", condition)
+
+    for column, (criteria, mode) in filters.items():
+        print("criteria:\n", criteria)
+        if column not in df.columns:
+            print(f"⚠️ Column '{column}' not found — skipping.")
+            continue
+
+        if mode == "include":
+            condition &= df[column].isin(criteria)
+        elif mode == "exclude":
+            condition &= ~df[column].isin(criteria)
+        elif mode == "condition":
+            if not isinstance(criteria, tuple) or len(criteria) != 2:
+                raise ValueError(f"Invalid condition format for column '{column}': must be (operator, value)")
+
+            op, value = criteria
+            try:
+                query_str = f"`{column}` {op} {value}"
+                
+                print("query_str:\n",query_str)
+                df = df.query(query_str)
+            except Exception as e:
+                raise ValueError(f"Failed to apply condition filter: {query_str}. Error: {e}")
+
     return df[condition]
 
 
@@ -233,6 +241,8 @@ def main(
     machoz_filter=None,
     cluster_filter=None,
     crop_filter=None,
+    energy_production_per_location_filter=None,
+    dunam_per_location_filter=None,
     objective_function_type="maximum energy",
     main_constraint="total_area_constraint",
     full_continuous_model=False,
@@ -250,6 +260,8 @@ def main(
         yeshuv_filter = []
         machoz_filter = []
         crop_filter = []
+        energy_production_per_location_filter = []
+        dunam_per_location_filter = []
         cluster_filter = []
         objective_function_type = "maximum energy"
         main_constraint = "total_area_constraint"
@@ -340,8 +352,22 @@ def main(
         filters["Machoz"] = (machoz_filter, "include")
     if crop_filter:
         filters["AnafSub"] = (crop_filter, "include")
+    if energy_production_per_location_filter:
+        operator, val = energy_production_per_location_filter.values()
+        filters["Energy production (fix) mln kWh/year"] = ((operator, val), "condition")
+    if dunam_per_location_filter:
+        operator, val = dunam_per_location_filter.values()
+        filters["Dunam"] = ((operator, val), "condition")
+
+    print("filters:\n", filters)
     # Add cluster filter if relevant to your dataset
 
+    # filters = {
+    #     'YeshuvName': (['אשדוד', 'תרום'], "exclude"),  # Include 'אשדוד' and 'אשקלון'
+    #     'Machoz': (['South'], "exclude"),   # Exclude 'North' and 'Center'
+    #     "AnafSub": (['peelables'], "exclude"),
+    #     "Energy production (fix) mln kWh/year": ((">=", 5.00), "condition")
+    # }
 
 
     objective_function_mapping = {
