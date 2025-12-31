@@ -11,7 +11,7 @@ import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'optimisation_tool')))
 from Agriplots_solve_opl import main as run_optimization_tool
 
-# === Load Filter Options (bulk) ===
+
 def get_unique_values_bulk(df: pd.DataFrame, columns: list[str]) -> dict[str, list[dict]]:
     """
     Return a dict mapping each requested column name to a list
@@ -22,7 +22,7 @@ def get_unique_values_bulk(df: pd.DataFrame, columns: list[str]) -> dict[str, li
     options_by_col: dict[str, list[dict]] = {}
     for colname in columns:
         if colname not in df.columns:
-            print(f"Warning: Column '{colname}' not found in {excel_path}")
+            print(f"Warning: Column '{colname}' not found in df")
             options_by_col[colname] = []
             continue
 
@@ -35,34 +35,6 @@ def get_unique_values_bulk(df: pd.DataFrame, columns: list[str]) -> dict[str, li
         options_by_col[colname] = [{"label": v, "value": v} for v in unique_sorted]
 
     return options_by_col
-
-# excel_path = "data-Agri_OPTI_UI/Agriplots dataset - 1,000 rows.xlsx"
-excel_path = "data-Agri_OPTI_UI/Agriplots_final - Full data - including missing rows.xlsx"
-csv_path = "data-Agri_OPTI_UI/Agriplots_final - Full data - including missing rows.csv"
-csv_path = "data-Agri_OPTI_UI/agrivoltaics_fix_13.8.25- main data.csv"
-
-cols_needed = ["YeshuvName", "Machoz", "AnafSub"]
-
-start_time_ = time.time()
-try:
-    # df = pd.read_excel(excel_path)
-    df = pd.read_csv(csv_path)
-except Exception as e:
-    print(f"Error reading '{excel_path}': {e}")
-
-unique_opts = get_unique_values_bulk(df, cols_needed)
-elapsed_time = time.time() - start_time_
-print(f"loading of UI took {elapsed_time:.2f} seconds")
-
-yeshuv_options    = unique_opts.get("YeshuvName", [])
-machoz_options    = unique_opts.get("Machoz", [])
-crop_type_options = unique_opts.get("AnafSub", [])
-
-# --- Small control styles ---
-DD_STYLE    = {"width": "260px"}        # dropdowns smaller
-NUM_STYLE   = {"width": "120px"}        # number inputs compact
-LABEL_STYLE = {"marginBottom": "4px"}
-OP_STYLE    = {"width": "76px", "marginRight": "6px"}  # operator dropdown size
 
 def build_eshkol_inputs_grouped():
     rows = []
@@ -124,6 +96,33 @@ def build_eshkol_inputs_grouped():
     rows.append(dbc.Row(row4, className="g-2"))
 
     return rows
+
+
+
+csv_path = "data/agrivoltaics_fix_13.8.25- main data.csv"
+cols_needed = ["YeshuvName", "Machoz", "AnafSub"]
+
+start_time_ = time.time()
+try:
+    df = pd.read_csv(csv_path)
+except Exception as e:
+    print(f"Error reading '{csv_path}': {e}")
+
+# === Load Filter Options (bulk) ===
+unique_opts = get_unique_values_bulk(df, cols_needed)
+elapsed_time = time.time() - start_time_
+print(f"loading of UI took {elapsed_time:.2f} seconds")
+
+yeshuv_options    = unique_opts.get("YeshuvName", [])
+machoz_options    = unique_opts.get("Machoz", [])
+crop_type_options = unique_opts.get("AnafSub", [])
+
+# --- Small control styles ---
+DD_STYLE    = {"width": "260px"}        # dropdowns smaller
+NUM_STYLE   = {"width": "120px"}        # number inputs compact
+LABEL_STYLE = {"marginBottom": "4px"}
+OP_STYLE    = {"width": "76px", "marginRight": "6px"}  # operator dropdown size
+
 
 # === Layout ===
 layout = dbc.Container([
@@ -252,10 +251,10 @@ layout = dbc.Container([
                         dbc.Checklist(
                             id="common-constraints",
                             options=[
-                                {"label": "energy_production_per_yeshuv_constraint", "value": "energy_production_per_yeshuv_constraint"},
-                                {"label": "energy_production_per_machoz_constraint", "value": "energy_production_per_machoz_constraint"},
-                                {"label": "energy_production_per_eshkol_upper_bounding_constraint", "value": "energy_production_per_eshkol_upper_bounding_constraint"},
-                                {"label": "energy_production_per_eshkol_lower_bounding_constraint", "value": "energy_production_per_eshkol_lower_bounding_constraint"},
+                                {"label": "energy production per yeshuv constraint", "value": "energy_production_per_yeshuv_constraint"},
+                                {"label": "energy production per machoz constraint", "value": "energy_production_per_machoz_constraint"},
+                                {"label": "energy production per eshkol upper bounding constraint", "value": "energy_production_per_eshkol_upper_bounding_constraint"},
+                                {"label": "energy production per eshkol lower bounding constraint", "value": "energy_production_per_eshkol_lower_bounding_constraint"},
                             ],
                             value=[
                                 "energy_production_per_yeshuv_constraint",
@@ -409,7 +408,6 @@ def run_model(n_clicks, yeshuv, machoz, crop,
         data=df,  # preloaded DF retained
         yeshuv_filter=yeshuv,
         machoz_filter=machoz,
-        cluster_filter=None,  # cluster filter removed from UI
         crop_filter=crop,
         # new numeric filters as separate variables
         energy_production_per_location_filter=energy_production_per_location_filter,
